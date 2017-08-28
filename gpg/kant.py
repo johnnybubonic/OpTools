@@ -33,6 +33,15 @@ import gpgme  # non-stdlib; Arch package is "python-pygpgme"
 #
 #Thanks again!
 
+def getKeys(args):
+    # Get our concept
+    os.environ['GNUPGHOME'] = args['gpgdir']
+    gpg = gpgme.Context()
+    # Do we have the key already? If not, fetch.
+    #for k in args['rcpts']:
+    #    if k['type']
+    return(gpg)
+
 def serverParser(uri):
     # https://en.wikipedia.org/wiki/Key_server_(cryptographic)#Keyserver_examples
     # We need to make a mapping of the default ports.
@@ -218,6 +227,7 @@ def main():
     args = verifyArgs(vars(rawargs.parse_args()))
     import pprint
     pprint.pprint(args)
+    getKeys(args)
 
 if __name__ == '__main__':
     main()
