@@ -38,8 +38,13 @@ def getKeys(args):
     os.environ['GNUPGHOME'] = args['gpgdir']
     gpg = gpgme.Context()
     # Do we have the key already? If not, fetch.
-    #for k in args['rcpts']:
-    #    if k['type']
+    for k in args['rcpts'].keys():
+        if args['rcpts'][k]['type'] == 'fpr':
+            # It's a key ID.
+            pass
+        elif args['rcpts'][k]['type'] == 'email':
+            # We need to actually do a lookup on the email address.
+            pass
     return(gpg)
 
 def serverParser(uri):
