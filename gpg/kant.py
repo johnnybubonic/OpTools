@@ -5,6 +5,7 @@ import datetime
 import email
 import os
 import re
+import shutil
 import subprocess
 from io import BytesIO
 from socket import *
@@ -37,16 +38,16 @@ def getKeys(args):
     # Get our concept
     os.environ['GNUPGHOME'] = args['gpgdir']
     gpg = gpgme.Context()
+    keys = {}
+    allkeys = []
     # Do we have the key already? If not, fetch.
     for k in args['rcpts'].keys():
         if args['rcpts'][k]['type'] == 'fpr':
-            # It's a key ID.
-            pass
-        elif args['rcpts'][k]['type'] == 'email':
+            allkeys.append(k)
+        if args['rcpts'][k]['type'] == 'email':
             # We need to actually do a lookup on the email address.
-            keys = {}
             with open(os.devnull, 'w') as f:
-                keyout = subprocess.run(['gpg',
+                keyout = subprocess.run(['gpg2',
                                         '--search-keys',
                                         '--with-colons',
                                         '--batch',
@@ -67,29 +68,72 @@ def getKeys(args):
                     keys[key]['uids'][uid[1]] = {}
                     keys[key]['uids'][uid[1]]['comment'] = uid[0]
                     keys[key]['uids'][uid[1]]['time'] = int(line.split(':')[2])
-            if len(keys) > 1:
-                import pprint
-                pprint.pprint(keys)
-                # Print the keys and prompt for a selection.
-                print('\nWe found the following keys for <{0}>...'.format(k))
-                print('KEY:{0:40}ID:{0:20}EMAIL:'.format(''))
+            if len(keys) > 1:                # Print the keys and prompt for a selection.
+                print('\nWe found the following keys for <{0}>...\n\nKEY ID:'.format(k))
                 for k in keys:
-                    print('{0} (Generated at {1})'.format(k, datetime.datetime.utcfromtimestamp(keys[k]['time'])))
+                    print('{0}\n{1:6}(Generated at {2})  UIDs:'.format(k, '', datetime.datetime.utcfromtimestamp(keys[k]['time'])))
                     for email in keys[k]['uids']:
-                        print('{0:40}{1:20}<{2}>'.format('', keys[k]['uids'][email]['comment'], email))
+                        print('{0:42}(Generated {3}) <{2}> {1}'.format('',
+                                                                          keys[k]['uids'][email]['comment'],
+                                                                          email,
+                                                                          datetime.datetime.utcfromtimestamp(
+                                                                              keys[k]['uids'][email]['time'])))
+                    print()
                 while True:
                     key = input('Please enter the (full) appropriate key: ')
                     if key not in keys.keys():
                         print('Please enter a full key ID from the list above or hit ctrl-d to exit.')
                     else:
+                        allkeys.append(key)
                         break
             else:
+                if not len(keys.keys()) >= 1:
+                    print('Could not find {0}!'.format(k))
+                    continue
                 key = list(keys.keys())[0]
-                print('\nFound key {0} for <{1}>:'.format(key, k))
-                print('ID:{0:70}EMAIL:'.format(' '))
-                for uid in keys[key]['uids']:
-                    print('{0:70}\t<{1}>'.format(uid[0], uid[1]))
-    return(gpg)
+                print('\nFound key {0} for <{1}> (Generated at {2}):'.format(key, k, datetime.datetime.utcfromtimestamp(keys[key]['time'])))
+                for email in keys[key]['uids']:
+                    print('\t(Generated {2}) {0} <{1}>'.format(keys[key]['uids'][email]['comment'],
+                                              email,
+                                              datetime.datetime.utcfromtimestamp(keys[key]['uids'][email]['time'])))
+                allkeys.append(key)
+                print()
+    ## And now we can (FINALLY) fetch the key(s).
+    recvcmd = ['gpg2', '--recv-keys', '--batch']  # We'll add the keys onto the end of this next.
+    recvcmd.extend(allkeys)
+    with open(os.devnull, 'w') as f:
+        subprocess.run(recvcmd, stdout = f, stderr = f)  # We hide stderr because gpg, for some unknown reason, spits non-errors to stderr.
+    return(allkeys)
+
+def modifyDirmngr(op, args):
+    if not args['keyservers']:
+        return()
+    pid = str(os.getpid())
+    activecfg = os.path.join(args['gpgdir'], 'dirmngr.conf')
+    bakcfg = '{0}.{1}'.format(activecfg, pid)
+    if op in ('new', 'start'):
+        if os.path.lexists(activecfg):
+            shutil.copy2(activecfg, bakcfg)
+        with open(bakcfg, 'r') as read, open(activecfg, 'w') as write:
+            for line in read:
+                if not line.startswith('keyserver '):
+                    write.write(line)
+        with open(activecfg, 'a') as f:
+            for s in args['keyservers']:
+                uri = '{0}://{1}:{2}'.format(s['proto'], s['server'], s['port'][0])
+                f.write('keyserver {0}\n'.format(uri))
+    if op in ('old', 'stop'):
+        if os.path.lexists(bakcfg):
+            with open(bakcfg, 'r') as read, open(activecfg, 'w') as write:
+                for line in read:
+                    write.write(line)
+            os.remove(bakcfg)
+        else:
+            os.remove(activecfg)
+    subprocess.run(['gpgconf',
+                    '--reload',
+                    'dirmngr'])
+    return()
 
 def serverParser(uri):
     # https://en.wikipedia.org/wiki/Key_server_(cryptographic)#Keyserver_examples
@@ -273,9 +317,9 @@ def verifyArgs(args):
 def main():
     rawargs = parseArgs()
     args = verifyArgs(vars(rawargs.parse_args()))
-    #import pprint
-    #pprint.pprint(args)
+    modifyDirmngr('new', args)
     getKeys(args)
+    modifyDirmngr('old', args)
 
 if __name__ == '__main__':
     main()
