@@ -8,7 +8,7 @@ import re
 import subprocess
 from io import BytesIO
 from socket import *
-from urllib.parse import urlparse
+import urllib.parse
 import gpgme  # non-stdlib; Arch package is "python-pygpgme"
 
 # TODO:
@@ -44,7 +44,51 @@ def getKeys(args):
             pass
         elif args['rcpts'][k]['type'] == 'email':
             # We need to actually do a lookup on the email address.
-            pass
+            keys = {}
+            with open(os.devnull, 'w') as f:
+                keyout = subprocess.run(['gpg',
+                                        '--search-keys',
+                                        '--with-colons',
+                                        '--batch',
+                                        k],
+                                        stdout = subprocess.PIPE,
+                                        stderr = f)
+            keyout = keyout.stdout.decode('utf-8').splitlines()
+            for line in keyout:
+                if line.startswith('pub:'):
+                    key = line.split(':')[1]
+                    keys[key] = {}
+                    keys[key]['uids'] = {}
+                    keys[key]['time'] = int(line.split(':')[4])
+                elif line.startswith('uid:'):
+                    uid = re.split('<(.*)>', urllib.parse.unquote(line.split(':')[1].strip()))
+                    uid.remove('')
+                    uid = [u.strip() for u in uid]
+                    keys[key]['uids'][uid[1]] = {}
+                    keys[key]['uids'][uid[1]]['comment'] = uid[0]
+                    keys[key]['uids'][uid[1]]['time'] = int(line.split(':')[2])
+            if len(keys) > 1:
+                import pprint
+                pprint.pprint(keys)
+                # Print the keys and prompt for a selection.
+                print('\nWe found the following keys for <{0}>...'.format(k))
+                print('KEY:{0:40}ID:{0:20}EMAIL:'.format(''))
+                for k in keys:
+                    print('{0} (Generated at {1})'.format(k, datetime.datetime.utcfromtimestamp(keys[k]['time'])))
+                    for email in keys[k]['uids']:
+                        print('{0:40}{1:20}<{2}>'.format('', keys[k]['uids'][email]['comment'], email))
+                while True:
+                    key = input('Please enter the (full) appropriate key: ')
+                    if key not in keys.keys():
+                        print('Please enter a full key ID from the list above or hit ctrl-d to exit.')
+                    else:
+                        break
+            else:
+                key = list(keys.keys())[0]
+                print('\nFound key {0} for <{1}>:'.format(key, k))
+                print('ID:{0:70}EMAIL:'.format(' '))
+                for uid in keys[key]['uids']:
+                    print('{0:70}\t<{1}>'.format(uid[0], uid[1]))
     return(gpg)
 
 def serverParser(uri):
@@ -57,7 +101,7 @@ def serverParser(uri):
               'https': [443, ['tcp']],  # SSL/TLS
               'ldap': [389, ['tcp', 'udp']],  # includes TLS negotiation since it runs on the same port
               'ldaps': [636, ['tcp', 'udp']]}  # SSL
-    urlobj = urlparse(uri)
+    urlobj = urllib.parse.urlparse(uri)
     server['proto'] = urlobj.scheme
     lazy = False
     if not server['proto']:
@@ -140,8 +184,7 @@ def parseArgs():
                       dest = 'keyservers',
                       default = defkeyservers,
                       help = 'The comma-separated keyserver(s) to push to. If "None", don\'t push signatures. Default is \033[1m{0}\033[0m.'.format(
-                                                                                                        ','.join(
-                                                                                                                 defkeyservers)))
+                                                                                                        defkeyservers))
     args.add_argument('-n',
                       '--netproto',
                       dest = 'netproto',
@@ -172,7 +215,7 @@ def verifyArgs(args):
             int(k, 16)
             ktype = 'fpr'
         except:  # If it isn't a valid key ID...
-            if not re.match('^[\w\.\+\-]+\@[\w]+\.[a-z]{2,3}$', k):  # is it an email address?
+            if not re.match('^[\w\.\+\-]+\@[\w-]+\.[a-z]{2,3}$', k):  # is it an email address?
                 raise ValueError('{0} is not a valid email address'.format(k))
             else:
                 ktype = 'email'
@@ -230,8 +273,8 @@ def verifyArgs(args):
 def main():
     rawargs = parseArgs()
     args = verifyArgs(vars(rawargs.parse_args()))
-    import pprint
-    pprint.pprint(args)
+    #import pprint
+    #pprint.pprint(args)
     getKeys(args)
 
 if __name__ == '__main__':
