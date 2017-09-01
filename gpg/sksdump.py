@@ -149,15 +149,22 @@ def syncDB():
            os.path.join(sks['destdir'], '.'),
            sks['rsync']]
     with open(sks['logfile'], 'a') as f:
+        f.write('===== {0} Rsyncing to mirror =====\n'.format(str(datetime.datetime.utcnow())))
+    with open(sks['logfile'], 'a') as f:
         subprocess.run(cmd, stdout = f, stderr = f)
     return()
 
 def main():
     if getpass.getuser() not in ('root', sks['user']):
         exit('ERROR: You must be root or {0}!'.format(sks['user']))
+    with open(sks['logfile'], 'a') as f:
+        f.write('===== {0} STARTING ====='.format(str(datetime.datetime.utcnow())))
     dumpDB()
     compressDB()
     syncDB()
+    with open(sks['logfile'], 'a') as f:
+        f.write('===== {0} DONE ====='.format(str(datetime.datetime.utcnow())))
+
 
 if __name__ == '__main__':
     main()
