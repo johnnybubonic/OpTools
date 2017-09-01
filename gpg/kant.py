@@ -13,8 +13,7 @@ import urllib.parse
 import gpgme  # non-stdlib; Arch package is "python-pygpgme"
 
 # TODO:
-# -a --batch arg, with filename parameter. needs to contain keyID or email address and trust level
-# -attach my pubkey
+# -attach pubkey when sending below email
 # mail to first email address in key with signed message:
 #Subj: Your GPG key has been signed
 #
@@ -24,7 +23,7 @@ import gpgme  # non-stdlib; Arch package is "python-pygpgme"
 #
 #* You have presented sufficient proof of identity
 #
-#The signatures have been pushed to the pgp.mit.edu and hkps.pool.sks-keyservers.net keyservers.
+#The signatures have been pushed to KEYSERVERS.
 #
 #I have taken the liberty of attaching my public key in the event you've not signed it yet and were unable to find it. Please feel free to push to pgp.mit.edu or hkps.pool.sks-keyservers.net.
 #
@@ -47,6 +46,7 @@ def getKeys(args):
         if args['rcpts'][k]['type'] == 'email':
             # We need to actually do a lookup on the email address.
             with open(os.devnull, 'w') as f:
+                # TODO: replace with gpg.keylist_mode(gpgme.KEYLIST_MODE_EXTERN) and internal mechanisms?
                 keyout = subprocess.run(['gpg2',
                                         '--search-keys',
                                         '--with-colons',
@@ -99,11 +99,15 @@ def getKeys(args):
                 allkeys.append(key)
                 print()
     ## And now we can (FINALLY) fetch the key(s).
-    recvcmd = ['gpg2', '--recv-keys', '--batch']  # We'll add the keys onto the end of this next.
+    # TODO: replace with gpg.keylist_mode(gpgme.KEYLIST_MODE_EXTERN) and internal mechanisms?
+    recvcmd = ['gpg2', '--recv-keys', '--batch', '--yes']  # We'll add the keys onto the end of this next.
     recvcmd.extend(allkeys)
     with open(os.devnull, 'w') as f:
         subprocess.run(recvcmd, stdout = f, stderr = f)  # We hide stderr because gpg, for some unknown reason, spits non-errors to stderr.
     return(allkeys)
+
+def sigKeys(keyids):
+    pass
 
 def modifyDirmngr(op, args):
     if not args['keyservers']:
@@ -207,28 +211,43 @@ def parseArgs():
     defkey = getDefKey(defgpgdir)
     defkeyservers = getDefKeyservers(defgpgdir)
     args = argparse.ArgumentParser(description = 'Keysigning Assistance and Notifying Tool (KANT)',
-                                   epilog = 'brent s. || 2017 || https://square-r00t.net')
+                                   epilog = 'brent s. || 2017 || https://square-r00t.net',
+                                   formatter_class = argparse.RawTextHelpFormatter)
     args.add_argument('-k',
                       '--keys',
                       dest = 'keys',
                       required = True,
-                      help = 'A single or comma-separated list of keys to sign, trust, and notify. Can also be an email address.')
+                      help = 'A single or comma-separated list of keys to sign,\ntrust, and notify. Can also be an email address.')
     args.add_argument('-K',
                       '--sigkey',
                       dest = 'sigkey',
                       default = defkey,
-                      help = 'The key to use when signing other keys. Default is \033[1m{0}\033[0m.'.format(defkey))
+                      help = 'The key to use when signing other keys.\nDefault is \033[1m{0}\033[0m.'.format(defkey))
+    args.add_argument('-b',
+                      '--batch',
+                      dest = 'batchfile',
+                      default = None,
+                      metavar = '/path/to/batchfile',
+                      help = 'If specified, a CSV file to use as a batch run\nin the format of (one per line):\n' +
+                             '\n\033[1mKEY_FINGERPRINT_OR_EMAIL_ADDRESS,TRUSTLEVEL,PUSH_TO_KEYSERVER\033[0m\n' +
+                             '\n\033[1mTRUSTLEVEL\033[0m can be numeric or string:' +
+                             '\n\n\t\033[1m0 = Unknown\n\t1 = Untrusted\n\t2 = Marginal\n\t3 = Full\n\t4 = Ultimate\033[0m\n' +
+                             '\n\033[1mPUSH_TO_KEYSERVER\033[0m can be \033[1m1/True\033[0m or \033[1m0/False\033[0m. If marked as False,\n' +
+                             'the signature will be made local/non-exportable.')
+
     args.add_argument('-d',
                       '--gpgdir',
                       dest = 'gpgdir',
                       default = defgpgdir,
-                      help = 'The GnuPG configuration directory to use (containing your keys, etc.). Default is \033[1m{0}\033[0m.'.format(defgpgdir))
+                      help = 'The GnuPG configuration directory to use (containing\n' +
+                             'your keys, etc.); default is \033[1m{0}\033[0m.'.format(defgpgdir))
     args.add_argument('-s',
                       '--keyservers',
                       dest = 'keyservers',
                       default = defkeyservers,
-                      help = 'The comma-separated keyserver(s) to push to. If "None", don\'t push signatures. Default is \033[1m{0}\033[0m.'.format(
-                                                                                                        defkeyservers))
+                      help = 'The comma-separated keyserver(s) to push to. If "None", don\'t\n' +
+                             'push signatures (local/non-exportable signatures will be made).\n'
+                             'Default keyserver list is: \n\n\033[1m{0}\033[0m\n\n'.format(re.sub(',', '\n', defkeyservers)))
     args.add_argument('-n',
                       '--netproto',
                       dest = 'netproto',
@@ -240,7 +259,8 @@ def parseArgs():
                       '--testkeyservers',
                       dest = 'testkeyservers',
                       action = 'store_true',
-                      help = 'If specified, initiate a test connection with each keyserver before anything else. Disabled by default.')
+                      help = 'If specified, initiate a test connection with each\n'
+                             '\nkeyserver before anything else. Disabled by default.')
     return(args)
 
 def verifyArgs(args):
@@ -267,6 +287,13 @@ def verifyArgs(args):
         if ktype == 'fpr' and not len(k) == 40:  # Security is important. We don't want users getting collisions, so we don't allow shortened key IDs.
             raise ValueError('{0} is not a full 40-char key ID or key fingerprint'.format(k))
     del args['keys']
+    ## Batch file
+    if args['batchfile']:
+        batchfilepath = os.path.abspath(os.path.expanduser(args['batchfile']))
+        if not os.path.isfile(batchfilepath):
+            raise ValueError('{0} does not exist or is not a regular file.'.format(batchfilepath))
+        else:
+            args['batchfile'] = batchfilepath
     ## Signing key
     if not args['sigkey']:
         raise ValueError('A key for signing is required') # We need a key we can sign with.
@@ -318,7 +345,8 @@ def main():
     rawargs = parseArgs()
     args = verifyArgs(vars(rawargs.parse_args()))
     modifyDirmngr('new', args)
-    getKeys(args)
+    fprs = getKeys(args)
+    sigKeys(fprs)
     modifyDirmngr('old', args)
 
 if __name__ == '__main__':
