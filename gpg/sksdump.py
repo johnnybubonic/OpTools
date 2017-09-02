@@ -112,6 +112,7 @@ def compressDB():
         return()
     curdir = os.path.join(sks['destdir'], NOWstr)
     for thisdir, dirs, files in os.walk(curdir):  # I use os.walk here because we might handle this differently in the future...
+        files.sort()
         for f in files:
             fullpath = os.path.join(thisdir, f)
             newfile = '{0}.{1}'.format(fullpath, sks['compress'])
