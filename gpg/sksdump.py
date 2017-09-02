@@ -50,8 +50,11 @@ sks = {
 }
 
 
+## Make things a little more sensical/catch some common errors
 # symlinks? relative path? HOME reference? WE HANDLE IT ALL.
 sks['destdir'] = os.path.realpath(os.path.abspath(os.path.expanduser(sks['destdir'])))
+if sks['compress'] == 'lrzip':
+    sks['compress'] == 'lrz'
 
 def svcMgmt(op):
     if op not in ('start', 'stop'):
