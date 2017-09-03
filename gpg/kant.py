@@ -107,7 +107,14 @@ def getKeys(args):
     return(allkeys)
 
 def sigKeys(keyids):
-    pass
+    # Map the trust levels to "human" equivs
+    trustmap = {0: 'unknown',
+                1: 'untrusted',
+                2: 'marginal',
+                3: 'full',
+                4: 'ultimate'}
+    def promptTrust(kinfo):
+        trust = input('\nWhat trust level should we sign {0} ({1} <{2}>) with?'.format(kinfo['fpr'], kinfo['name'], kinfo['email']))
 
 def modifyDirmngr(op, args):
     if not args['keyservers']:

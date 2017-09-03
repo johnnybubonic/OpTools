@@ -70,16 +70,19 @@ def destPrep():
     nowdir = os.path.join(sks['destdir'], NOWstr)
     curdir = os.path.join(sks['destdir'], 'current')
     PAST = NOW - datetime.timedelta(days = sks['days'])
-    for thisdir, dirs, files in os.walk(sks['destdir']):
+    for thisdir, dirs, files in os.walk(sks['destdir'], topdown = False):
         for f in files:
             fstat = os.stat(os.path.join(thisdir, f))
             mtime = fstat.st_mtime
             if int(mtime) < PAST.timestamp():
                 os.remove(os.path.join(thisdir, f))
-    try:
-        os.removedirs(sks['destdir'])  # Remove empty dirs
-    except:
-        pass  # thisisfine.jpg
+            # Delete if empty dir
+            if len(os.listdir(thisdir)) == 0:
+                os.rmdir(thisdir)
+    #try:
+    #    os.removedirs(sks['destdir'])  # Remove empty dirs
+    #except:
+    #    pass  # thisisfine.jpg
     os.makedirs(nowdir, exist_ok = True)
     if getpass.getuser() == 'root':
         uid = getpwnam(sks['user']).pw_uid
@@ -119,6 +122,9 @@ def compressDB():
         for f in files:
             fullpath = os.path.join(thisdir, f)
             newfile = '{0}.{1}'.format(fullpath, sks['compress'])
+            # TODO: add compressed tarball support.
+            # However, I can't do this on memory-constrained systems for lrzip.
+            # See: https://github.com/kata198/python-lrzip/issues/1
             with open(sks['logfile'], 'a') as f:
                 f.write('===== {0} Now compressing {1} =====\n'.format(str(datetime.datetime.utcnow()), fullpath))
             if sks['compress'].lower() == 'gz':

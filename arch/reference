@@ -1,0 +1,89 @@
+some random snippets to incorporate...
+
+
+
+######################
+this was to assist with https://www.archlinux.org/news/perl-library-path-change/
+the following was used to gen the /tmp/perlfix.pkgs.lst:
+pacman -Qqo '/usr/lib/perl5/vendor_perl' >> /tmp/perlfix.pkgs.lst ; pacman -Qqo '/usr/lib/perl5/site_perl' >> /tmp/perlfix.pkgs.lst
+######################
+
+#!/usr/bin/env python3
+
+import datetime
+import re
+import os
+import pprint
+import subprocess
+
+pkgs = []
+
+pkglstfile = '/tmp/perlfix.pkgs.lst'
+
+if os.path.isfile(pkglstfile):
+    with open(pkglstfile, 'r') as f:
+        pkgs = f.read().splitlines()
+
+pkgd = {'rdeps': [],
+        'deps': [],
+        'remove': []}
+
+for p in pkgs:
+    pkgchkcmd = ['apacman', '-Q', p]
+    with open(os.devnull, 'w') as devnull:
+        pkgchk = subprocess.run(pkgchkcmd, stdout = devnull, stderr = devnull).returncode
+    if pkgchk != 0:  # not installed anymore
+        break
+    cmd = ['apacman',
+           '-Qi',
+           p]
+    stdout = subprocess.run(cmd, stdout = subprocess.PIPE).stdout.decode('utf-8').strip().splitlines()
+    #pprint.pprint(stdout)
+    d = {re.sub('\s', '_', k.strip().lower()):v.strip() for k, v in (dict(k.split(':', 1) for k in stdout).items())}
+
+    # some pythonizations..
+    # list of things(keys) that should be lists
+    ll = ['architecture', 'conflicts_with', 'depends_on', 'groups', 'licenses', 'make_depends',
+          'optional_deps', 'provides', 'replaces', 'required_by']
+    # and now actually listify
+    for k in ll:
+        if k in d.keys():
+            if d[k].lower() in ('none', ''):
+                d[k] = None
+            else:
+                d[k] = d[k].split()
+    # Not necessary... blah blah inconsistent whitespace blah blah.
+    #for k in ('build_date', 'install_date'):
+    #    if k in d.keys():
+    #        try:
+    #            d[k] = datetime.datetime.strptime(d[k], '%a %d %b %Y %H:%M:%S %p %Z')
+    #        except:
+    #            d[k] = datetime.datetime.strptime(d[k], '%a %d %b %Y %H:%M:%S %p')
+
+    #pprint.pprint(d)
+    if d['required_by']:
+        pkgd['rdeps'].extend(d['required_by'])
+    else:
+        if d['install_reason'] != 'Explicitly installed':
+            pkgd['remove'].append(p)
+    if d['depends_on']:
+        pkgd['deps'].extend(d['depends_on'])
+    #break
+
+for x in ('rdeps', 'deps'):
+    pkgd[x].sort()
+
+#for p in pkgd['rdeps']:
+#    if p in pkgd['deps']:
+#        pkgd['
+
+#print('DEPENDENCIES:')
+#print('\n'.join(pkgd['deps']))
+#print('\nREQUIRED BY:')
+#print('\n'.join(pkgd['rdeps']))
+#print('\nCAN REMOVE:')
+print('\n'.join(pkgd['remove']))
+
+#cmd = ['apacman', '-R']
+#cmd.extend(pkgd['remove'])
+#subprocess.run(cmd)
