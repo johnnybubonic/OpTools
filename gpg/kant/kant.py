@@ -14,6 +14,7 @@ import urllib.parse
 import gpgme  # non-stdlib; Arch package is "python-pygpgme"
 
 # TODO:
+# - http://tanguy.ortolo.eu/blog/article9/pgp-signature-infos edit certification level- possible with pygpgme?
 # -attach pubkey when sending below email
 # mail to first email address in key with signed message:
 #Subj: Your GPG key has been signed
@@ -284,6 +285,24 @@ def sigKeys(trusts, args):  # The More Business-End(TM)
                     signerkey = gpg.get_key(s.keyid).subkeys[0].fpr
                     if signerkey == mkey.subkeys[0].fpr:
                         sign = False  # We already signed this key
+                except gpgme.GpgmeError:
+                    pass  # usually if we get this it means we don't have a signer's key in our keyring
+        trusts[k]['sign'] = sign
+
+        # edit_sign(ctx, key, index=0, local=False, norevoke=False, expire=True, check=0)
+        #       index:    the index of the user ID to sign, starting at 1.  Sign all
+        #       user IDs if set to 0.
+        #       local:    make a local signature
+        #       norevoke: make a non-revokable signature
+        #       command:  the type of signature.  One of sign, lsign, tsign or nrsign.
+        #       expire:   whether the signature should expire with the key.
+        #       check:    Amount of checking performed.  One of:
+        #         0 - no answer
+        #         1 - no checking
+        #         2 - casual checking
+        #         3 - careful checking
+
+        #gpgme.editutil.edit_sign(gpg, k, index = 0, lo
 
 
 def pushKeys():  # The Last Business-End(TM)
@@ -414,13 +433,28 @@ def parseArgs():
                       help = 'The trust level to automatically apply to all keys\n' +
                              '(if not specified, kant will prompt for each key).\n' +
                              'See -b/--batch for trust level notations.')
+    args.add_argument('-c',
+                      '--check',
+                      dest = 'checklevel',
+                      default = None,
+                      help = 'The level of checking done (if not specified, kant will\n' +
+                             'prompt for each key). See -b/--batch for check level notations.')
+    args.add_argument('-e',
+                      '--export',
+                      dest = 'export',
+                      default = 'true',
+                      help = 'Make the signatures exportable (default is True).\nSee -b/--batch for more information.')
+    args.add_argument('-l',
+                      '--local',
+                      dest = 'local',
+                      default = 'false',
+                      help = 'Make the signature(s) local-only (i.e. don\'t push to a keyserver).')
     args.add_argument('-s',
                       '--keyservers',
                       dest = 'keyservers',
                       default = defkeyservers,
-                      help = 'The comma-separated keyserver(s) to push to. If\n' +
-                             '"None", don\'t push signatures (local-only signatures\n' +
-                             'will be made). Default keyserver list is: \n\n\t\033[1m{0}\033[0m\n\n'.format(re.sub(',', '\n\t', defkeyservers)))
+                      help = 'The comma-separated keyserver(s) to push to.\n' +
+                             'Default keyserver list is: \n\n\t\033[1m{0}\033[0m\n\n'.format(re.sub(',', '\n\t', defkeyservers)))
     # This will require some restructuring...
     args.add_argument('-b',
                       '--batch',
@@ -428,12 +462,18 @@ def parseArgs():
                       action = 'store_true',
                       help = 'If specified, -k/--keys is a CSV file to use as a\n' +
                              'batch run in the format of (one per line):\n' +
-                             '\n\033[1mKEY_FINGERPRINT_OR_EMAIL_ADDRESS,TRUSTLEVEL,PUSH_TO_KEYSERVER\033[0m\n\n'
-                             '\033[1mTRUSTLEVEL\033[0m can be numeric or string:' +
+                             '\n\033[1mKEY_ID,TRUSTLEVEL,PUSH,CHECKLEVEL,EXPORT\033[0m\n'
+                             '\n\033[1mKEY_ID\033[0m can be the full 40-char key ID (fingerprint)\n' +
+                             'or an email address of the key.\n\n\033[1mTRUSTLEVEL\033[0m is how much trust to assign, and can\n' +
+                             'be numeric or string:' +
                              '\n\n\t\033[1m-1 = Never\n\t 0 = Unknown\n\t 1 = Untrusted\n\t 2 = Marginal\n\t 3 = Full\n\t 4 = Ultimate\033[0m\n' +
-                             '\n\033[1mPUSH_TO_KEYSERVER\033[0m can be \033[1m1/True\033[0m, \033[1m0/False\033[0m, or \033[1m-1/Never\033[0m.\n' +
+                             '\n\033[1mPUSH\033[0m can be \033[1m1/True\033[0m or \033[1m0/False\033[0m.\n' +
                              'If marked as False, the signature will be made local.\n' +
-                             '(If marked as Never, the signature will be non-exportable.)')
+                             '\n\033[1mCHECKLEVEL\033[0m is the amount of checking done on the owner\'s\n' +
+                             'validity of identity. Can be numeric or string:' +
+                             '\n\n\t\033[1m 0 = Unknown\n\t 1 = None\n\t 2 = Casual\n\t 3 = Careful\033[0m\n' +
+                             '\n\033[1mEXPORT\033[0m can be either \033[1m1/True\033[0m or \033[1m0/False\033[0m.\n' +
+                             'If True, make the signature exportable.\nIf False, make it non-exportable.')
     args.add_argument('-d',
                       '--gpgdir',
                       dest = 'gpgdir',
