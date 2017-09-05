@@ -1,0 +1,102 @@
+= kant(1)
+Brent Saner
+v1.0.0
+:doctype: manpage
+:manmanual: KANT - Keysigning and Notification Tool
+:mansource: KANT
+:man-linkstyle: pass:[blue R < >]
+
+== NAME
+
+kant - Sign GnuPG/OpenPGP/PGP keys and notify the key owner(s)
+
+== SYNOPSIS
+
+*kant* [_OPTION_] -k/--key _<KEY_IDS|BATCHFILE>_
+
+== OPTIONS
+
+Keysigning (and keysigning parties) can be a lot of fun, and can offer someone with new keys a way into the WoT (Web-of-Trust). 
+Unfortunately, they can be intimidating to those new to the experience. 
+This tool offers a simple and easy-to-use interface to sign public keys (normal, local-only, and/or non-exportable), 
+set owner trust, specify level of checking done, and push the signatures to a keyserver. It even supports batch operation via a CSV file.
+
+*-h*, *--help*::
+  Display brief help/usage and exit.
+
+*-k* _KEY_IDS|BATCHFILE_, *--key* _KEY_IDS|BATCHFILE_::
+  A single or comma-separated list of key IDs (see *KEY ID FORMAT*) to sign, trust, and notify. Can also be an email address.
+  If *-b*/*--batch* is specified, this should instead be a path to the batch file (see *BATCHFILE*).
+
+*-K* _KEY_ID_, *--sigkey* _KEY_ID_::
+  The key to use when signing other keys (see *KEY ID FORMAT*). The default key is automatically determined at runtime
+  (it will be displayed in *-h*/*--help* output).
+
+*-t* _TRUSTLEVEL_, *--trustlevel* _TRUSTLEVEL_::
+  The trust level to automatically apply to all keys (if not specified, kant will prompt for each key). See *BATCHFILE* for trust level notations.
+
+*-c* _CHECKLEVEL_, *--checklevel* _CHECKLEVEL_::
+  The level of checking that was done to confirm the validity of ownership for all keys being signed. If not specified,
+  the default is for kant to prompt for each key we sign. See *BATCHFILE* for check level notations.
+
+*-e* _EXPORT_, *--export* _EXPORT_::
+  Whether the signature(s) should be made exportable or not. See *BATCHFILE* for more information on exportability.
+  The default is True (signatures will be exportable).
+
+*-l* _LOCAL_, *--local* _LOCAL_::
+  Make the signature(s) local-only (i.e. don't push to a keyserver).
+
+*-s* _KEYSERVER(S)_, *--keyservers* _KEYSERVER(S)_::
+  The comma-separated keyserver(s) to push to. The default keyserver list is automatically generated at runtime.
+
+*-b*, *--batch*::
+  If specified, operate in batch mode. See *BATCHFILE* for more information.
+
+*-d* _GPGDIR_, *--gpgdir* _GPGDIR_::
+  The GnuPG configuration directory to use (containing your keys, etc.). The default is automatically generated at runtime,
+  but will probably be */home/<yourusername>/.gnupg* or similar.
+
+*-T*, *--testkeyservers*::
+  If specified, initiate a basic test connection with each set keyserver before anything else. Disabled by default.
+
+== KEY ID FORMAT
+Key IDs can be specified in one of two ways. The first (and preferred) way is to use the full 160-bit (40-character, hexadecimal) key ID.
+A little known fact is the fingerprint of a key:
+
+*DEAD BEEF DEAD BEEF DEAD  BEEF DEAD BEEF DEAD BEEF*
+
+is actually the full key ID of the primary key; i.e.:
+
+*DEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF*
+
+The second way to specify a key, as far as KANT is concerned, is to use an email address.
+Do note that if more than one key is found that matches the email address given, you will be prompted to select the specific
+correct key ID anyways so it's usually a better idea to have the owner present their full key ID/fingerprint right from the get-go.
+
+== BATCHFILE
+
+=== Format
+The batch file is a CSV-formatted (comma-delimited) file containing keys to sign and other information about them. It keeps the following format:
+
+*KEY_ID,TRUSTLEVEL,PUSH,CHECKLEVEL,EXPORT*
+
+=== KEY_ID
+See *KEY ID FORMAT*.
+
+=== TRUSTLEVEL
+The _TRUSTLEVEL_ is specified by the following levels:
+
+    *THIS IS A TEST*
+
+== SEE ALSO
+gpg(1), gpgcong(1)
+
+== RESOURCES
+
+* Author's web site:* https://square-r00t.net/
+
+== COPYING
+
+Copyright \(C) 2017 {author}.
+
+Free use of this software is granted under the terms of the GPLv3 License.
