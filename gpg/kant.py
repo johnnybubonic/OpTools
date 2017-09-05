@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import csv
 import datetime
 import email
 import os
@@ -25,7 +26,8 @@ import gpgme  # non-stdlib; Arch package is "python-pygpgme"
 #
 #The signatures have been pushed to KEYSERVERS.
 #
-#I have taken the liberty of attaching my public key in the event you've not signed it yet and were unable to find it. Please feel free to push to pgp.mit.edu or hkps.pool.sks-keyservers.net.
+#I have taken the liberty of attaching my public key in the event you've not signed it yet and were unable to find it.
+#Please feel free to push to pgp.mit.edu or hkps.pool.sks-keyservers.net.
 #
 #As a reminder, my key ID, Keybase.io username, and verification/proof of identity can all be found at:
 #
@@ -74,10 +76,9 @@ def getKeys(args):
                     print('{0}\n{1:6}(Generated at {2})  UIDs:'.format(k, '', datetime.datetime.utcfromtimestamp(keys[k]['time'])))
                     for email in keys[k]['uids']:
                         print('{0:42}(Generated {3}) <{2}> {1}'.format('',
-                                                                          keys[k]['uids'][email]['comment'],
-                                                                          email,
-                                                                          datetime.datetime.utcfromtimestamp(
-                                                                              keys[k]['uids'][email]['time'])))
+                                                                       keys[k]['uids'][email]['comment'],
+                                                                       email,
+                                                                       datetime.datetime.utcfromtimestamp(keys[k]['uids'][email]['time'])))
                     print()
                 while True:
                     key = input('Please enter the (full) appropriate key: ')
@@ -89,9 +90,10 @@ def getKeys(args):
             else:
                 if not len(keys.keys()) >= 1:
                     print('Could not find {0}!'.format(k))
+                    del(args['rcpts'][k])
                     continue
                 key = list(keys.keys())[0]
-                print('\nFound key {0} for <{1}> (Generated at {2}):'.format(key, k, datetime.datetime.utcfromtimestamp(keys[key]['time'])))
+                print('\nFound key {0} for {1} (Generated at {2}):'.format(key, k, datetime.datetime.utcfromtimestamp(keys[key]['time'])))
                 for email in keys[key]['uids']:
                     print('\t(Generated {2}) {0} <{1}>'.format(keys[key]['uids'][email]['comment'],
                                               email,
@@ -103,18 +105,189 @@ def getKeys(args):
     recvcmd = ['gpg2', '--recv-keys', '--batch', '--yes']  # We'll add the keys onto the end of this next.
     recvcmd.extend(allkeys)
     with open(os.devnull, 'w') as f:
-        subprocess.run(recvcmd, stdout = f, stderr = f)  # We hide stderr because gpg, for some unknown reason, spits non-errors to stderr.
+        fetchout = subprocess.run(recvcmd, stdout = f, stderr = f)  # We hide stderr because gpg, for some unknown reason, spits non-errors to stderr.
     return(allkeys)
 
-def sigKeys(keyids):
-    # Map the trust levels to "human" equivs
-    trustmap = {0: 'unknown',
-                1: 'untrusted',
-                2: 'marginal',
-                3: 'full',
-                4: 'ultimate'}
+def trustKeys(keyids, args):
+    # Map the trust levels to "human" equivalent
+    trustmap = {-1: ['never', gpgme.VALIDITY_NEVER], # this is... probably? not ideal, but.
+                0: ['unknown', gpgme.VALIDITY_UNKNOWN],
+                1: ['untrusted', gpgme.VALIDITY_UNDEFINED],
+                2: ['marginal', gpgme.VALIDITY_MARGINAL],
+                3: ['full', gpgme.VALIDITY_FULL],
+                4: ['ultimate', gpgme.VALIDITY_ULTIMATE]}
+    pushmap = {-1: ['never', None],
+               0: ['no', False],
+               1: ['yes', True]}
     def promptTrust(kinfo):
-        trust = input('\nWhat trust level should we sign {0} ({1} <{2}>) with?'.format(kinfo['fpr'], kinfo['name'], kinfo['email']))
+        for k in list(kinfo):
+            if 'trust' not in kinfo[k].keys():
+                trust_lvl = None
+                trust_in = input(('\nWhat trust level should we assign to {0}?\n\t\t\t\t     ({1} <{2}>)' +
+                                 '\n\n\t\033[1m-1 = Never\n\t 0 = Unknown\n\t 1 = Untrusted\n\t 2 = Marginal\n\t 3 = Full' +
+                                 '\n\t 4 = Ultimate\033[0m\nTrust: ').format(k, kinfo[k]['name'], kinfo[k]['email']))
+                for dictk, dictv in trustmap.items():
+                    if trust_in.lower().strip() == dictv[0]:
+                        trust_lvl = int(dictk)
+                    elif trust_in == str(dictk):
+                        trust_lvl = dictk
+                if not trust_lvl:
+                    print('Not a valid trust level; skipping. Run kant again to fix.')
+                    continue
+                kinfo[k]['trust'] = trustmap[trust_lvl][1]
+            if 'push' not in kinfo[k].keys():
+                push = True
+                if args['keyservers']:
+                    push_in = input('\nShould we push {0} to the keyserver(s) (\033[1mYES\033[0m/No/Never)? '.format(k))
+                    if push_in.lower() == 'never':
+                        push = None
+                    elif push_in.lower().startswith('n'):
+                        push = False
+                kinfo[k]['push'] = push
+        return(kinfo)
+    os.environ['GNUPGHOME'] = args['gpgdir']
+    gpg = gpgme.Context()
+    # Build out some info about keys
+    kinfo = {}
+    for k in keyids:
+        if k not in kinfo.keys():
+            kinfo[k] = {}
+        else:
+            continue  # The key was already parsed; don't waste time adding the info
+        try:
+            kobj = gpg.get_key(k)
+            kinfo[k]['name'] = kobj.uids[0].name
+            kinfo[k]['email'] = kobj.uids[0].email
+        except gpgme.GpgmeError:
+            print('Can\'t get information about key {0}; skipping.'.format(k))
+            del(kinfo[k])
+    if not args['batch']:
+        trusts = promptTrust(kinfo)
+    else:
+        trusts = {}
+        csvd = {}  # We import the CSV into a totally separate dict so we can do some validation loops
+        with open(args['keys'], 'r') as f:
+            for row in csv.reader(f, delimiter = ',', quotechar = '"'):
+                csvd[row[0]] = {'trust': row[1], 'push': row[2]}
+        for k in list(csvd):
+            if re.match('^<?[\w\.\+\-]+\@[\w-]+\.[a-z]{2,3}>?$', k):  # is it an email address?
+                fullkey = gpg.get_key(k)
+                csvd[fullkey.subkeys[0].fpr] = csvd[k]
+                del(csvd[k])
+                k = fullkey.subkeys[0].fpr
+            if k not in trusts.keys():
+                trusts[k] = {}
+            if 'trust' not in trusts[k].keys():
+                # Properly index the trust
+                strval = str(csvd[k]['trust']).lower().strip()
+                if strval == 'true':
+                    trusts[k]['trust'] = True
+                elif strval == 'false':
+                    trusts[k]['trust'] = False
+                elif strval == 'none':
+                    trusts[k]['trust'] = None
+                else:
+                    for dictk, dictv in trustmap.items():  # "no"/"yes"
+                        if strval == dictv[0]:
+                            trusts[k]['trust'] = trustmap[dictk][1]
+                        elif strval == str(dictk):
+                            trusts[k]['trust'] = trustmap[dictk][1]
+            if 'trust' not in trusts[k].keys():  # yes, again. we make sure it was set. otherwise, we need to skip this key.
+                print('Key {0}: trust level "{1}" is invalid; skipping.'.format(k, csvd[k]['trust']))
+                del(trusts[k])
+                continue
+            # Now we need to index whether we push or not.
+            if 'push' not in trusts[k].keys():
+                strval = str(csvd[k]['push']).lower().strip()
+                if strval == 'true':
+                    trusts[k]['push'] = True
+                elif strval == 'false':
+                    trusts[k]['push'] = False
+                elif strval == 'none':
+                    trusts[k]['push'] = None
+                else:
+                    for dictk, dictv in pushmap.items():  # "no"/"yes"
+                        if strval in dictv[0]:
+                            trusts[k]['push'] = pushmap[dictk][1]
+                        elif strval == str(dictk):
+                            trusts[k]['push'] = pushmap[dictk][1]
+            if 'push' not in trusts[k].keys():  # yep. double-check
+                print('Key {0}: push option "{1}" is invalid; skipping.'.format(k, csvd[k]['push']))
+                del(trusts[k])
+                continue
+    # WHEW. THAT'S A LOT OF VALIDATIONS. Now the Business-End(TM)
+    # Reverse mapping of constants to human-readable
+    rmap = {gpgme.VALIDITY_NEVER: 'Never',
+            gpgme.VALIDITY_UNKNOWN: 'Unknown',
+            gpgme.VALIDITY_UNDEFINED: 'Untrusted',
+            gpgme.VALIDITY_MARGINAL: 'Marginal',
+            gpgme.VALIDITY_FULL: 'Full',
+            gpgme.VALIDITY_ULTIMATE: 'Ultimate'}
+    mykey = gpg.get_key(args['sigkey'])
+    for k in list(trusts):
+        keystat = None
+        try:
+            tkey = gpg.get_key(k)
+        except gpgme.GpgmeError:
+            print('Cannot find {0} in keyring at all; skipping.'.format(k))
+            del(trusts[k])
+            continue
+        curtrust = rmap[tkey.owner_trust]
+        newtrust = rmap[trusts[k]['trust']]
+        if tkey.owner_trust == trusts[k]['trust']:
+            trusts[k]['change'] = False
+            continue  # Don't bother; we aren't changing the trust level, it's the same (OR we haven't trusted yet)
+        elif tkey.owner_trust == gpgme.VALIDITY_UNKNOWN:
+            keystat = 'a NEW TRUST'
+        elif tkey.owner_trust > trusts[k]['trust']:
+            keystat = 'a DOWNGRADE'
+        elif tkey.owner_trust < trusts[k]['trust']:
+            keystat = 'an UPGRADE'
+        print(('\nKey 0x{0} [{1} ({2})]:\n' +
+              '\tThis trust level ({3}) is {4} from the current trust level ({5}).').format(k,
+                                                                                            kinfo[k]['name'],
+                                                                                            kinfo[k]['email'],
+                                                                                            newtrust,
+                                                                                            keystat,
+                                                                                            curtrust))
+        tchk = input('Continue? (yes/\033[1mNO\033[0m) ')
+        if tchk.lower().startswith('y'):
+            trusts[k]['change'] = True
+        else:
+            trusts[k]['change'] = False
+    for k in list(trusts):
+        if trusts[k]['change']:
+            gpgme.editutil.edit_trust(gpg, k, trusts['k']['trust'])
+    print()
+    return(trusts)
+
+def sigKeys(trusts, args):  # The More Business-End(TM)
+    import pprint
+    pprint.pprint(trusts)
+    os.environ['GNUPGHOME'] = args['gpgdir']
+    gpg = gpgme.Context()
+    gpg.keylist_mode = gpgme.KEYLIST_MODE_SIGS
+    mkey = gpg.get_key(args['sigkey'])
+    gpg.signers = [mkey]
+    global_policy = {}
+    global_policy['push'] = True  # I may be able to provide a way to explicitly change this at runtime later
+    global_policy['sign'] = True
+    if not args['keyservers']:
+        global_policy['sign'] = 'local'
+        global_policy['push'] = False
+    for k in list(trusts):
+        sign = True
+        key = gpg.get_key(k)
+        for uid in key.uids:
+            for s in uid.signatures:
+                try:
+                    signerkey = gpg.get_key(s.keyid).subkeys[0].fpr
+                    if signerkey == mkey.subkeys[0].fpr:
+                        sign = False  # We already signed this key
+
+
+def pushKeys():  # The Last Business-End(TM)
+    pass
 
 def modifyDirmngr(op, args):
     if not args['keyservers']:
@@ -223,84 +396,93 @@ def parseArgs():
     args.add_argument('-k',
                       '--keys',
                       dest = 'keys',
+                      metavar = 'KEYS | /path/to/batchfile',
                       required = True,
-                      help = 'A single or comma-separated list of keys to sign,\ntrust, and notify. Can also be an email address.')
+                      help = 'A single or comma-separated list of keys to sign,\n' +
+                             'trust, and notify. Can also be an email address.\n' +
+                             'If -b/--batch is specified, this should instead be\n' +
+                             'a path to the batch file.')
     args.add_argument('-K',
                       '--sigkey',
                       dest = 'sigkey',
                       default = defkey,
                       help = 'The key to use when signing other keys.\nDefault is \033[1m{0}\033[0m.'.format(defkey))
+    args.add_argument('-t',
+                      '--trust',
+                      dest = 'trustlevel',
+                      default = None,
+                      help = 'The trust level to automatically apply to all keys\n' +
+                             '(if not specified, kant will prompt for each key).\n' +
+                             'See -b/--batch for trust level notations.')
+    args.add_argument('-s',
+                      '--keyservers',
+                      dest = 'keyservers',
+                      default = defkeyservers,
+                      help = 'The comma-separated keyserver(s) to push to. If\n' +
+                             '"None", don\'t push signatures (local-only signatures\n' +
+                             'will be made). Default keyserver list is: \n\n\t\033[1m{0}\033[0m\n\n'.format(re.sub(',', '\n\t', defkeyservers)))
+    # This will require some restructuring...
     args.add_argument('-b',
                       '--batch',
-                      dest = 'batchfile',
-                      default = None,
-                      metavar = '/path/to/batchfile',
-                      help = 'If specified, a CSV file to use as a batch run\nin the format of (one per line):\n' +
-                             '\n\033[1mKEY_FINGERPRINT_OR_EMAIL_ADDRESS,TRUSTLEVEL,PUSH_TO_KEYSERVER\033[0m\n' +
-                             '\n\033[1mTRUSTLEVEL\033[0m can be numeric or string:' +
-                             '\n\n\t\033[1m0 = Unknown\n\t1 = Untrusted\n\t2 = Marginal\n\t3 = Full\n\t4 = Ultimate\033[0m\n' +
-                             '\n\033[1mPUSH_TO_KEYSERVER\033[0m can be \033[1m1/True\033[0m or \033[1m0/False\033[0m. If marked as False,\n' +
-                             'the signature will be made local/non-exportable.')
-
+                      dest = 'batch',
+                      action = 'store_true',
+                      help = 'If specified, -k/--keys is a CSV file to use as a\n' +
+                             'batch run in the format of (one per line):\n' +
+                             '\n\033[1mKEY_FINGERPRINT_OR_EMAIL_ADDRESS,TRUSTLEVEL,PUSH_TO_KEYSERVER\033[0m\n\n'
+                             '\033[1mTRUSTLEVEL\033[0m can be numeric or string:' +
+                             '\n\n\t\033[1m-1 = Never\n\t 0 = Unknown\n\t 1 = Untrusted\n\t 2 = Marginal\n\t 3 = Full\n\t 4 = Ultimate\033[0m\n' +
+                             '\n\033[1mPUSH_TO_KEYSERVER\033[0m can be \033[1m1/True\033[0m, \033[1m0/False\033[0m, or \033[1m-1/Never\033[0m.\n' +
+                             'If marked as False, the signature will be made local.\n' +
+                             '(If marked as Never, the signature will be non-exportable.)')
     args.add_argument('-d',
                       '--gpgdir',
                       dest = 'gpgdir',
                       default = defgpgdir,
                       help = 'The GnuPG configuration directory to use (containing\n' +
                              'your keys, etc.); default is \033[1m{0}\033[0m.'.format(defgpgdir))
-    args.add_argument('-s',
-                      '--keyservers',
-                      dest = 'keyservers',
-                      default = defkeyservers,
-                      help = 'The comma-separated keyserver(s) to push to. If "None", don\'t\n' +
-                             'push signatures (local/non-exportable signatures will be made).\n'
-                             'Default keyserver list is: \n\n\033[1m{0}\033[0m\n\n'.format(re.sub(',', '\n', defkeyservers)))
-    args.add_argument('-n',
-                      '--netproto',
-                      dest = 'netproto',
-                      action = 'store',
-                      choices = ['4', '6'],
-                      default = '4',
-                      help = 'Whether to use (IPv)4 or (IPv)6. Default is to use IPv4.')
-    args.add_argument('-t',
+    args.add_argument('-T',
                       '--testkeyservers',
                       dest = 'testkeyservers',
                       action = 'store_true',
                       help = 'If specified, initiate a test connection with each\n'
-                             '\nkeyserver before anything else. Disabled by default.')
+                             'set keyserver before anything else. Disabled by default.')
     return(args)
 
 def verifyArgs(args):
     ## Some pythonization...
-    # We don't want to only strip the values, we want to remove ALL whitespace. 
-    #args['keys'] = [k.strip() for k in args['keys'].split(',')]
-    #args['keyservers'] = [s.strip() for s in args['keyservers'].split(',')]
-    args['keys'] = [re.sub('\s', '', k) for k in args['keys'].split(',')]
+    if not args['batch']:
+        args['keys'] = [re.sub('\s', '', k) for k in args['keys'].split(',')]
+    else:
+        ## Batch file
+        batchfilepath = os.path.abspath(os.path.expanduser(args['keys']))
+        if not os.path.isfile(batchfilepath):
+            raise ValueError('{0} does not exist or is not a regular file.'.format(batchfilepath))
+        else:
+            args['keys'] = batchfilepath
     args['keyservers'] = [re.sub('\s', '', s) for s in args['keyservers'].split(',')]
     args['keyservers'] = [serverParser(s) for s in args['keyservers']]
     ## Key(s) to sign
     args['rcpts'] = {}
-    for k in args['keys']:
+    if not args['batch']:
+        keyiter = args['keys']
+    else:
+        keyiter = []
+        with open(args['keys'], 'r') as f:
+            for row in csv.reader(f, delimiter = ',', quotechar = '"'):
+                keyiter.append(row[0])
+    for k in keyiter:
         args['rcpts'][k] = {}
         try:
             int(k, 16)
             ktype = 'fpr'
         except:  # If it isn't a valid key ID...
-            if not re.match('^[\w\.\+\-]+\@[\w-]+\.[a-z]{2,3}$', k):  # is it an email address?
+            if not re.match('^<?[\w\.\+\-]+\@[\w-]+\.[a-z]{2,3}>?$', k):  # is it an email address?
                 raise ValueError('{0} is not a valid email address'.format(k))
             else:
                 ktype = 'email'
         args['rcpts'][k]['type'] = ktype
         if ktype == 'fpr' and not len(k) == 40:  # Security is important. We don't want users getting collisions, so we don't allow shortened key IDs.
             raise ValueError('{0} is not a full 40-char key ID or key fingerprint'.format(k))
-    del args['keys']
-    ## Batch file
-    if args['batchfile']:
-        batchfilepath = os.path.abspath(os.path.expanduser(args['batchfile']))
-        if not os.path.isfile(batchfilepath):
-            raise ValueError('{0} does not exist or is not a regular file.'.format(batchfilepath))
-        else:
-            args['batchfile'] = batchfilepath
     ## Signing key
     if not args['sigkey']:
         raise ValueError('A key for signing is required') # We need a key we can sign with.
@@ -353,7 +535,8 @@ def main():
     args = verifyArgs(vars(rawargs.parse_args()))
     modifyDirmngr('new', args)
     fprs = getKeys(args)
-    sigKeys(fprs)
+    trusts = trustKeys(fprs, args)
+    sigs = sigKeys(trusts, args)
     modifyDirmngr('old', args)
 
 if __name__ == '__main__':

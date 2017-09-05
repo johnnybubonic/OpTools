@@ -79,6 +79,9 @@ def destPrep():
             # Delete if empty dir
             if len(os.listdir(thisdir)) == 0:
                 os.rmdir(thisdir)
+        for d in dirs:
+            if len(os.listdir(os.join(thisdir, d))) == 0:
+                os.rmdir(os.join(thisdir, d))
     #try:
     #    os.removedirs(sks['destdir'])  # Remove empty dirs
     #except:
