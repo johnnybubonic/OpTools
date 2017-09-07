@@ -1,14 +1,18 @@
 # NOTE: The python csv module does NOT skip
 # commented lines!
-# This is my personal key. Ultimate trust, push key.
-748231EBCBD808A14F5E85D28C004C2F93481F6B,4,1
+# This is my personal key. Ultimate trust,
+# push key, careful checking, notify
+748231EBCBD808A14F5E85D28C004C2F93481F6B,4,1,3,1
 # This is a testing junk key generated on a completely separate box,
-# and does not exist on ANY keyservers. Never trust, Never push.
-A03CACFD7123AF443A3A185298A8A46921C8DDEF,-1,-1
-# This is jthan's key. assign full trust, push to keyserver.
-EFD9413B17293AFDFE6EA6F1402A088DEDF104CB,full,true
-# This is paden's key. assign Marginal trust, push to keyserver.
-6FA8AE12AEC90B035EEE444FE70457341A63E830,2,True
+# and does not exist on ANY keyservers nor the local keyring.
+# Never trust, local sig, unknown checking, don't notify
+A03CACFD7123AF443A3A185298A8A46921C8DDEF,-1,0,0,0
+# This is jthan's key.
+# assign full trust, push to keyserver, casual checking, notify
+EFD9413B17293AFDFE6EA6F1402A088DEDF104CB,full,true,casual,yes
+# This is paden's key.
+# assign Marginal trust, push to keyserver, casual checking, notify
+6FA8AE12AEC90B035EEE444FE70457341A63E830,2,True,Casual,True
 # This is the email for the Sysadministrivia serverkey.
-# Assign full trust, push to keyserver.
-<admin@sysadministrivia.com>, full, yes
+# Assign full trust, push to keyserver, careful checking, don't notify
+<admin@sysadministrivia.com>, full, yes, careful, false

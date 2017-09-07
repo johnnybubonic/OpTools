@@ -1,0 +1,15 @@
+GENERATING THE MAN PAGE:
+If you have asciidoctor installed, you can generate the manpage one of two ways.
+
+The first way:
+
+	asciidoctor -b manpage kant.1.adoc -o- | groff -Tascii -man | gz -c > kant.1.gz
+
+This will generate a fixed-width man page.
+
+
+The second way (recommended):
+
+	asciidoctor -b manpage kant.1.adoc -o- | gz -c > kant.1.gz
+
+This will generate a dynamic-width man page. Most modern versions of man want this version.

@@ -42,7 +42,7 @@ sks = {
     # I would hope this is self-explanatory. If not, this is where we log the outout of the sks dump process. (and any rsync errors, too)
     'logfile': '/var/log/sksdump.log',
     # If not None value, where we should push the dumps when done. Can be a local path too, obviously.
-    'rsync': 'root@sks.mirror.square-r00t.net:/srv/http/sks/dumps/.',
+    'rsync': 'root@mirror.square-r00t.net:/srv/http/sks/dumps/.',
     # How many previous days of dumps should we keep?
     'days': 1,
     # How many keys to include per dump file

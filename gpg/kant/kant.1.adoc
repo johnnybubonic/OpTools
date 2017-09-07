@@ -8,7 +8,7 @@ v1.0.0
 
 == NAME
 
-kant - Sign GnuPG/OpenPGP/PGP keys and notify the key owner(s)
+KANT - Sign GnuPG/OpenPGP/PGP keys and notify the key owner(s)
 
 == SYNOPSIS
 
@@ -26,25 +26,28 @@ set owner trust, specify level of checking done, and push the signatures to a ke
 
 *-k* _KEY_IDS|BATCHFILE_, *--key* _KEY_IDS|BATCHFILE_::
   A single or comma-separated list of key IDs (see *KEY ID FORMAT*) to sign, trust, and notify. Can also be an email address.
-  If *-b*/*--batch* is specified, this should instead be a path to the batch file (see *BATCHFILE*).
+  If *-b*/*--batch* is specified, this should instead be a path to the batch file (see *BATCHFILE/Format*).
 
 *-K* _KEY_ID_, *--sigkey* _KEY_ID_::
   The key to use when signing other keys (see *KEY ID FORMAT*). The default key is automatically determined at runtime
   (it will be displayed in *-h*/*--help* output).
 
-*-t* _TRUSTLEVEL_, *--trustlevel* _TRUSTLEVEL_::
-  The trust level to automatically apply to all keys (if not specified, kant will prompt for each key). See *BATCHFILE* for trust level notations.
+*-t* _TRUSTLEVEL_, *--trust* _TRUSTLEVEL_::
+  The trust level to automatically apply to all keys (if not specified, KANT will prompt for each key).
+  See *BATCHFILE/TRUSTLEVEL* for trust level notations.
 
-*-c* _CHECKLEVEL_, *--checklevel* _CHECKLEVEL_::
+*-c* _CHECKLEVEL_, *--check* _CHECKLEVEL_::
   The level of checking that was done to confirm the validity of ownership for all keys being signed. If not specified,
-  the default is for kant to prompt for each key we sign. See *BATCHFILE* for check level notations.
-
-*-e* _EXPORT_, *--export* _EXPORT_::
-  Whether the signature(s) should be made exportable or not. See *BATCHFILE* for more information on exportability.
-  The default is True (signatures will be exportable).
+  the default is for KANT to prompt for each key we sign. See *BATCHFILE/CHECKLEVEL* for check level notations.
 
 *-l* _LOCAL_, *--local* _LOCAL_::
-  Make the signature(s) local-only (i.e. don't push to a keyserver).
+  If specified, make the signature(s) local-only (i.e. non-exportable, don't push to a keyserver).
+  See *BATCHFILE/LOCAL* for more information on local signatures.
+
+*-n*, *--no-notify*::
+  This requires some explanation. If you have MSMTPfootnote:[\http://msmtp.sourceforge.net/] installed and configured for the currently active user,
+  then we will send out emails to recipients letting them know we have signed their key. However, if MSMTP is installed and configured
+  but this flag is given, then we will NOT attempt to send emails.
 
 *-s* _KEYSERVER(S)_, *--keyservers* _KEYSERVER(S)_::
   The comma-separated keyserver(s) to push to. The default keyserver list is automatically generated at runtime.
@@ -52,7 +55,7 @@ set owner trust, specify level of checking done, and push the signatures to a ke
 *-b*, *--batch*::
   If specified, operate in batch mode. See *BATCHFILE* for more information.
 
-*-d* _GPGDIR_, *--gpgdir* _GPGDIR_::
+*-D* _GPGDIR_, *--gpgdir* _GPGDIR_::
   The GnuPG configuration directory to use (containing your keys, etc.). The default is automatically generated at runtime,
   but will probably be */home/<yourusername>/.gnupg* or similar.
 
@@ -70,7 +73,7 @@ is actually the full key ID of the primary key; i.e.:
 *DEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF*
 
 The second way to specify a key, as far as KANT is concerned, is to use an email address.
-Do note that if more than one key is found that matches the email address given, you will be prompted to select the specific
+Do note that if more than one key is found that matches the email address given (and they usually are), you will be prompted to select the specific
 correct key ID anyways so it's usually a better idea to have the owner present their full key ID/fingerprint right from the get-go.
 
 == BATCHFILE
@@ -78,22 +81,85 @@ correct key ID anyways so it's usually a better idea to have the owner present t
 === Format
 The batch file is a CSV-formatted (comma-delimited) file containing keys to sign and other information about them. It keeps the following format:
 
-*KEY_ID,TRUSTLEVEL,PUSH,CHECKLEVEL,EXPORT*
+*KEY_ID,TRUSTLEVEL,LOCAL,CHECKLEVEL,NOTIFY*
+
+For more information on each column, reference the appropriate sub-section below.
 
 === KEY_ID
 See *KEY ID FORMAT*.
 
 === TRUSTLEVEL
-The _TRUSTLEVEL_ is specified by the following levels:
+The _TRUSTLEVEL_ is specified by the following levels (you can use either the numeric or string representation):
 
-    *THIS IS A TEST*
+[subs=+quotes]
+....
+*-1 = Never
+ 0 = Unknown
+ 1 = Untrusted
+ 2 = Marginal
+ 3 = Full
+ 4 = Ultimate*
+....
+
+It is how much trust to assign to a key, and the signatures that key makes on other keys.footnote:[For more information
+on trust levels and the Web of Trust, see: \https://www.gnupg.org/gph/en/manual/x334.html and \https://www.gnupg.org/gph/en/manual/x547.html]
+
+=== LOCAL
+Whether or not to push to a keyserver. It can be either the numeric or string representation of the following:
+
+[subs=+quotes]
+....
+*0 = False
+1 = True*
+....
+
+If *1/True*, KANT will sign the key with a local signature (and the signature will not be pushed to a keyserver or be exportable).footnote:[For
+more information on pushing to keyservers and local signatures, see: \https://www.gnupg.org/gph/en/manual/r899.html#LSIGN and
+\https://lists.gnupg.org/pipermail/gnupg-users/2007-January/030242.html]
+
+=== CHECKLEVEL
+The amount of checking that has been done to confirm that the owner of the key is who they say they are and that the key matches their provided information.
+It can be either the numeric or string representation of the following:
+
+[subs=+quotes]
+....
+*0 = Unknown
+1 = None
+2 = Casual
+3 = Careful*
+....
+
+It is up to you to determine the classification of the amount of checking you have done, but the following is recommended (it is the policy
+the author follows):
+
+[subs=+quotes]
+....
+*Unknown:* The key is unknown and has not been reviewed
+
+*None:* The key has been signed, but no confirmation of the
+        ownership of the key has been performed (typically
+        a local signature)
+
+*Casual:* The key has been presented and the owner is either
+          known to the signer or they have provided some form
+          of non-government-issued identification or other
+          proof (website, Keybase.io, etc.)
+
+*Careful:* The same as *Casual* requirements but they have
+          provided a government-issued ID and all information
+          matches
+....
+
+It's important to check each key you sign carefully. Failure to do so may hurt others' trust in your key.footnote:[GnuPG documentation refers
+to this as "validity"; see \https://www.gnupg.org/gph/en/manual/x334.html]
 
 == SEE ALSO
-gpg(1), gpgcong(1)
+gpg(1), gpgconf(1)
 
 == RESOURCES
 
-* Author's web site:* https://square-r00t.net/
+*Author's web site:* https://square-r00t.net/
+*Author's GPG information:* https://square-r00t.net/gpg-info
 
 == COPYING
 
