@@ -30,13 +30,14 @@ import gpg  # non-stdlib; Arch package is "python-gpgme" - see
 #The signatures have been pushed to KEYSERVERS.
 #
 #I have taken the liberty of attaching my public key in the event you've not signed it yet and were unable to find it.
-#Please feel free to push to pgp.mit.edu or hkps.pool.sks-keyservers.net.
+#Please feel free to push to hkps://sks.mirror.square-r00t.net:11371 (you can do this with "gpg --keyserver ...) or any other SKS-pooled keyserver[0].
 #
 #As a reminder, my key ID, Keybase.io username, and verification/proof of identity can all be found at:
 #
-#https://devblog.square-r00t.net/about/my-gpg-public-key-verification-of-identity
+#https://square-r00t.net/gpg-info
 #
 #Thanks again!
+#[0] https://mirror.square-r00t.net/#svcs-sks
 
 class sigsession(object):
     def __init__(self, args):
