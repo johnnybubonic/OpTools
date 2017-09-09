@@ -72,10 +72,14 @@ def destPrep():
     PAST = NOW - datetime.timedelta(days = sks['days'])
     for thisdir, dirs, files in os.walk(sks['destdir'], topdown = False):
         for f in files:
-            fstat = os.stat(os.path.join(thisdir, f))
-            mtime = fstat.st_mtime
-            if int(mtime) < PAST.timestamp():
-                os.remove(os.path.join(thisdir, f))
+            try:  # we use a try here because if the link's broken, the script bails out.
+                fstat = os.stat(os.path.join(thisdir, f))
+                mtime = fstat.st_mtime
+                if int(mtime) < PAST.timestamp():
+                    os.remove(os.path.join(thisdir, f))
+            except FileNotFoundError:  # broken symlink
+                try:
+                    os.remove(os.path.join(thisdir, f))
             # Delete if empty dir
             if len(os.listdir(thisdir)) == 0:
                 os.rmdir(thisdir)
@@ -90,7 +94,7 @@ def destPrep():
     if getpass.getuser() == 'root':
         uid = getpwnam(sks['user']).pw_uid
         gid = getgrnam(sks['group']).gr_gid
-        for d in (sks['destdir'], nowdir):
+        for d in (sks['destdir'], nowdir):  # we COULD set it as part of the os.makedirs, but iirc it doesn't set it for existing dirs
             os.chown(d, uid, gid)
     if os.path.isdir(curdir):
         os.remove(curdir)
