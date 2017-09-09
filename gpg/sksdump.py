@@ -94,7 +94,7 @@ def destPrep():
     #    pass  # thisisfine.jpg
     os.makedirs(nowdir, exist_ok = True)
     if getpass.getuser() == 'root':
-        uid = getpwnam(sks['user']).pw_uidFileNotFoundError
+        uid = getpwnam(sks['user']).pw_uid
         gid = getgrnam(sks['group']).gr_gid
         for d in (sks['destdir'], nowdir):  # we COULD set it as part of the os.makedirs, but iirc it doesn't set it for existing dirs
             os.chown(d, uid, gid)
