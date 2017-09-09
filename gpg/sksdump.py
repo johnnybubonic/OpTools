@@ -80,6 +80,8 @@ def destPrep():
             except FileNotFoundError:  # broken symlink
                 try:
                     os.remove(os.path.join(thisdir, f))
+                except:
+                    pass  # just... ignore it. it's fine, whatever.
             # Delete if empty dir
             if len(os.listdir(thisdir)) == 0:
                 os.rmdir(thisdir)
@@ -92,7 +94,7 @@ def destPrep():
     #    pass  # thisisfine.jpg
     os.makedirs(nowdir, exist_ok = True)
     if getpass.getuser() == 'root':
-        uid = getpwnam(sks['user']).pw_uid
+        uid = getpwnam(sks['user']).pw_uidFileNotFoundError
         gid = getgrnam(sks['group']).gr_gid
         for d in (sks['destdir'], nowdir):  # we COULD set it as part of the os.makedirs, but iirc it doesn't set it for existing dirs
             os.chown(d, uid, gid)
