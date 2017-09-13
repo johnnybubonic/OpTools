@@ -34,7 +34,7 @@ if bwlimit >= 1:
     opts.insert(10, '--bwlimit=' + str(bwlimit))  # limit socket I/O bandwidth
 
 lockfile = '/var/run/repo-sync.lck'
-logfile = '/var/log/arch.repo.sync'
+logfile = '/var/log/repo/arch.log'
 
 def sync():
     # TODO: safer file creation etc. - make sure parent dirs exist.
@@ -70,7 +70,7 @@ def sync():
     return()
 
 def parseArgs():
-    pass
+    pass  # TODO: make this moar configurable
 
 def main():
     sync()
