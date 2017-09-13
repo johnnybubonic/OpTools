@@ -203,7 +203,7 @@ def main():
     if getpass.getuser() not in ('root', sks['user']):
         exit('ERROR: You must be root or {0}!'.format(sks['user']))
     with open(sks['logfile'], 'a') as f:
-        f.write('===== {0} STARTING ====='.format(str(datetime.datetime.utcnow())))
+        f.write('===== {0} STARTING =====\n'.format(str(datetime.datetime.utcnow())))
     if not args['nodump']:
         dumpDB()
     if not args['nocompress']:
@@ -211,7 +211,7 @@ def main():
     if not args['nosync']:
         syncDB()
     with open(sks['logfile'], 'a') as f:
-        f.write('===== {0} DONE ====='.format(str(datetime.datetime.utcnow())))
+        f.write('===== {0} DONE =====\n'.format(str(datetime.datetime.utcnow())))
 
 
 if __name__ == '__main__':
