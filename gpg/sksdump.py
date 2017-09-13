@@ -16,6 +16,7 @@
 #           SKSUSER ALL = NOPASSWD: SKSCMDS
 
 
+import argparse
 import datetime
 import getpass
 import os
@@ -25,6 +26,10 @@ from grp import getgrnam
 
 NOW = datetime.datetime.utcnow()
 NOWstr = NOW.strftime('%Y-%m-%d')
+
+# TODO:
+# - use a config file system
+# - cleanup/rotation should be optional
 
 sks = {
     # chowning - MAKE SURE THIS IS THE USER SKS RUNS AS.
@@ -173,14 +178,38 @@ def syncDB():
         subprocess.run(cmd, stdout = f, stderr = f)
     return()
 
+def parseArgs():
+    args = argparse.ArgumentParser(description = 'sksdump - a tool for dumping the SKS Database',
+                                   epilog = 'brent s. || 2017 || https://square-r00t.net')
+    args.add_argument('-d',
+                      '--no-dump',
+                      dest = 'nodump',
+                      action = 'store_true',
+                      help = 'Don\'t dump the SKS DB (default is to dump)')
+    args.add_argument('-c',
+                      '--no-compress',
+                      dest = 'nocompress',
+                      action = 'store_true',
+                      help = 'Don\'t compress the DB dumps (default is to compress)')
+    args.add_argument('-s',
+                      '--no-sync',
+                      dest = 'nosync',
+                      action = 'store_true',
+                      help = 'Don\'t sync the dumps to the remote server.')
+    return(args)
+
 def main():
+    args = vars(parseArgs().parse_args())
     if getpass.getuser() not in ('root', sks['user']):
         exit('ERROR: You must be root or {0}!'.format(sks['user']))
     with open(sks['logfile'], 'a') as f:
         f.write('===== {0} STARTING ====='.format(str(datetime.datetime.utcnow())))
-    dumpDB()
-    compressDB()
-    syncDB()
+    if not args['nodump']:
+        dumpDB()
+    if not args['nocompress']:
+        compressDB()
+    if not args['nosync']:
+        syncDB()
     with open(sks['logfile'], 'a') as f:
         f.write('===== {0} DONE ====='.format(str(datetime.datetime.utcnow())))
 
