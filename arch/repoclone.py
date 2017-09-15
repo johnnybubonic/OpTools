@@ -44,25 +44,25 @@ def sync(args):
     cmd = [rsync]  # the path to the binary
     cmd.extend(opts)  # the arguments
     # TODO: implement repos here?
-    cmd.append(os.path.join(mirror, '.'))  # the path on the remote mirror
-    cmd.append(os.path.join(dest['path'], '.'))  # the local destination
-    if os.path.isfile(lockfile):
-        with open(lockfile, 'r') as f:
+    cmd.append(os.path.join(args['mirror'], '.'))  # the path on the remote mirror
+    cmd.append(os.path.join(args['destination'], '.'))  # the local destination
+    if os.path.isfile(args['lockfile']):
+        with open(args['lockfile'], 'r') as f:
             existingpid = f.read().strip()
         exit('!! A repo synchronization seems to already be running (PID: {0}). Quitting. !!'.format(existingpid))
     else:
-        with open(lockfile, 'w') as f:
+        with open(args['lockfile'], 'w') as f:
             f.write(str(os.getpid()))
-    with open(logfile, 'a') as log:
+    with open(args['logfile'], 'a') as log:
         try:
             subprocess.call(cmd, stdout = log, stderr = subprocess.STDOUT)
             now = int(datetime.datetime.timestamp(datetime.datetime.utcnow()))
             with open(os.path.join(dest['path'], 'lastsync'), 'w') as f:
                 f.write(str(now) + '\n')
-            os.remove(lockfile)
+            os.remove(args['lockfile'])
         except:
-            os.remove(lockfile)
-            exit('!! The rsync has failed. See {0} for more details. !!'.format(logfile))
+            os.remove(args['lockfile'])
+            exit('!! The rsync has failed. See {0} for more details. !!'.format(args['logfile']))
     return()
 
 def getDefaults():
