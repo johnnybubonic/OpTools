@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 
 import argparse
+import configparser
 import datetime
 import os
+import pprint
 import subprocess
 
-mirror = 'rsync://mirror.wdc1.us.leaseweb.net/archlinux'  # must be an rsync mirror; base path
-dest = {'mount':'/mnt/raidbox', 'path':'/mnt/raidbox/repos/arch'}
-bwlimit = 7000  # in Kilobyte/s by default; set to 0 to disable bandwidth throttling
-# currently not used:
-repos = ['core',
-         'extra',
-         'community',
-         'multilib',
-         'iso/latest']
+cfgfile = os.path.join(os.environ['HOME'], '.arch.repoclone.ini')
+
 # Rsync options
 opts = [
         '--recursive',  # recurse into directories
@@ -30,17 +25,16 @@ opts = [
         '--exclude=.*'  # exclude files matching PATTERN
        ]
 
-if bwlimit >= 1:
-    opts.insert(10, '--bwlimit=' + str(bwlimit))  # limit socket I/O bandwidth
-
-lockfile = '/var/run/repo-sync.lck'
-logfile = '/var/log/repo/arch.log'
-
-def sync():
-    # TODO: safer file creation etc. - make sure parent dirs exist.
-    # TODO: check that destination is mounted first.
+def sync(args):
+    mntchk = subprocess.run(['findmnt', args['mount']])
+    if mntchk.returncode != 0:
+        exit('!! BAILING OUT; {0} isn\'t mounted !!'.format(args['mount']))
+    if args['bwlimit'] >= 1:
+        opts.insert(10, '--bwlimit=' + str(args['bwlimit']))  # limit socket I/O bandwidth
+    for k in ('destination', 'logfile', 'lockfile'):
+        os.makedirs(args[k], exist_ok = True)
     paths = os.environ['PATH'].split(':')
-    rsync = '/usr/bin/'  # set the default
+    rsync = '/usr/bin/rsync'  # set the default
     for p in paths:
         testpath = os.path.join(p, 'rsync')
         if os.path.isfile(testpath):
@@ -48,6 +42,7 @@ def sync():
             break
     cmd = [rsync]  # the path to the binary
     cmd.extend(opts)  # the arguments
+    # TODO: implement repos here?
     cmd.append(os.path.join(mirror, '.'))  # the path on the remote mirror
     cmd.append(os.path.join(dest['path'], '.'))  # the local destination
     if os.path.isfile(lockfile):
@@ -69,11 +64,63 @@ def sync():
             exit('!! The rsync has failed. See {0} for more details. !!'.format(logfile))
     return()
 
+def getDefaults():
+    # Hardcoded defaults
+    dflt = {'mirror': 'rsync://mirror.square-r00t.net/arch/',
+            'repos': 'core,extra,community,multilib,iso/latest',
+            'destination': '/srv/repos/arch',
+            'mount': '/',
+            'bwlimit': 0,
+            'lockfile': '/var/run/repo-sync.lck',
+            'logfile': '/var/log/repo/arch.log'}
+    realcfg = configparser.ConfigParser(defaults = dflt)
+    if not os.path.isfile(cfgfile):
+        with open(cfgfile, 'w') as f:
+            realcfg.write(f)
+    realcfg.read(cfgfile)
+    return(realcfg)
+
 def parseArgs():
-    pass  # TODO: make this moar configurable
+    cfg = getDefaults()
+    liveopts = cfg['DEFAULT']
+    args = argparse.ArgumentParser(description = 'Synchronization for a remote Arch repository to a local one.',
+                                   epilog = ('This program will write a default configuration file to {0} ' +
+                                            'if one is not found.'.format(cfgfile)))
+    args.add_argument('-m',
+                      '--mirror',
+                      dest = 'mirror',
+                      default = liveopts['mirror'],
+                      help = ('The upstream mirror to sync from, must be an rsync URI '+
+                              '(Default: {0}').format(liveopts['mirror']))
+# TODO: can we do this?
+#    args.add_argument('-r',
+#                      '--repos',
+#                      dest = 'repos',
+#                      default = liveopts['repos'],
+#                      help = ('The repositories to sync; must be a comma-separated list. ' +
+#                              '(Currently not used.) Default: {0}').format(','.join(liveopts['repos'])))
+    args.add_argument('-d',
+                      '--destination',
+                      dest = 'destination',
+                      default = liveopts['destination'],
+                      help = 'The destination directory to sync to. Default: {0}'.format(liveopts['destination']))
+    args.add_argument('-b',
+                      '--bwlimit',
+                      dest = 'bwlimit',
+                      default = liveopts['bwlimit'],
+                      type = int,
+                      help = 'The amount, in Kilobytes per second, to throttle the sync to. Default is to not throttle (0).')
+    args.add_argument('-M',
+                      '--mount',
+                      dest = 'mount',
+                      default = liveopts['mount'],
+                      help = 'The mountpoint for your --destination. The script will exit if this point is not mounted. ' +
+                             'If you don\'t need mount checking, just use /. Default: {0}'.format(liveopts['mount']))
+    return(args)
 
 def main():
-    sync()
+    args = vars(parseArgs().parse_args())
+    #sync(args)
 
 if __name__ == '__main__':
     main()
