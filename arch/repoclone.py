@@ -120,7 +120,7 @@ def parseArgs():
 
 def main():
     args = vars(parseArgs().parse_args())
-    #sync(args)
+    sync(args)
 
 if __name__ == '__main__':
     main()
