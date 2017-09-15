@@ -33,7 +33,7 @@ def sync(args):
     if args['bwlimit'] >= 1:
         opts.insert(10, '--bwlimit=' + str(args['bwlimit']))  # limit socket I/O bandwidth
     for k in ('destination', 'logfile', 'lockfile'):
-        os.makedirs(args[k], exist_ok = True)
+        os.makedirs(os.path.dirname(args[k]), exist_ok = True)
     paths = os.environ['PATH'].split(':')
     rsync = '/usr/bin/rsync'  # set the default
     for p in paths:
