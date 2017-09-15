@@ -59,16 +59,24 @@ def sync(args):
         with open(args['lockfile'], 'w') as f:
             f.write(str(os.getpid()))
     with open(args['logfile'], 'a') as log:
-#        try:
-        # Disabled the try/except because otherwise it complains on broken symlinks. Gah!
-        subprocess.call(cmd, stdout = log, stderr = subprocess.STDOUT)
+        c = subprocess.run(cmd, stdout = log, stderr = subprocess.PIPE)
         now = int(datetime.datetime.timestamp(datetime.datetime.utcnow()))
         with open(os.path.join(args['destination'], 'lastsync'), 'w') as f:
             f.write(str(now) + '\n')
         os.remove(args['lockfile'])
-#        except:
-#            os.remove(args['lockfile'])
-#            exit('!! The rsync has failed. See {0} for more details. !!'.format(args['logfile']))
+        # Only report errors at the end of the run if we aren't running in cron. Otherwise, log them.
+        errors = c.stderr.decode('utf-8').splitlines()
+        if os.isatty(sys.stdin.fileno()):
+            print('We encountered some errors:')
+            for e in errors:
+                if e.startswith('symlink has no referent: '):
+                    print('Broken upstream symlink: {0}'.format(e.split()[1].replace('"', '')))
+                else:
+                    print(e)
+        else:
+            with open(args['logfile'], 'a') as f:
+                for e in errors:
+                    f.write('{0}\n'.format(e))
     return()
 
 def getDefaults():
