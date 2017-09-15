@@ -6,6 +6,7 @@ import datetime
 import os
 import pprint
 import subprocess
+import sys
 
 cfgfile = os.path.join(os.environ['HOME'], '.arch.repoclone.ini')
 
@@ -49,7 +50,11 @@ def sync(args):
     if os.path.isfile(args['lockfile']):
         with open(args['lockfile'], 'r') as f:
             existingpid = f.read().strip()
-        exit('!! A repo synchronization seems to already be running (PID: {0}). Quitting. !!'.format(existingpid))
+        if os.isatty(sys.stdin.fileno()):
+            # Running from shell
+            exit('!! A repo synchronization seems to already be running (PID: {0}). Quitting. !!'.format(existingpid))
+        else:
+            exit()  # we're running in cron, shut the hell up.
     else:
         with open(args['lockfile'], 'w') as f:
             f.write(str(os.getpid()))
