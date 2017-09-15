@@ -54,15 +54,16 @@ def sync(args):
         with open(args['lockfile'], 'w') as f:
             f.write(str(os.getpid()))
     with open(args['logfile'], 'a') as log:
-        try:
-            subprocess.call(cmd, stdout = log, stderr = subprocess.STDOUT)
-            now = int(datetime.datetime.timestamp(datetime.datetime.utcnow()))
-            with open(os.path.join(dest['path'], 'lastsync'), 'w') as f:
-                f.write(str(now) + '\n')
-            os.remove(args['lockfile'])
-        except:
-            os.remove(args['lockfile'])
-            exit('!! The rsync has failed. See {0} for more details. !!'.format(args['logfile']))
+#        try:
+        # Disabled the try/except because otherwise it complains on broken symlinks. Gah!
+        subprocess.call(cmd, stdout = log, stderr = subprocess.STDOUT)
+        now = int(datetime.datetime.timestamp(datetime.datetime.utcnow()))
+        with open(os.path.join(dest['path'], 'lastsync'), 'w') as f:
+            f.write(str(now) + '\n')
+        os.remove(args['lockfile'])
+#        except:
+#            os.remove(args['lockfile'])
+#            exit('!! The rsync has failed. See {0} for more details. !!'.format(args['logfile']))
     return()
 
 def getDefaults():
