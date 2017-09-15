@@ -58,7 +58,7 @@ def sync(args):
         # Disabled the try/except because otherwise it complains on broken symlinks. Gah!
         subprocess.call(cmd, stdout = log, stderr = subprocess.STDOUT)
         now = int(datetime.datetime.timestamp(datetime.datetime.utcnow()))
-        with open(os.path.join(dest['path'], 'lastsync'), 'w') as f:
+        with open(os.path.join(args['destination'], 'lastsync'), 'w') as f:
             f.write(str(now) + '\n')
         os.remove(args['lockfile'])
 #        except:
