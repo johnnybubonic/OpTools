@@ -26,7 +26,8 @@ opts = [
        ]
 
 def sync(args):
-    mntchk = subprocess.run(['findmnt', args['mount']])
+    with open(os.devnull, 'w') as devnull:
+        mntchk = subprocess.run(['findmnt', args['mount']], stdout = devnull, stderr = devnull)
     if mntchk.returncode != 0:
         exit('!! BAILING OUT; {0} isn\'t mounted !!'.format(args['mount']))
     if args['bwlimit'] >= 1:
@@ -110,6 +111,16 @@ def parseArgs():
                       default = liveopts['bwlimit'],
                       type = int,
                       help = 'The amount, in Kilobytes per second, to throttle the sync to. Default is to not throttle (0).')
+    args.add_argument('-l',
+                      '--log',
+                      dest = 'logfile',
+                      default = liveopts['logfile'],
+                      help = 'The path to the logfile. Default: {0}'.format(liveopts['logfile']))
+    args.add_argument('-L',
+                      '--lock',
+                      dest = 'lockfile',
+                      default = liveopts['lockfile'],
+                      help = 'The path to the lockfile. Default: {0}'.format(liveopts['lockfile']))
     args.add_argument('-M',
                       '--mount',
                       dest = 'mount',
