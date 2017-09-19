@@ -15,7 +15,6 @@ NOW = datetime.datetime.utcnow()
 NOWstr = NOW.strftime('%Y-%m-%d')
 
 # TODO:
-# - use a config file system
 # - cleanup/rotation should be optional
 
 cfgfile = os.path.join(os.environ['HOME'], '.sksdump.ini')
