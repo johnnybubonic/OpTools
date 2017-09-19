@@ -1,0 +1,33 @@
+The following functions are available within the SigSession() class:
+
+getTpls()
+Get the user-specified templates if they exist, otherwise set up stock ones.
+
+modifyDirmngr(op)
+*op* can be either:
+new/start/replace - modify dirmngr to use the runtime-specified keyserver(s)
+old/stop/restore - modify dirmngr back to the keyservers that were defined before modification
+
+buildKeys()
+build out the keys dict (see REF.keys.struct.txt).
+
+getKeys()
+fetch keys in the keys dict (see REF.keys.struct.txt) from a keyserver if they aren't found in the local keyring.
+
+trustKeys()
+set up trusts for the keys in the keys dict (see REF.keys.struct.txt). prompts for each trust not found/specified at runtime.
+
+sigKeys()
+sign keys in the keys dict (see REF.keys.struct.txt), either exportable or local depending on runtime specification.
+
+pushKeys()
+push keys in the keys dict (see REF.keys.struct.txt) to the keyservers specified at runtime (as long as they weren't specified to be local/non-exportable signatures; then we don't bother).
+
+sendMails()
+send emails to each of the recipients specified in the keys dict (see REF.keys.struct.txt).
+
+serverParser(uri)
+returns a dict of a keyserver URI broken up into separate components easier for parsing.
+
+verifyArgs(locargs)
+does some verifications, classifies certain data, calls serverParser(), etc.

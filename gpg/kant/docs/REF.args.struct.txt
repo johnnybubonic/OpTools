@@ -1,0 +1,42 @@
+The __init__() function of kant.SigSession() takes a single argument: args.
+
+it should be a dict, structured like this:
+
+{'batch': False,
+ 'checklevel': None,
+ 'gpgdir': '/home/bts/.gnupg',
+ 'keys': 'EFD9413B17293AFDFE6EA6F1402A088DEDF104CB,admin@sysadministrivia.com',
+ 'keyservers': 'hkp://sks.mirror.square-r00t.net:11371,hkps://hkps.pool.sks-keyservers.net:443,http://pgp.mit.edu:80',
+ 'local': 'false',
+ 'notify': True,
+ 'sigkey': '748231EBCBD808A14F5E85D28C004C2F93481F6B',
+ 'testkeyservers': False,
+ 'trustlevel': None}
+
+The gpgdir, sigkey, and keyservers are set from system defaults in kant.parseArgs() if it's run interactively.
+This *may* be reworked in the future to provide a mechanism for external calls to kant.SigSession() but for now,
+it's up to you to provide all the data in the dict in the above format. 
+
+It will then internally verify these items and do various conversions, so that self.args becomes this:
+
+{'batch': False,
+ 'checklevel': None,
+ 'gpgdir': '/home/bts/.gnupg',
+ 'keys': ['EFD9413B17293AFDFE6EA6F1402A088DEDF104CB',
+          'admin@sysadministrivia.com'],
+ 'keyservers': [{'port': [11371, ['tcp', 'udp']],
+                 'proto': 'hkp',
+                 'server': 'sks.mirror.square-r00t.net'},
+                {'port': [443, ['tcp']],
+                 'proto': 'hkps',
+                 'server': 'hkps.pool.sks-keyservers.net'},
+                {'port': [80, ['tcp']],
+                 'proto': 'http',
+                 'server': 'pgp.mit.edu'}],
+ 'local': 'false',
+ 'notify': True,
+ 'rcpts': {'EFD9413B17293AFDFE6EA6F1402A088DEDF104CB': {'type': 'fpr'},
+           'admin@sysadministrivia.com': {'type': 'email'}},
+ 'sigkey': '748231EBCBD808A14F5E85D28C004C2F93481F6B',
+ 'testkeyservers': False,
+ 'trustlevel': None}

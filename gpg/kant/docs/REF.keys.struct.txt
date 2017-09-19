@@ -1,0 +1,44 @@
+TYPES:
+d = dict
+l = list
+s = string
+i = int
+b = binary (True/False)
+o = object
+
+- pkey's dict key is the 40-char key ID of the primary key
+- "==>" indicates the next item is a dict and the current item may contain one or more elements of the same format,
+	"++>" is a list,
+	"-->" is a "flat" item (string, object, int, etc.)
+-"status" is one of "an UPGRADE", "a DOWNGRADE", or "a NEW TRUST".
+
+keys(d)	==>	(40-char key ID)(s)	==>	pkey(d)		-->	email(s)
+								-->	name(s)
+								-->	creation (o, datetime)
+								-->	key(o, gpg)
+					-->	trust(i)
+					-->	check(i)
+					-->	local(b)
+					-->	notify(b)
+					==>	subkeys(d)	==>	(40-char key ID)(s)	-->	creation
+					-->	change(b)
+					-->	sign(b)
+					-->	status(s)
+					==>	uids(d)		==>	email(s)		-->	name(s)
+												-->	comment(s)
+												-->	email(s)
+												-->	updated(o, datetime)
+
+for email templates, they are looped over for each key dict as "key".
+so for example, instead of specifying "keys['748231EBCBD808A14F5E85D28C004C2F93481F6B']['pkey']['name']",
+you instead should specify "key['pkey']['name']". To get the name of e.g. the second uid,
+you'd use "key['uids'][(uid email)]['name'].
+
+the same structure is available via the "mykey" dictionary. e.g. to get the key ID of *your* key,
+you can use "mykey['subkeys'][0][0]".
+
+you also have the following variables/lists/etc. available for templates (via the Jinja2 templating syntax[0]):
+- "keyservers", a list of keyservers set.
+
+
+[0] http://jinja.pocoo.org/docs/2.9/templates/

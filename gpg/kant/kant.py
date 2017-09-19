@@ -4,6 +4,7 @@ import argparse
 import csv
 import datetime
 import email
+import jinja2
 import os
 import re
 import shutil
@@ -42,13 +43,13 @@ import gpg  # non-stdlib; Arch package is "python-gpgme" - see
 class sigsession(object):
     def __init__(self, args):
         self.args = args
+        self.keyids = []
 
     def getKeys(self):
-        # Get our concept
+        # Get our context
         os.environ['GNUPGHOME'] = self.args['gpgdir']
         ctx = gpg.Context()
         keys = {}
-        self.keyids = []
         # Do we have the key already? If not, fetch.
         for k in list(self.args['rcpts']):
             if self.args['rcpts'][k]['type'] == 'fpr':
