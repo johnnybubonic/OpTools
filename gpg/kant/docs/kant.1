@@ -1,0 +1,257 @@
+'\" t
+.\"     Title: kant
+.\"    Author: Brent Saner
+.\" Generator: Asciidoctor 1.5.6.1
+.\"      Date: 2017-09-21
+.\"    Manual: KANT - Keysigning and Notification Tool
+.\"    Source: KANT
+.\"  Language: English
+.\"
+.TH "KANT" "1" "2017-09-21" "KANT" "KANT \- Keysigning and Notification Tool"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.if \n[.g] .mso www.tmac
+.LINKSTYLE blue R < >
+.SH "NAME"
+kant \- Sign GnuPG/OpenPGP/PGP keys and notify the key owner(s)
+.SH "SYNOPSIS"
+.sp
+\fBkant\fP [\fIOPTION\fP] \-k/\-\-key \fI<KEY_IDS|BATCHFILE>\fP
+.SH "OPTIONS"
+.sp
+Keysigning (and keysigning parties) can be a lot of fun, and can offer someone with new keys a way into the WoT (Web\-of\-Trust).
+Unfortunately, they can be intimidating to those new to the experience.
+This tool offers a simple and easy\-to\-use interface to sign public keys (normal, local\-only, and/or non\-exportable),
+set owner trust, specify level of checking done, and push the signatures to a keyserver. It even supports batch operation via a CSV file.
+On successful completion, information about the keys that were signed and the key used to sign are saved to ~/.kant/cache/YYYY.MM.DD_HH.MM.SS.
+.sp
+\fB\-h\fP, \fB\-\-help\fP
+.RS 4
+Display brief help/usage and exit.
+.RE
+.sp
+\fB\-k\fP \fIKEY_IDS|BATCHFILE\fP, \fB\-\-key\fP \fIKEY_IDS|BATCHFILE\fP
+.RS 4
+A single or comma\-separated list of key IDs (see \fBKEY ID FORMAT\fP) to sign, trust, and notify. Can also be an email address.
+If \fB\-b\fP/\fB\-\-batch\fP is specified, this should instead be a path to the batch file (see \fBBATCHFILE/Format\fP).
+.RE
+.sp
+\fB\-K\fP \fIKEY_ID\fP, \fB\-\-sigkey\fP \fIKEY_ID\fP
+.RS 4
+The key to use when signing other keys (see \fBKEY ID FORMAT\fP). The default key is automatically determined at runtime
+(it will be displayed in \fB\-h\fP/\fB\-\-help\fP output).
+.RE
+.sp
+\fB\-t\fP \fITRUSTLEVEL\fP, \fB\-\-trust\fP \fITRUSTLEVEL\fP
+.RS 4
+The trust level to automatically apply to all keys (if not specified, KANT will prompt for each key).
+See \fBBATCHFILE/TRUSTLEVEL\fP for trust level notations.
+.RE
+.sp
+\fB\-c\fP \fICHECKLEVEL\fP, \fB\-\-check\fP \fICHECKLEVEL\fP
+.RS 4
+The level of checking that was done to confirm the validity of ownership for all keys being signed. If not specified,
+the default is for KANT to prompt for each key we sign. See \fBBATCHFILE/CHECKLEVEL\fP for check level notations.
+.RE
+.sp
+\fB\-l\fP \fILOCAL\fP, \fB\-\-local\fP \fILOCAL\fP
+.RS 4
+If specified, make the signature(s) local\-only (i.e. non\-exportable, don\(cqt push to a keyserver).
+See \fBBATCHFILE/LOCAL\fP for more information on local signatures.
+.RE
+.sp
+\fB\-n\fP, \fB\-\-no\-notify\fP
+.RS 4
+This requires some explanation. If you have MSMTP[1] installed and configured for the currently active user,
+then we will send out emails to recipients letting them know we have signed their key. However, if MSMTP is installed and configured
+but this flag is given, then we will NOT attempt to send emails. See \fBMAIL\fP for more information.
+.RE
+.sp
+\fB\-s\fP \fIKEYSERVER(S)\fP, \fB\-\-keyservers\fP \fIKEYSERVER(S)\fP
+.RS 4
+The comma\-separated keyserver(s) to push to. The default keyserver list is automatically generated at runtime.
+.RE
+.sp
+\fB\-m\fP \fIPROFILE\fP, \fB\-\-msmtp\-profile\fP \fIPROFILE\fP
+.RS 4
+If specified, use the msmtp profile named \fIPROFILE\fP. If this is not specified, KANT first looks for an msmtp configuration named KANT (case\-sensitive). If it doesn\(cqt find one, it will use the profile specified as the default profile in your msmtp configuration. See \fBMAIL\fP for more information.
+.RE
+.sp
+\fB\-b\fP, \fB\-\-batch\fP
+.RS 4
+If specified, operate in batch mode. See \fBBATCHFILE\fP for more information.
+.RE
+.sp
+\fB\-D\fP \fIGPGDIR\fP, \fB\-\-gpgdir\fP \fIGPGDIR\fP
+.RS 4
+The GnuPG configuration directory to use (containing your keys, etc.). The default is automatically generated at runtime,
+but will probably be \fB/home/<yourusername>/.gnupg\fP or similar.
+.RE
+.sp
+\fB\-T\fP, \fB\-\-testkeyservers\fP
+.RS 4
+If specified, initiate a basic test connection with each set keyserver before anything else. Disabled by default.
+.RE
+.SH "KEY ID FORMAT"
+.sp
+Key IDs can be specified in one of two ways. The first (and preferred) way is to use the full 160\-bit (40\-character, hexadecimal) key ID.
+A little known fact is the fingerprint of a key:
+.sp
+\fBDEAD BEEF DEAD BEEF DEAD  BEEF DEAD BEEF DEAD BEEF\fP
+.sp
+is actually the full key ID of the primary key; i.e.:
+.sp
+\fBDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF\fP
+.sp
+The second way to specify a key, as far as KANT is concerned, is to use an email address.
+Do note that if more than one key is found that matches the email address given (and they usually are), you will be prompted to select the specific
+correct key ID anyways so it\(cqs usually a better idea to have the owner present their full key ID/fingerprint right from the get\-go.
+.SH "BATCHFILE"
+.SS "Format"
+.sp
+The batch file is a CSV\-formatted (comma\-delimited) file containing keys to sign and other information about them. It keeps the following format:
+.sp
+\fBKEY_ID,TRUSTLEVEL,LOCAL,CHECKLEVEL,NOTIFY\fP
+.sp
+For more information on each column, reference the appropriate sub\-section below.
+.SS "KEY_ID"
+.sp
+See \fBKEY ID FORMAT\fP.
+.SS "TRUSTLEVEL"
+.sp
+The \fITRUSTLEVEL\fP is specified by the following levels (you can use either the numeric or string representation):
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fB\-1 = Never
+ 0 = Unknown
+ 1 = Untrusted
+ 2 = Marginal
+ 3 = Full
+ 4 = Ultimate\fP
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+It is how much trust to assign to a key, and the signatures that key makes on other keys.[2]
+.SS "LOCAL"
+.sp
+Whether or not to push to a keyserver. It can be either the numeric or string representation of the following:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fB0 = False
+1 = True\fP
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If \fB1/True\fP, KANT will sign the key with a local signature (and the signature will not be pushed to a keyserver or be exportable).[3]
+.SS "CHECKLEVEL"
+.sp
+The amount of checking that has been done to confirm that the owner of the key is who they say they are and that the key matches their provided information.
+It can be either the numeric or string representation of the following:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fB0 = Unknown
+1 = None
+2 = Casual
+3 = Careful\fP
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+It is up to you to determine the classification of the amount of checking you have done, but the following is recommended (it is the policy
+the author follows):
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fBUnknown:\fP The key is unknown and has not been reviewed
+
+\fBNone:\fP The key has been signed, but no confirmation of the
+        ownership of the key has been performed (typically
+        a local signature)
+
+\fBCasual:\fP The key has been presented and the owner is either
+          known to the signer or they have provided some form
+          of non\-government\-issued identification or other
+          proof (website, Keybase.io, etc.)
+
+\fBCareful:\fP The same as \fBCasual\fP requirements but they have
+          provided a government\-issued ID and all information
+          matches
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+It\(cqs important to check each key you sign carefully. Failure to do so may hurt others\(aq trust in your key.[4]
+.SH "MAIL"
+.sp
+The mailing feature of KANT is very handy; it will let you send notifications to the owners of the keys you sign. This is encouraged because: 1.) it\(cqs courteous to let them know where they can fetch the signature you just made on their key, 2.) it\(cqs courteous to let them know if you did/did not push to a keyserver (some people don\(cqt want their keys pushed, and it\(cqs a good idea to respect that wish), and 3.) the mailer also attaches the pubkey for the key you used to sign with, in case your key isn\(cqt on a keyserver, etc.
+.sp
+However, in order to do this since many ISPs block outgoing mail, one would typically use something like msmtp (http://msmtp.sourceforge.net/). Note that you don\(cqt even need msmtp to be installed, you just need to have msmtp configuration files set up via either /etc/msmtprc or ~/.msmtprc. KANT will parse these configuration files and use a purely pythonic implementation for sending the emails (see \fBSENDING\fP).
+.sp
+It supports templated mail messages as well (see \fBTEMPLATES\fP). It sends a MIME multipart email, in both plaintext and HTML formatting, for mail clients that may only support one or the other. It will also sign the email message using your signing key (see \fB\-K\fP, \fB\-\-sigkey\fP) and attach a binary (.gpg) and ASCII\-armored (.asc) export of your pubkey.
+.SS "SENDING"
+.sp
+KANT first looks for ~/.msmtprc and, if not found, will look for /etc/msmtprc. If neither are found, mail notifications will not be sent and it will be up to you to contact the key owner(s) and let them know you have signed their key(s). If it does find either, it will use the first configuration file it finds and first look for a profile called "KANT" (without quotation marks). If this is not found, it will use whatever profile is specified for as the default profile (e.g. \fBaccount default: someprofilename\fP in the msmtprc).
+.SS "TEMPLATES"
+.sp
+KANT, on first run (even with a \fB\-h\fP/\fB\-\-help\fP execution), will create the default email templates (which can be found as ~/.kant/email.html.j2 and ~/.kant/email.plain.j2). These support templating via Jinja2 (http://jinja.pocoo.org/docs/2.9/templates/), and the following variables/dictionaries/lists are exported for your use:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+* \fBkey\fP \- a dictionary of information about the recipient\(aqs key (see docs/REF.keys.struct.txt)
+* \fBmykey\fP \- a dictionary of information about your key (see docs/REF.keys.struct.txt)
+* \fBkeyservers\fP \- a list of keyservers that the key has been pushed to (if an exportable/non\-local signature was made)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+And of course you can set your own variables inside the template as well (http://jinja.pocoo.org/docs/2.9/templates/#assignments).
+.SH "SEE ALSO"
+.sp
+gpg(1), gpgconf(1), msmtp(1)
+.SH "RESOURCES"
+.sp
+\fBAuthor\(cqs web site:\fP https://square\-r00t.net/
+.sp
+\fBAuthor\(cqs GPG information:\fP https://square\-r00t.net/gpg\-info
+.SH "COPYING"
+.sp
+Copyright (C) 2017 Brent Saner.
+.sp
+Free use of this software is granted under the terms of the GPLv3 License.
+.SH "NOTES"
+1. http://msmtp.sourceforge.net/
+2. For more information on trust levels and the Web of Trust, see: https://www.gnupg.org/gph/en/manual/x334.html and https://www.gnupg.org/gph/en/manual/x547.html
+3. For more information on pushing to keyservers and local signatures, see: https://www.gnupg.org/gph/en/manual/r899.html#LSIGN and https://lists.gnupg.org/pipermail/gnupg-users/2007-January/030242.html
+4. GnuPG documentation refers to this as "validity"; see https://www.gnupg.org/gph/en/manual/x334.html
+.SH "AUTHOR(S)"
+.sp
+\fBBrent Saner\fP
+.RS 4
+Author(s).
+.RE

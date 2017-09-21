@@ -32,35 +32,33 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
         # These are the "stock" templates for emails. It's a PITA, but to save some space since we store them
         # inline in here, they're XZ'd and base64'd.
         self.email_tpl = {}
-        self.email_tpl['plain'] = ('/Td6WFoAAATm1rRGAgAhARwAAAAQz1jM4AWYAs1dACQZSZhvFgKNdKNXbSf05z0ZPvTvmdQ0mJQg' +
-                                    'atgzhPVeLKxz22bhxedC813X5I8Gn2g9q9Do2jPPViyuLf1SFHDUx1m7SEFsSUyT7L/j71tuxRZi' +
-                                    'xLyy6P3mHo3HeUhwgpgh6lvMYwlTf+zhj3558RJmhXprLteoKt/sY4NIMzz3TBa0ivsVo6EFA9/G' +
-                                    '2q1MpuHxg86uY1pA4tkFlmxuSklZq5EKuu7B5RSeUGB+SsjDPSfsdhoPngMET1EXTZfVSWezjJkH' +
-                                    'REyn5SgqpD7vwmwvZWcwWua+V+e/rYYF1cx0Y0Wi1wAC6NzGDce3gbcr/k6M/PiMi8ekJPCmgMgP' +
-                                    'R4GBtRi121wU374nml42WjdGjHee6Se6d0OGKscJjB5Z1eSOho63OMn5Ayu4Lvl05L/mB88Hnk5e' +
-                                    'MayYmXqQdhx3ualWiD/TdHwLf+79t43wfjs6Z/aq/lku67SGdUpjuYRV52nls6WPTuBmo2oCbzpP' +
-                                    'MojIXiYHR3cWebI2CdnVTTHHz7el4NAWIlPKtZkPR6VYj2DkND4kmkO92I258hUqLARWnNaywx87' +
-                                    'hFzhaGN9oKZdozKSZpEDyZUsymWuhQnnY76EImeha67LJwSsXLpBxuViCNlqv7ATT9iffzDmjm0i' +
-                                    '2MeLix3rBRMWp4MmWC8bP1ZAKOEq4M3hwjt1q68fH4QvtmTyic/7DBW2KsgZRu21RjK7tHtKTxwy' +
-                                    '2UN3pGT6uZRL8vNRNvD70UaeD5MW7lFBPehIeFoByaEKGFfeS8dKc1VFauDmkRlhOboLkPqqwbV+' +
-                                    'tUmU8UvTftKIx1RwTm3FKqjKCYrdqp0fL5wsA93YhRJqHfkvtjCjzRc0czszURkJMHfPyttQg2jb' +
-                                    'UQVIg40XMgew2EUdCrJC3wTvXm9tBxMqXAFBn6S4ihqiJ5PTUDKCx7EnAjK3kUwbWvDno8h1M9u9' +
-                                    'teC5CEWhcAAAAAAwG5UqO9bdswAB6QWZCwAAKFDj9rHEZ/sCAAAAAARZWg==')
-        self.email_tpl['html'] = ('/Td6WFoAAATm1rRGAgAhARwAAAAQz1jM4AXiAt1dAB4aCobvStaHNqdVBn1LjZcL+G+98rmZ7eGZ' +
+        self.email_tpl['plain'] = ('/Td6WFoAAATm1rRGAgAhARwAAAAQz1jM4ATxAnZdACQZSZhvFgKNdKNXbSf05z0ZPvTvmdQ0mJQg' +
+                                    'atgzhPVeLKxz22bhxedC813X5I8Gn2g9q9Do2jPPgXOzysImWXoraY4mhz0BAo2Zx1u6AiQQLdN9' +
+                                    '/jwrDrUEtb8M/QzmRd+8JrYN8s8vhViJZARMNHYnPeQK5GYEoGZEQ8l2ULmpTjAn9edSnrMmNSb2' +
+                                    'EC86CuyhaWDPsQeIamWW1t+MWmgsggE3xKYADKXHMQyXvhv/TAn987dEbzmrkpg8PCjxWt1wKRAr' +
+                                    'siDpCGvXLiBwnDtN1D7ocwbZVKty2GELbYt0f0CT7n5Pyu9n0P7QMnErM38kLR1nReopQp41+CsG' +
+                                    'orb8EpGGVdFa7sSWSANQtGTjx/1JHecpkTN8xX4kAjMWKYujWlZi/HzN7y/W5GDJM3ycVEUTsDRV' +
+                                    '6AusncRBFbo4/+K6cn5WCrhqd5jY2vDJR6KcO0O3usHUMzvOF0S0CZhUbA3Mil5DmPwFrdFrESby' +
+                                    'O1xH3uvgHpA5X91qkpEajokOOkY3FZm0oeANh9AMoMfDFTuqi41Nq9Myk4VKNEfzioChn9IfFxX0' +
+                                    'Luw6OyXtWJdpe3BvO7pWazLhvdIY4poh9brvJ25cG1kDMOlmC3NEb+POeqQ5aUr4XaRqFstk3grb' +
+                                    '8EjiGBzg18uHsbhjyReXnZprJjwzWUdwpV6j+2JFI13UEp16oTyTwyhHdpAmAg+lQJQxtcMpnUeX' +
+                                    '/xBkQGs+rqe0e/i8ZQ80XsLAoScxUL+45v9vANYV+lCWRnm/2GZOtCFs1Cb4t9hOeV0P1cwxw7fG' +
+                                    'b1A921JUkHbASFiv2EFsgf0lkvnMgz2slNXKcLuwB6X0CAAAALypR4JWDUR6AAGSBfIJAABGCaV4' +
+                                    'scRn+wIAAAAABFla')
+        self.email_tpl['html'] = ('/Td6WFoAAATm1rRGAgAhARwAAAAQz1jM4AXfAtVdAB4aCobvStaHNqdVBn1LjZcL+G+98rmZ7eGZ' +
                                     'Wqx+3LjENIv37L1aGPICZDRBrsBugzVSasRBHkdHMrWW7SsPfRzw6btQfASTHLr48auPJlJgXTnb' +
-                                    'vgDd2ELrs6p5kXZwE7+pedhgffAcekwr0eyqVNzzdUWJpvZcDBGtp+yvIwSAcrKkUxUd5AFBigd3' +
-                                    '4IW1XEK3eQ+LSSEIquUugrd3xiFB4rkSSDGbAuVLqy4Sq3w5c8RRAKavhfSn154/H/D+3RhqFHc/' +
-                                    '/x51rgXFvgJ/DwYrr9g7JV9EQB15JvJJxazgnWftZE0W0u05Z7QNrIZQMG6LjcSjf0ep1zNYrJkf' +
-                                    'UYOfHNjXGfpmIfG0Y/cNhU1Zqv3ohv6EGWk4B7CdLjXEeDYqkJgIGA6Q4FQXM6PF7blXFQJ3papF' +
-                                    'lH0iO+ElK3LZVcql+QcVt2Ci+hwiKzsUvV5ydnHezyViTYTppjlZzju5SxxddQg+7CwGzX9O8ys1' +
-                                    '8dlbMFHD2ruPd4Zig9B1TEKHSdmQQGwITNufbSGixbuOZAbfMXP1oQqSzYkbbx2ye8ddISOr/753' +
-                                    'deLOwaQpy6tK9nb1wYwsfhpmZriWYDcKRfjkgr0srxnC2iDlMB0Do+GCLVVlmju9qcxeObWoxUaX' +
-                                    'TqecRW4fbpa9xAIH0tZlOpIyPgGfm3CXkiGOs/J/QJ4C4spqNpwppoXg6EAig7Y9GStQyEsHXZrj' +
-                                    'vLAefyaseybuMC+9okhx8VYM8esuE2GVTbCbWhn8ZTi8posQ+zabXvk7KE5zwGHDcvSGg0bYctJj' +
-                                    'V6pExLCp1vCUdP3iP06OCFMINDnGR7ZP4Da/atBUuB/F0LN//x+HfwhEUpVTG52L7f6Qjd/LhvU2' +
-                                    'f/zVfMKlw5xXwTjBu2X1oRYfhyYFhgnDECEi9iuRiVwwtnUU39r2XoaGcnMTPnZe62oy2jqTp3p+' +
-                                    'Y+klB9jUwPUg2t5IxptZ0D/H5flD+pEAAAAAYczECM+Nfu0AAfkF4wsAAEsSt/GxxGf7AgAAAAAE' +
-                                    'WVo=')
+                                    'vgDd2ELrs6p5m5Wip3qD4NeNuwj4QMcxszWF1vLa1oZiNAmCSunIF8bNTw+lmI50h2M6bXfx80Og' +
+                                    'T2HGcuTp07Mp+XLyZQJ5lbQyu5BRhwyKpu14sq9qrVkxmYt8AAxgUyhvRkooHSuug4O8ArMFXqqX' +
+                                    'usX9P3zERAsi/TqWIFaG0xoBdrWf/zpGtsVQ+5TtCGOfUHGfIBaNy9Q+FOvfLJFYEzxac992Fkd0' +
+                                    'as4RsN31FaySbBmZ8eB3zGbpjS7QH7CA70QYkRcYXcjWE9xHD3Wzxa3DFE0ihKAyVwakxvjgYa2B' +
+                                    '7G6uYO606c+a6vHfPhgvY7Eph+I7ip0btfBbcKZ+XBSd0DtCd7ZvI7vlGJdW2/OBXHfNmCndMP1W' +
+                                    'Ujd0ASQAQBbJr4rIxYygckSPWti4nBe9JpKTVWqdWRXWjeYGci1dKIjKs7JfS1PGJR50iuyANBun' +
+                                    'yQ9oIRafb3nreBqtpXZ4LKM5hC697BaeOIcocXyMALf0a06AUmIaRQfO3AZrPxyOPH3EYOKIMrjM' +
+                                    'EosihPVVyYuKUVOg3wWq5aeIC9zM7Htw4FNh2NB5QDYY6HxIqIVUfHCGz+4GaPBVaf0eie8kHaQR' +
+                                    'xj+DkAiWQDmN/JRZeTlsy4d3P8XcArOLmxzql/iDzFqtzpD5d91o8I3HU9BJlDJFPs8bC2eCjYs8' +
+                                    'o3WJET/UIch6YXQOemXa72aWdBVSytfKBMtL7uekd4ARGbFZYyW2x1agkAZGiWt7gwY8RVEoKyZH' +
+                                    'bbvIvOhQ/j1BDuJFJO3BEgekeLhBPpG7cEewseXjGjoWZWtGr+qFTI//w+oDtdqGtJaGtELL3WYU' +
+                                    '/tMiQU9AfXkTsODAjvduAAAAAIixVQ23iBDFAAHxBeALAADIP1EPscRn+wIAAAAABFla')
         # Set up a dict of some constants and mappings
         self.maps = {}
         # Keylist modes
@@ -130,7 +128,7 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
         self.getTpls()   # Build out self.tpls
         return(None)
 
-    def getEditPrompt(self, key):  # "key" should be the FPR of the primary key
+    def getEditPrompt(self, key, cmd):  # "key" should be the FPR of the primary key
         # This mapping defines the default "answers" to the gpgme key editing.
         # https://www.apt-browse.org/browse/debian/wheezy/main/amd64/python-pyme/1:0.8.1-2/file/usr/share/doc/python-pyme/examples/t-edit.py
         # https://searchcode.com/codesearch/view/20535820/
@@ -161,7 +159,7 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
                             'trustsig_prompt': {'trust_value': str(_loctrust),  # This requires some processing; see above
                                                 'trust_depth': str(_locdepth),  # The "depth" of the trust signature.
                                                 'trust_regexp': None},  # We can "Restrict" trust to certain domains, but this isn't really necessary.
-                            'keyedit': {'prompt': 'trust',  # Initiate trust editing
+                            'keyedit': {'prompt': cmd,  # Initiate trust editing
                                         'save': {'okay': 'yes'}}}}  # Save if prompted
         return(_map)
     
@@ -271,21 +269,25 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
                         _keys[k.fpr]['uids'][s.email] = {'comment': s.comment,
                                                          'updated': s.last_update}
                 if len(_keytmp) > 1:  # Print the keys and prompt for a selection.
-                    print('\nWe found the following keys for {0} <{1}>...\n\nKEY ID:'.format(r, _orig_r))
-                    for s in _keys[r]:
-                        print(s, _keys[r])
-                        print('{0}\n{1:6}(Generated at {2})  UIDs:'.format(k,
+                    
+                    print('\nWe found the following keys for {0}...\n\nKEY ID:'.format(r))
+                    for s in _keytmp:
+                        print('{0}\n{1:6}(Generated at {2})  UIDs:'.format(s.fpr,
                                                                            '',
-                                                                           datetime.datetime.utcfromtimestamp(s['updated'])))
-                        for email in _keys[k]['uids']:
-                            print('{0:42}(Generated {3}) <{2}> {1}'.format('',
-                                                                           s['uids'][email]['comment'],
-                                                                           email,
-                                                                           datetime.datetime.utcfromtimestamp(s['uids'][email]['updated'])))
+                                                                           datetime.datetime.utcfromtimestamp(s.subkeys[0].timestamp)))
+                        for u in s.uids:
+                            if u.last_update == 0:
+                                _updated = 'Never/Unknown'
+                            else:
+                                _updated = datetime.datetime.utcfromtimestamp(u.last_update)
+                            print('{0:42}(Updated {3}) <{2}> {1}'.format('',
+                                                                         u.comment,
+                                                                         u.email,
+                                                                         _updated))
                         print()
                     while True:
                         key = input('Please enter the (full) appropriate key: ')
-                        if key not in keys.keys():
+                        if key not in _keys.keys():
                             print('Please enter a full key ID from the list above or hit ctrl-d to exit.')
                         else:
                             _keyids.append(key)
@@ -295,17 +297,21 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
                         print('Could not find {0}!'.format(r))
                         del(self.args['rcpts'][r])
                         continue
-                    _keyids.append(_keys[k.fpr]['fpr'])
+                    _keyids.append(k.fpr)
                     print('\nFound key {0} for {1} (Generated at {2}):'.format(_keys[k.fpr]['fpr'],
                                                                                r,
                                                                                datetime.datetime.utcfromtimestamp(_keys[k.fpr]['created'])))
                     for email in _keys[k.fpr]['uids']:
+                        if _keys[k.fpr]['uids'][email]['updated'] == 0:
+                            _updated = 'Never/Unknown'
+                        else:
+                            _updated = datetime.datetime.utcfromtimestamp(_keys[k.fpr]['uids'][email]['updated'])
                         print('\t(Generated {2}) {0} <{1}>'.format(_keys[k.fpr]['uids'][email]['comment'],
-                                                  email,
-                                                  datetime.datetime.utcfromtimestamp(_keys[k.fpr]['uids'][email]['updated'])))
+                                                                   email,
+                                                                   _updated))
                     print()
         ## And now we can (FINALLY) fetch the key(s).
-        # TODO: replace with gpg.keylist_mode(gpgme.KEYLIST_MODE_EXTERN) and internal mechanisms?
+        print(_keyids)
         for g in _keyids:
             try:
                 self.ctx.op_import_keys([_keys[g]['obj']])
@@ -313,6 +319,8 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
                 print('Key {0} could not be found on the keyserver'.format(g))  # The key isn't on the keyserver
         self.ctx.set_keylist_mode(self.maps['keylist']['local'])
         for k in _keys:
+            if k not in _keyids:
+                continue
             _key = _keys[k]['obj']
             self.keys[k] = {'pkey': {'email': _key.uids[0].email,
                                      'name': _key.uids[0].name,
@@ -417,7 +425,7 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
                               '(Default is Unknown.)\n' +
                               '\n\t\033[1m0 = Unknown\n\t1 = None\n\t2 = Casual\n\t3 = Careful\033[0m\nCheck level: ').format(k))
             if check_in == '':
-                check_in == 'unknown'
+                check_in = 'unknown'
             self.keys[k]['check'] = check_in
         return()
     
@@ -469,6 +477,13 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
             print('{0}: "{1}" is not a valid {2}; skipping. Run kant again to fix.'.format(k, self.keys[k][s], _errs[s]))
             del(self.keys[k])
             return()
+        # Determine if we need to change the trust.
+        if t == 'trust':
+            cur_trust = self.keys[k]['pkey']['key'].owner_trust
+            if cur_trust == self.keys[k]['trust']:
+                self.keys[k]['change'] = False
+            else:
+                self.keys[k]['change'] = True
         return()
     
     def sigKeys(self):  # The More Business-End(TM)
@@ -521,10 +536,11 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
         # TODO: add check for change
         for k in list(self.keys.keys()):
             _key = self.keys[k]
-            _map = self.getEditPrompt(_key)
-            out = gpg.Data()
-            self.ctx.interact(_key['pkey']['key'], self.KeyEditor(_map).editKey, sink = out, fnc_value = out)
-            out.seek(0, 0)
+            if _key['change']:
+                _map = self.getEditPrompt(_key, 'trust')
+                out = gpg.Data()
+                self.ctx.interact(_key['pkey']['key'], self.KeyEditor(_map).editKey, sink = out, fnc_value = out)
+                out.seek(0, 0)
         return()
     
     def pushKeys(self):  # The Last Business-End(TM)
@@ -537,7 +553,7 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
         def __init__(self):
             _homeconf = os.path.join(os.environ['HOME'], '.msmtprc')
             _sysconf = '/etc/msmtprc'
-            self.msmtp = {'path': None}
+            self.msmtp = {'conf': None}
             if not os.path.isfile(_homeconf):
                 if not os.path.isfile(_sysconf):
                     self.msmtp['conf'] = False
@@ -545,14 +561,10 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
                     self.msmtp['conf'] = _sysconf
             else:
                 self.msmtp['conf'] = _homeconf
-            if os.path.isfile(self.msmtp['conf']):
-                for p in (os.environ['PATH']).split(':'):
-                    if os.path.isfile(os.path.join(p, 'msmtp')):
-                        self.msmtp['path'] = os.path.join(p, 'msmtp')
-                if self.msmtp['path']:
-                    # Okay. So we have a config file, which we're assuming to be set up correctly, and a path to a binary.
-                    # Now we need to parse the config.
-                    self.msmtp['cfg'] = self.getCfg()
+            if self.msmtp['conf']:
+                # Okay. So we have a config file, which we're assuming to be set up correctly.
+                # Now we need to parse the config.
+                self.msmtp['cfg'] = self.getCfg()
             return(None)
 
         def getCfg(self):
@@ -753,7 +765,8 @@ class SigSession(object):  # see docs/REFS.funcs.struct.txt
                 else:
                     r = k.replace('<', '').replace('>', '')
                     locargs['rcpts'][r] = locargs['rcpts'][k]
-                    del(locargs['rcpts'][k])
+                    if k != r:
+                        del(locargs['rcpts'][k])
                     k = r
                     _ktype = 'email'
             locargs['rcpts'][k]['type'] = _ktype
@@ -901,6 +914,11 @@ def parseArgs():
                              'Default keyserver list is: \n\n\t\033[1m{0}\033[0m\n\n'.format(re.sub(',',
                                                                                                     '\n\t',
                                                                                                     defkeyservers)))
+    args.add_argument('-m',
+                      '--msmtp',
+                      dest = 'msmtp_profile',
+                      default = None,
+                      help = 'The msmtp profile to use to send the notification emails. See the man page for more information.')
     args.add_argument('-b',
                       '--batch',
                       dest = 'batch',

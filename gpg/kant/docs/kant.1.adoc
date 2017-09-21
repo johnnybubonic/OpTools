@@ -20,6 +20,7 @@ Keysigning (and keysigning parties) can be a lot of fun, and can offer someone w
 Unfortunately, they can be intimidating to those new to the experience. 
 This tool offers a simple and easy-to-use interface to sign public keys (normal, local-only, and/or non-exportable), 
 set owner trust, specify level of checking done, and push the signatures to a keyserver. It even supports batch operation via a CSV file.
+On successful completion, information about the keys that were signed and the key used to sign are saved to ~/.kant/cache/YYYY.MM.DD_HH.MM.SS.
 
 *-h*, *--help*::
   Display brief help/usage and exit.
@@ -47,10 +48,13 @@ set owner trust, specify level of checking done, and push the signatures to a ke
 *-n*, *--no-notify*::
   This requires some explanation. If you have MSMTPfootnote:[\http://msmtp.sourceforge.net/] installed and configured for the currently active user,
   then we will send out emails to recipients letting them know we have signed their key. However, if MSMTP is installed and configured
-  but this flag is given, then we will NOT attempt to send emails.
+  but this flag is given, then we will NOT attempt to send emails. See *MAIL* for more information.
 
 *-s* _KEYSERVER(S)_, *--keyservers* _KEYSERVER(S)_::
   The comma-separated keyserver(s) to push to. The default keyserver list is automatically generated at runtime.
+
+*-m* _PROFILE_, *--msmtp-profile* _PROFILE_::
+  If specified, use the msmtp profile named _PROFILE_. If this is not specified, KANT first looks for an msmtp configuration named KANT (case-sensitive). If it doesn't find one, it will use the profile specified as the default profile in your msmtp configuration. See *MAIL* for more information.
 
 *-b*, *--batch*::
   If specified, operate in batch mode. See *BATCHFILE* for more information.
@@ -153,13 +157,36 @@ the author follows):
 It's important to check each key you sign carefully. Failure to do so may hurt others' trust in your key.footnote:[GnuPG documentation refers
 to this as "validity"; see \https://www.gnupg.org/gph/en/manual/x334.html]
 
+== MAIL
+The mailing feature of KANT is very handy; it will let you send notifications to the owners of the keys you sign. This is encouraged because: 1.) it's courteous to let them know where they can fetch the signature you just made on their key, 2.) it's courteous to let them know if you did/did not push to a keyserver (some people don't want their keys pushed, and it's a good idea to respect that wish), and 3.) the mailer also attaches the pubkey for the key you used to sign with, in case your key isn't on a keyserver, etc.
+
+However, in order to do this since many ISPs block outgoing mail, one would typically use something like msmtp (\http://msmtp.sourceforge.net/). Note that you don't even need msmtp to be installed, you just need to have msmtp configuration files set up via either /etc/msmtprc or ~/.msmtprc. KANT will parse these configuration files and use a purely pythonic implementation for sending the emails (see *SENDING*).
+
+It supports templated mail messages as well (see *TEMPLATES*). It sends a MIME multipart email, in both plaintext and HTML formatting, for mail clients that may only support one or the other. It will also sign the email message using your signing key (see *-K*, *--sigkey*) and attach a binary (.gpg) and ASCII-armored (.asc) export of your pubkey.
+
+=== SENDING
+KANT first looks for ~/.msmtprc and, if not found, will look for /etc/msmtprc. If neither are found, mail notifications will not be sent and it will be up to you to contact the key owner(s) and let them know you have signed their key(s). If it does find either, it will use the first configuration file it finds and first look for a profile called "KANT" (without quotation marks). If this is not found, it will use whatever profile is specified for as the default profile (e.g. *account default: someprofilename* in the msmtprc).
+
+=== TEMPLATES
+KANT, on first run (even with a *-h*/*--help* execution), will create the default email templates (which can be found as ~/.kant/email.html.j2 and ~/.kant/email.plain.j2). These support templating via Jinja2 (\http://jinja.pocoo.org/docs/2.9/templates/), and the following variables/dictionaries/lists are exported for your use:
+
+[subs=+quotes]
+....
+* *key* - a dictionary of information about the recipient's key (see docs/REF.keys.struct.txt)
+* *mykey* - a dictionary of information about your key (see docs/REF.keys.struct.txt)
+* *keyservers* - a list of keyservers that the key has been pushed to (if an exportable/non-local signature was made)
+....
+
+And of course you can set your own variables inside the template as well (\http://jinja.pocoo.org/docs/2.9/templates/#assignments).
+
 == SEE ALSO
-gpg(1), gpgconf(1)
+gpg(1), gpgconf(1), msmtp(1)
 
 == RESOURCES
 
-*Author's web site:* https://square-r00t.net/
-*Author's GPG information:* https://square-r00t.net/gpg-info
+*Author's web site:* \https://square-r00t.net/
+
+*Author's GPG information:* \https://square-r00t.net/gpg-info
 
 == COPYING
 
