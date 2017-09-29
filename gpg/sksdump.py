@@ -128,7 +128,10 @@ def destPrep(args):
             os.chown(d, uid, gid)
     if os.path.isdir(curdir):
         os.remove(curdir)
-    os.symlink(NOWstr, curdir, target_is_directory = True)
+    try:
+        os.symlink(NOWstr, curdir, target_is_directory = True)
+    except FileExistsError:
+        pass  # Ignore if it was set earlier
     return()
 
 def dumpDB(args):
