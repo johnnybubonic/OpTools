@@ -100,7 +100,7 @@ def parseArgs():
     liveopts = cfg['DEFAULT']
     args = argparse.ArgumentParser(description = 'Synchronization for a remote Arch repository to a local one.',
                                    epilog = ('This program will write a default configuration file to {0} ' +
-                                            'if one is not found.'.format(cfgfile)))
+                                            'if one is not found.').format(cfgfile))
     args.add_argument('-m',
                       '--mirror',
                       dest = 'mirror',
