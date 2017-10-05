@@ -66,7 +66,7 @@ def sync(args):
         os.remove(args['lockfile'])
         # Only report errors at the end of the run if we aren't running in cron. Otherwise, log them.
         errors = c.stderr.decode('utf-8').splitlines()
-        if os.isatty(sys.stdin.fileno()):
+        if os.isatty(sys.stdin.fileno()) and errors:
             print('We encountered some errors:')
             for e in errors:
                 if e.startswith('symlink has no referent: '):
