@@ -43,7 +43,7 @@ def index():
                           'language': request.user_agent.language,
                           'to_header': request.user_agent.to_header(),
                           'version': request.user_agent.version},
-               'ip': request.remote_addr,
+               'ip': re.sub('^::ffff:', '', request.remote_addr),
                'headers': dict(request.headers)}
     # We have to convert these to strings so we can do tuple comparisons on lower()s.
     params = {'json': str(request.args.get('json')).lower(),
