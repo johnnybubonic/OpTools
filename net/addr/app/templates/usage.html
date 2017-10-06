@@ -9,7 +9,7 @@
       <li>It will display it nicely if you're in a browser, otherwise it will return raw/plaintext JSON.</li>
       <li>Use <b>raw</b> if you want to force raw plaintext JSON output.</li>
     </ul></li>
-  <li><b>html:</b> Force rendering in HTML</li>
+  <li><b>html:</b> Force rendering in HTML
   <ul>
     <li>It will render HTML in clients that would normally render as JSON (e.g. curl, wget).</li>
   </ul></li>
@@ -25,26 +25,26 @@
       <li>Default is 4 for "desktop" browsers (if <b>json</b> is enabled), and no indentation otherwise.</li>
     </ul></li>
 </ul></p>
-<h2>Examples</h2>
+<h2>Examples</h2>{% set scheme = 'https' if request.is_secure else 'http'%}
 <p><table>
   <tr>
     <th>URL</th>
     <th>Behavior</th>
   </tr>
   <tr>
-    <td><a href="{{ request.base_url }}">{{ request.base_url }}</a></td>
+    <td><a href="{{ scheme }}://{{ request.headers['host'] }}/">{{ scheme }}://{{ request.headers['host'] }}/</a></td>
     <td>Displays HTML and "Human" formatting if in a graphical browser, otherwise returns a raw, unformatted JSON string.</td>
   </tr>
   <tr>
-    <td><a href="{{ request.base_url }}?raw=1">{{ request.base_url }}?raw=1</a></td>
+    <td><a href="{{ scheme }}://{{ request.headers['host'] }}/?raw=1">{{ scheme }}://{{ request.headers['host'] }}/?raw=1</a></td>
     <td>Renders a raw, unformatted JSON string if in a graphical browser, otherwise no effect. All other parameters ignored (if in a graphical browser).</td>
   </tr>
   <tr>
-    <td><a href="{{ request.base_url }}?html=1">{{ request.base_url }}?html=1</a></td>
+    <td><a href="{{ scheme }}://{{ request.headers['host'] }}/?html=1">{{ scheme }}://{{ request.headers['host'] }}/?html=1</a></td>
     <td>Forces HTML rendering on non-graphical clients.</td>
   </tr>
   <tr>
-    <td><a href="{{ request.base_url }}?json=1&tabs=4">{{ request.base_url }}?json=1&tabs=4</a></td>
+    <td><a href="{{ scheme }}://{{ request.headers['host'] }}/?json=1&tabs=4">{{ scheme }}://{{ request.headers['host'] }}/?json=1&tabs=4</a></td>
     <td>Returns JSON indented by 4 spaces for each level (you can leave "json=1" off if it's in a non-graphical browser, unless you specified "html=1").</td>
   </tr>
 </table></p>
