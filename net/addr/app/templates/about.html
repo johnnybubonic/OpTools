@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block title %}r00t^2 Client Info Revealer || About{% endblock %}{% block body %}<div class="jumbotron">
+<h1>About</h1></div>
+<p>This is a tool to reveal certain information about your connection that the server sees. Note that all of this information you see is <i>sent by your client</i>; there was no probing/scanning or the like done from the server this site is hosted on.</p>
+<p>If you don't like this info being available to server administrators of the websites you visit you may want to consider <a href="https://getfoxyproxy.org/">hiding your client IP address</a><sup><a href="#0">0</a></sup> and/or <a href="https://panopticlick.eff.org/self-defense">hiding your browser's metadata</a>, which can be done via browser plugins such as <a href="https://www.eff.org/privacybadger">Privacy Badger</a>, {{ '<a href="https://addons.mozilla.org/en-US/firefox/addon/modify-headers/">Modify Headers</a>, '|safe if request.user_agent.browser == 'firefox' else '' }}<a href="https://www.requestly.in/">Requestly</a>, and others.</p>
+<p>If you would like to view the <i>server</i> headers, then you can use a service such as <a href="https://securityheaders.io">SecurityHeaders.io</a> (or use the <b><code>curl -i</code></b> command in *Nix operating systems).</p>
+<br />
+<p><a name="0"></a><b>[0]</b> Disclosure: I am an engineer for this company.</p>
+{% endblock %}

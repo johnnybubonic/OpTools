@@ -1,7 +1,6 @@
-{% extends "base.html" %} {% block title %}r00t^2 Client Info Revealer{% endblock %}{% block body %}
-<div class="jumbotron">
-  <h1>What this is</h1>
-  <p class="lead">This is a tool to reveal certain information about your connection that the server sees.</p>
+{% extends "base.html" %}{% block title %}r00t^2 Client Info Revealer{% endblock %}{% block body %}<div class="jumbotron">
+  <h1>Client Info Revealer</h1>
+  <p class="lead">A tool to reveal client-identifying data sent to webservers</p>
 </div>
-<p>PLACEHOLDER.</p>
+{% include 'html.html' if not params['json'] else 'json.html' %}
 {% endblock %}

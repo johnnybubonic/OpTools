@@ -1,0 +1,51 @@
+{% extends "base.html" %}{% block title %}r00t^2 Client Info Revealer || Usage{% endblock %}{% block body %}<div class="jumbotron">
+<h1>Usage</h1></div>
+<h2>Parameters</h2>
+<p>You can control how this page displays/renders. By default it will try to "guess" what you want; e.g. if you access it in Chrome, it will display this page but if you fetch via Curl, you'll get raw JSON. The following parameters control this behavior.</p>
+<p><i><b>Note:</b> "Enabled" parameter values can be one of <b>y</b>, <b>yes</b>, <b>1</b>, or <b>true</b>. "Disabled" parameter values can be one of <b>n</b>, <b>no</b>, <b>0</b>, or <b>false</b>. The parameter names are case-sensitive but the values are not.</i></p>
+<p><ul>
+  <li><b>json:</b> Force rendering in JSON format
+    <ul>
+      <li>It will display it nicely if you're in a browser, otherwise it will return raw/plaintext JSON.</li>
+      <li>Use <b>raw</b> if you want to force raw plaintext JSON output.</li>
+    </ul></li>
+  <li><b>html:</b> Force rendering in HTML</li>
+  <ul>
+    <li>It will render HTML in clients that would normally render as JSON (e.g. curl, wget).</li>
+  </ul></li>
+  <li><b>raw:</b> Force output into a raw JSON string 
+    <ul>
+      <li>Pure JSON instead of HTML or formatted JSON. This is suitable for API usages if your client is detected wrongly (or you just want to get the raw JSON).</li>
+      <li>Overrides all other tags.</li>
+      <li>Has no effect for clients that would normally render as JSON (curl, wget, etc.).</li>
+    </ul></li>
+  <li><b>tabs:</b> Indentation for JSON output
+    <ul>
+      <li>Accepts a positive integer.</li>
+      <li>Default is 4 for "desktop" browsers (if <b>json</b> is enabled), and no indentation otherwise.</li>
+    </ul></li>
+</ul></p>
+<h2>Examples</h2>
+<p><table>
+  <tr>
+    <th>URL</th>
+    <th>Behavior</th>
+  </tr>
+  <tr>
+    <td><a href="{{ request.base_url }}">{{ request.base_url }}</a></td>
+    <td>Displays HTML and "Human" formatting if in a graphical browser, otherwise returns a raw, unformatted JSON string.</td>
+  </tr>
+  <tr>
+    <td><a href="{{ request.base_url }}?raw=1">{{ request.base_url }}?raw=1</a></td>
+    <td>Renders a raw, unformatted JSON string if in a graphical browser, otherwise no effect. All other parameters ignored (if in a graphical browser).</td>
+  </tr>
+  <tr>
+    <td><a href="{{ request.base_url }}?html=1">{{ request.base_url }}?html=1</a></td>
+    <td>Forces HTML rendering on non-graphical clients.</td>
+  </tr>
+  <tr>
+    <td><a href="{{ request.base_url }}?json=1&tabs=4">{{ request.base_url }}?json=1&tabs=4</a></td>
+    <td>Returns JSON indented by 4 spaces for each level (you can leave "json=1" off if it's in a non-graphical browser, unless you specified "html=1").</td>
+  </tr>
+</table></p>
+{% endblock %}
