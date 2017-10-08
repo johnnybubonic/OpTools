@@ -204,7 +204,7 @@ def syncDB(args):
            os.path.join(args['destdir'], '.'),
            args['rsync']]
     if args['throttle'] > 0.0:
-        cmd.insert(-1, str(args['throttle']))
+        cmd.insert(-1, '--bwlimit {0}'.format(str(args['throttle'])))
     with open(args['logfile'], 'a') as f:
         f.write('===== {0} Rsyncing to mirror =====\n'.format(str(datetime.datetime.utcnow())))
     with open(args['logfile'], 'a') as f:
