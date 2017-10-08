@@ -28,6 +28,7 @@ def getDefaults():
                        'logfile': '/var/log/sksdump.log',
                        'days': 1,
                        'dumpkeys': 15000},
+            'sync': {'throttle': 0},
             'paths': {'basedir': '/var/lib/sks',
                       'destdir': '/srv/http/sks/dumps',
                       'rsync': 'root@mirror.square-r00t.net:/srv/http/sks/dumps'},
@@ -59,6 +60,10 @@ def getDefaults():
                                                          d['logfile'],
                                                          d['days'],
                                                          d['dumpkeys'])
+    # [sync]
+    d = dflt['sync']
+    dflt_str += ('# This section controls sync settings.\n[sync]\n# This setting is what the speed should be throttled to, '+
+                 'in KiB/s. Use 0 for no throttling.\nthrottle = {0}\n\n').format(d['throttle'])
     # [paths]
     d = dflt['paths']
     dflt_str += ('# This section controls where stuff goes and where we should find it.\n[paths]\n# ' +
@@ -198,6 +203,8 @@ def syncDB(args):
            '--delete',
            os.path.join(args['destdir'], '.'),
            args['rsync']]
+    if args['throttle'] > 0.0:
+        cmd.insert(-1, str(args['throttle']))
     with open(args['logfile'], 'a') as f:
         f.write('===== {0} Rsyncing to mirror =====\n'.format(str(datetime.datetime.utcnow())))
     with open(args['logfile'], 'a') as f:
@@ -208,6 +215,7 @@ def parseArgs():
     cfg = getDefaults()
     system = cfg['system']
     paths = cfg['paths']
+    sync = cfg['sync']
     runtime = cfg['runtime']
     args = argparse.ArgumentParser(description = 'sksdump - a tool for dumping the SKS Database',
                                    epilog = 'brent s. || 2017 || https://square-r00t.net')
@@ -264,6 +272,12 @@ def parseArgs():
                       default = paths['rsync'],
                       dest = 'rsync',
                       help = 'The remote (user@host:/path/) or local (/path/) path to use to sync the dumps to.')
+    args.add_argument('-t',
+                      '--throttle',
+                      default = float(sync['throttle']),
+                      dest = 'throttle',
+                      type = float,
+                      help = 'The amount in KiB/s to throttle the rsync to. Use 0 for no throttling.')
     args.add_argument('-D',
                       '--no-dump',
                       dest = 'nodump',
