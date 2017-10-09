@@ -55,14 +55,15 @@ def chkDisk(disk):
             subprocess.run(c, stdout = DEVNULL)
     return()
 
-def main():
-    for d in getDisks():
-        chkDisk(d)
-
 def userChk():
     # Needs to be run as root/with sudo, because of e.g. cryptsetup, etc.
     if os.geteuid() != 0:
         raise PermissionError('This script must be run with root privileges.')
+
+def main():
+    userChk()
+    for d in getDisks():
+        chkDisk(d)
 
 if __name__ == '__main__':
     main()
