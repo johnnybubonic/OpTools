@@ -5,8 +5,8 @@
 # Should probably only cron it once a week or so.
 
 import os
-import pycryptsetup
-import lvm
+import pycryptsetup  # requires cryptsetup to be configured with '--enable-python --with-python_version=3.6' (or whatever your python version is)
+import lvm  # requires lvm2 to be configured with '-enable-python3_bindings'
 import subprocess
 
 def getDisks():
