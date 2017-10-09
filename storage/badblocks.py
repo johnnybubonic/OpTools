@@ -50,8 +50,9 @@ def chkDisk(disk):
              '-t', 'long',
              '-d', 'sat',
              disk]
-    for c in (bb, smctl):
-        subprocess.run(c)
+    with open(os.devnull, 'w') as DEVNULL:
+        for c in (bb, smctl):
+            subprocess.run(c, stdout = DEVNULL)
     return()
 
 def main():
