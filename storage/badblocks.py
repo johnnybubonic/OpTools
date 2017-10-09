@@ -32,18 +32,19 @@ def getDisks():
     return(disks)
 
 def chkDisk(disk):
-    d = disk.replace('/', '.')
-    if os.path.isfile('/var/log/badblocks.{0}.log'.format(d)):
+    d = '.'.join(os.path.split(disk)[1:])
+    os.makedirs('/var/log/badblocks', exist_ok = True)
+    if os.path.isfile('/var/log/badblocks/{0}.log'.format(d)):
         # for some reason this file was just created within the past 24 hours,
         # so we better play it safe and write to a different log file
         now = datetime.datetime.now()
-        modified = datetime.datetime.fromtimestamp(os.path.getmtime('/var/log/badblocks.{0}.log'.format(d)))
+        modified = datetime.datetime.fromtimestamp(os.path.getmtime('/var/log/badblocks/{0}.log'.format(d)))
         diff = now - modified
         timedelta = datetime.timedelta(days = 1)
         if not diff >= timedelta:
             d += '_secondary'
     bb = ['badblocks',
-          '-o /var/log/badblocks.{0}.log'.format(d),
+          '-o /var/log/badblocks/{0}.log'.format(d),
           disk]
     smctl = ['smartctl',
              '-t long',
