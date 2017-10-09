@@ -5,28 +5,26 @@
 # Should probably only cron it once a week or so.
 
 import os
-import pycryptsetup  # requires cryptsetup to be configured with '--enable-python --with-python_version=3.6' (or whatever your python version is)
-import lvm  # requires lvm2 to be configured with '-enable-python3_bindings'
 import subprocess
 
 def getDisks():
     disks = []
-    for d in psutil.disk_partitions(all = False):
-        if d.device not in disks:  # Avoid dupes
-            _devpath = os.path.split(d.device)
-            if _devpath[1] == 'mapper':  # It's actually an LVM, LUKS, etc.
-                # Is it an LVM device?
-                if lvm.scan():
-                    continue
-                # Is it a LUKS device?
-                _crypt = pycryptsetup.CryptSetup(d.device)
-                if _crypt.isLuks() == 0:
-                    # We can (and should) get the actual physical device
-                    _dev = _crypt.info()['device']
-                    if _dev not in disks:
-                        disks.append(_dev)
-            else:
-                disks.append(d.device)
+    with open(os.devnull, 'w') as _DEVNULL:
+        _rawlist = subprocess.run(['parted',
+                                   '--list',
+                                   '--machine',
+                                   '--script'],
+                                  stdout = subprocess.PIPE,
+                                  stderr = _DEVNULL).stdout.decode('utf-8')
+    for l in _rawlist.splitlines():
+        if l in ('', 'BYT;'):
+            continue  # Skip empty lines and markers for new devices
+        elif l.startswith('/'):
+            # It's a device path.
+            _l = l.split(':')
+            if _l[2] not in ('md', 'dm'):  # Skip non-block devices like MDADM arrays, LVM volumes
+                if _l[0] not in disks:
+                    disks.append(_l[0])
     return(disks)
 
 def chkDisk(disk):
