@@ -4,8 +4,12 @@
 # It can take a LONG time depending on the speed/type of disk and size of disk.
 # Should probably only cron it once a week or so.
 
+import datetime
 import os
 import subprocess
+import sys
+
+# needs badblocks, smartctl, and parted installed also
 
 def getDisks():
     disks = []
@@ -28,10 +32,30 @@ def getDisks():
     return(disks)
 
 def chkDisk(disk):
-    pass
+    d = disk.replace('/', '.')
+    if os.path.isfile('/var/log/badblocks.{0}.log'.format(d)):
+        # for some reason this file was just created within the past 24 hours,
+        # so we better play it safe and write to a different log file
+        now = datetime.datetime.now()
+        modified = datetime.datetime.fromtimestamp(os.path.getmtime('/var/log/badblocks.{0}.log'.format(d)))
+        diff = now - modified
+        timedelta = datetime.timedelta(days = 1)
+        if not diff >= timedelta:
+            d += '_secondary'
+    bb = ['badblocks',
+          '-o /var/log/badblocks.{0}.log'.format(d),
+          disk]
+    smctl = ['smartctl',
+             '-t long',
+             '-d sat',
+             disk]
+    for c in (bb, smctl):
+        subprocess.run(c)
+    return()
 
 def main():
-    pass
+    for d in getDisks():
+        chkDisk(d)
 
 def userChk():
     # Needs to be run as root/with sudo, because of e.g. cryptsetup, etc.
