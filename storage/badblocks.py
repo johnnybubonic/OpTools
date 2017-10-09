@@ -44,11 +44,11 @@ def chkDisk(disk):
         if not diff >= timedelta:
             d += '_secondary'
     bb = ['badblocks',
-          '-o /var/log/badblocks/{0}.log'.format(d),
+          '-o', '/var/log/badblocks/{0}.log'.format(d),
           disk]
     smctl = ['smartctl',
-             '-t long',
-             '-d sat',
+             '-t', 'long',
+             '-d', 'sat',
              disk]
     for c in (bb, smctl):
         subprocess.run(c)
