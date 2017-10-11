@@ -6,6 +6,7 @@ import hashlib
 import os
 import pprint
 import sqlite3
+import subprocess
 import sys
 
 class Manager(object):
@@ -301,6 +302,8 @@ class Manager(object):
 
     def close(self):
         self.conn.close()
+        _cmd = ['systemctl', 'restart', 'murmur']
+        subprocess.run(_cmd)
         return()
 
 def parseArgs():
