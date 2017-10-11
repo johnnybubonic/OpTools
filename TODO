@@ -8,3 +8,7 @@
 --http://mindbending.org/en/python-and-udisks-part-2
 --http://storaged.org/doc/udisks2-api/2.6.5/gdbus-org.freedesktop.UDisks2.Block.html
 --https://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html
+
+
+sshkeys:
+need to verify keys via GPG signature. we also need to have a more robust way of updating pubkeys - categorization
