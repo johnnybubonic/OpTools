@@ -20,8 +20,8 @@ conf_options['sshd'] = {'KexAlgorithms': 'curve25519-sha256@libssh.org,diffie-he
                         'ChallengeResponseAuthentication': 'no',
                         'PubkeyAuthentication': 'yes',
                         'Ciphers': 'chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr',
-                        'MACs': 'hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-ripemd160-etm@openssh.com,' +
-                                'umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,hmac-ripemd160,umac-128@openssh.com'}
+                        'MACs': ('hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,' +
+                                 'hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com')}
 # Uncomment if this is further configured
 #conf_options['sshd']['AllowGroups'] = 'ssh-user'
 
@@ -177,12 +177,18 @@ def clientKeys(user = 'root'):
     return(pubkeys)
         
 def main():
-    #Warning: The moduli stuff takes a LONG time to run. Hours.
-    buildmoduli = True
-    hostKeys(buildmoduli)
+    _chkfile = '/etc/ssh/.aif-generated'
+    if not os.path.isfile(_chkfile):
+        #Warning: The moduli stuff takes a LONG time to run. Hours.
+        buildmoduli = True
+        hostKeys(buildmoduli)
     for t in ('sshd', 'ssh'):
         config(conf_options[t], t)
     clientKeys()
+    with open(_chkfile, 'w') as f:
+        f.write(('ssh, sshd, and hostkey configurations/keys have been ' +
+                 'modified by sshsecure.py from OpTools.\nhttps://git.square-r00t.net/OpTools/\n'))
+    return()
 
 if __name__ == '__main__':
     main()

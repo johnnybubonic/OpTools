@@ -1,3 +1,10 @@
 -git
 -net/addr needs DNS/PTR/allocation stuff etc.
 -net/mirroring
+
+-storage, see if we can access lvm and cryptsetup functions via https://github.com/storaged-project/libblockdev/issues/41
+--http://storaged.org/doc/udisks2-api/latest/gdbus-org.freedesktop.UDisks2.MDRaid.html
+--http://storaged.org/doc/udisks2-api/latest/gdbus-org.freedesktop.UDisks2.Encrypted.html
+--http://mindbending.org/en/python-and-udisks-part-2
+--http://storaged.org/doc/udisks2-api/2.6.5/gdbus-org.freedesktop.UDisks2.Block.html
+--https://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html
