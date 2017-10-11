@@ -302,8 +302,9 @@ class Manager(object):
 
     def close(self):
         self.conn.close()
-        _cmd = ['systemctl', 'restart', 'murmur']
-        subprocess.run(_cmd)
+        if self.args['operation'] in ('add', 'rm', 'edit'):
+            _cmd = ['systemctl', 'restart', 'murmur']
+            subprocess.run(_cmd)
         return()
 
 def parseArgs():
