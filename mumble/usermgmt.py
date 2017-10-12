@@ -67,6 +67,7 @@ class Manager(object):
                     if not _pass_in or _pass_in == '':
                         print('Invalid password. Please re-enter: ')
                     else:
+                        _repeat = False
                         self.args['password'] = hashlib.sha1(_pass_in.replace('\n', '').encode('utf-8')).hexdigest().lower()
         # Insert into the "users" table
         # I spit on the Mumble developers for not using https://sqlite.org/autoinc.html.
