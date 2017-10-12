@@ -11,4 +11,5 @@
 
 
 sshkeys:
-need to verify keys via GPG signature. we also need to have a more robust way of updating pubkeys - categorization
+-need to verify keys via GPG signature. we also need to have a more robust way of updating pubkeys - categorization
+-write API to get pubkeys, hostkeys? really wish DBs supported nesting

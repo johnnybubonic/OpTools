@@ -1,3 +1,4 @@
 -add lsChans()
 -lsACL? lsBans? edit these?
--find out some way to use the DBus/ICE/RPC interface instead? then we can get rid of the reload
+-find out some way to use the DBus/ICE/RPC interface instead? then we can get rid of the restart
+-- NOTE: Arch murmur package currently disables ice at compile-time. https://bugs.archlinux.org/task/55958
