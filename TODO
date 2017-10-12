@@ -1,5 +1,7 @@
 -git
+
 -net/addr needs DNS/PTR/allocation stuff etc.
+
 -net/mirroring
 
 -storage, see if we can access lvm and cryptsetup functions via https://github.com/storaged-project/libblockdev/issues/41
@@ -13,3 +15,4 @@
 sshkeys:
 -need to verify keys via GPG signature. we also need to have a more robust way of updating pubkeys - categorization
 -write API to get pubkeys, hostkeys? really wish DBs supported nesting
+-separate by algo, but this is easy to do (split on space, [0])
