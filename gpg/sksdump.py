@@ -120,7 +120,10 @@ def destPrep(args):
             _dir = os.path.join(thisdir, d)
             if os.path.isdir(_dir):
                 if len(os.listdir(_dir)) == 0:
-                    os.rmdir(os.path.join(thisdir, d))
+                    try:
+                        os.rmdir(os.path.join(thisdir, d))
+                    except NotADirectoryError:
+                        pass  # in case it grabs the "current" symlink
     #try:
     #    os.removedirs(sks['destdir'])  # Remove empty dirs
     #except:

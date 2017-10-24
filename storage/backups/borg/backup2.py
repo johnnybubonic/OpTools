@@ -35,8 +35,18 @@ loglvls = {'critical': logging.CRITICAL,
 class Backup(object):
     def __init__(self, args):
         self.args = args
-        # Set up logging
+        ### LOGGING ###
+        # Thanks to:
+        # https://web.archive.org/web/20170726052946/http://www.lexev.org/en/2013/python-logging-every-day/
+        # https://stackoverflow.com/a/42604392
+        # https://plumberjack.blogspot.com/2010/10/supporting-alternative-formatting.html
+        # and user K900_ on r/python for entertaining my very silly question.
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(loglvls[self.args['loglevel']])
         _logfmt = logging.Formatter(fmt = '{levelname}:{name}: {message} ({asctime}; {filename}:{lineno})',
+                                    style = '{',
+                                    datefmt = '%Y-%m-%d %H:%M:%S')
+        _journalfmt = logging.Formatter(fmt = '{levelname}:{name}: {message} ({filename}:{lineno})',
                                     style = '{',
                                     datefmt = '%Y-%m-%d %H:%M:%S')
         handlers = []
@@ -45,13 +55,18 @@ class Backup(object):
                                                                  encoding = 'utf8',
                                                                  maxBytes = 100000,
                                                                  backupCount = 1))
-        handlers.append(logging.StreamHandler())
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        if self.args['verbose']:
+            handlers.append(logging.StreamHandler())
+        if has_systemd:
+            handlers.append(journal.JournalHandler())
         for h in handlers:
             h.setFormatter(_logfmt)
             h.setLevel(loglvls[self.args['loglevel']])
             self.logger.addHandler(h)
+        ### CONFIG ###
+        if not os.path.isfile(self.args['cfgfile']):
+            self.logger.error('{0} does not exist'.format(self.args['cfgfile']))
+            exit(1)
 
         def create(self):
             pass
@@ -113,6 +128,11 @@ def parseArgs():
                       default = _logfile,
                       help = ('The path to the logfile, only used if -Ld/--log-to-disk ' +
                               'is specified. Default: \033[1m{0}\033[0m (dynamic)').format(_logfile))
+    args.add_argument('-v', '--verbose',
+                      dest = 'verbose',
+                      action = 'store_true',
+                      help = ('If specified, log messages will be printed to STDOUT/STDERR ' +
+                              'in addition to the other configured log systems.'))
     ### ARGS FOR ALL OPERATIONS ###
     commonargs = argparse.ArgumentParser(add_help = False)
     commonargs.add_argument('-r', '--repo',
