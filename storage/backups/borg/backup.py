@@ -3,6 +3,7 @@
 # TODO: https://borgbackup.readthedocs.io/en/latest/internals/frontends.html
 # will they EVER release a public API? for now we'll just use subprocess since
 # we import it for various prep stuff anyways.
+# TODO: no silent failing?
 
 import argparse
 import configparser
