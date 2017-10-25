@@ -194,8 +194,8 @@ class Backup(object):
         _cmd = None
         for p in os.environ['PATH'].split(':'):
             d = os.path.expanduser(p)
-            if os.path.isfile(os.path.join(d, pkgtool)):
-                _pkgr = pkgtool
+            if os.path.isfile(os.path.join(d, pkgr)):
+                _pkgr = pkgr
                 self.logger.debug('Package tool found at {0}'.format(_pkgr))
             else:
                 _pkgr = 'pacman'
