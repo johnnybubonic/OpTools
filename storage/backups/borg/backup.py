@@ -278,6 +278,7 @@ class Backup(object):
         return()
 
     def printer(self):
+        # TODO: better alignment. https://stackoverflow.com/a/5676884
         _results = self.lister()
         if not self.args['archive']:  # It's a listing of archives
             print('\033[1mREPO:\tSNAPSHOT:\t\tTIMESTAMP:\033[0m\n')
@@ -285,22 +286,22 @@ class Backup(object):
                 print(r, end = '')
                 for line in _results[r]:
                     _snapshot = line.split()
-                    print('\t\033[1m{0}\033[0m\t\t{1}'.format(_snapshot[0], ' '.join(_snapshot[1:])))
+                    print('\t{0}\t\t{1}'.format(_snapshot[0], ' '.join(_snapshot[1:])))
                 print()
         else:  # It's a listing inside an archive
             if self.args['verbose']:
-                fields = ['REPO:', 'PERMS:', 'OWNERSHIP:', 'SIZE:', 'TIMESTAMP:', 'PATH:']
-                for r in results.keys():
-                    print('\033[1m{0}\t{1}\033[0m'.format(fields[0], r))
+                _fields = ['REPO:', 'PERMS:', 'OWNERSHIP:', 'SIZE:', 'TIMESTAMP:', 'PATH:']
+                for r in _results.keys():
+                    print('\033[1m{0}\t{1}\033[0m'.format(_fields[0], r))
                     # https://docs.python.org/3/library/string.html#formatspec
-                    print('{0[1]:<15}\t{0[2]:<15}\t{0[3]:<15}\t{0[4]:<24}\t{0[5]:<15}'.format(fields))
+                    print('{0[1]:<15}\t{0[2]:<15}\t{0[3]:<15}\t{0[4]:<24}\t{0[5]:<15}'.format(_fields))
                     for line in _results[r]:
                         _fline = line.split()
-                        _perms = fline[0]
-                        _ownership = '{0}:{1}'.format(fline[1], fline[2])
-                        _size = fline[3]
-                        _time = ' '.join(fline[4:7])
-                        _path = ' '.join(fline[7:])
+                        _perms = _fline[0]
+                        _ownership = '{0}:{1}'.format(_fline[1], _fline[2])
+                        _size = _fline[3]
+                        _time = ' '.join(_fline[4:7])
+                        _path = ' '.join(_fline[7:])
                         print('{0:<15}\t{1:<15}\t{2:<15}\t{3:<24}\t{4:<15}'.format(_perms,
                                                                                    _ownership,
                                                                                    _size,
@@ -318,7 +319,7 @@ class Backup(object):
     def lister(self):
         output = {}
         _env = os.environ.copy()
-        self.logger.info('START: lister')
+        self.logger.debug('START: lister')
         _env['BORG_RSH'] = self.cfg['config']['ctx']
         for r in self.args['repo']:
             if self.args['archive']:
@@ -359,7 +360,7 @@ class Backup(object):
                         output[r] = list(reversed(output[r]))[:self.args['numlimit']]
             if self.args['invert']:
                 output[r] = reversed(output[r])
-        self.logger.info('END: lister')
+        self.logger.debug('END: lister')
         return(output)
 
 def printMoarHelp():
