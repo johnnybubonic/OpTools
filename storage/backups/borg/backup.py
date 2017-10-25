@@ -4,6 +4,7 @@
 # will they EVER release a public API? for now we'll just use subprocess since
 # we import it for various prep stuff anyways.
 # TODO: no silent failing?
+# TODO: so, borg -v's extra output? yeah. that goes to stderr, not stdout. gorram it. so check the _cmd.returncode
 
 import argparse
 import configparser
