@@ -102,7 +102,7 @@ class Backup(object):
         self.logger.debug('Running command: {0}'.format(' '.join(cmd)))
         if self.args['dryrun']:
             return()  # no-op
-        if outfh:
+        if stdoutfh:
             _err = subprocess.run(cmd, stdout = stdoutfh, stderr = subprocess.PIPE).stderr.decode('utf-8').strip()
         else:
             with open(os.devnull, 'w') as DEVNULL:
