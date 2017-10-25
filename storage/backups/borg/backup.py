@@ -164,7 +164,7 @@ class Backup(object):
                                                   self.cfg['config']['host'],
                                                   r,
                                                   self.args['archive']))
-            for p in cfg['repos'][r]['paths']:
+            for p in self.cfg['repos'][r]['paths']:
                 _cmd.append(p)
             _env['BORG_PASSPHRASE'] = self.cfg['repos'][r]['password']
             self.logger.debug('VARS: {0}'.format(vars()))
