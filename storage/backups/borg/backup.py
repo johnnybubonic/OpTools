@@ -516,7 +516,7 @@ def main():
     elif args['oper'] == 'listrepos':
         bak.listRepos()
     elif args['oper'] == 'backup':
-        bak.createBak()
+        bak.create()
     elif args['oper'] == 'init':
         bak.createRepo()
     return()
