@@ -108,7 +108,7 @@ class Backup(object):
             with open(os.devnull, 'w') as DEVNULL:
                 _err = subprocess.run(cmd, stdout = DEVNULL, stderr = subprocess.PIPE).stderr.decode('utf-8').strip() 
         if _err != '':
-            self.logger.error('STDERR: {0} ({1})'.format(_out.stderr.decode('utf-8'),
+            self.logger.error('STDERR: {0} ({1})'.format(_err.stderr.decode('utf-8'),
                                                          ' '.join(cmd)))
         return()
     
@@ -134,11 +134,14 @@ class Backup(object):
                                       stderr = subprocess.PIPE)
                 _stdout = _out.stdout.decode('utf-8').strip()
                 _stderr = _out.stderr.decode('utf-8').strip()
+                _returncode = _out.returncode
                 self.logger.debug('[{0}]: (RESULT) {1}'.format(r, _stdout))
-                if _stderr != '':
-                    self.logger.error('[{0}]: STDERR: {1} ({2})'.format(r,
-                                                                        _stderr,
-                                                                        ' '.join(_cmd)))
+                # sigh. borg uses stderr for verbose output.
+                self.logger.debug('[{0}]: STDERR: ({2})\n{1}'.format(r,
+                                                                     _stderr,
+                                                                     ' '.join(_cmd)))
+                if _returncode != 0:
+                    self.logger.error('[{0}]: FAILED: {1}'.format(r, ' '.join(_cmd)))
             del(_env['BORG_PASSPHRASE'])
             self.logger.info('[{0}]: END INITIALIZATION'.format(r))
         return()
@@ -179,11 +182,13 @@ class Backup(object):
                                       stderr = subprocess.PIPE)
                 _stdout = _out.stdout.decode('utf-8').strip()
                 _stderr = _out.stderr.decode('utf-8').strip()
+                _returncode = _out.returncode
                 self.logger.debug('[{0}]: (RESULT) {1}'.format(r, _stdout))
-                if _stderr != '':
-                    self.logger.error('[{0}]: STDERR: {1} ({2})'.format(r,
-                                                                        _stderr,
-                                                                        ' '.join(_cmd)))
+                self.logger.error('[{0}]: STDERR: ({2})\n{1}'.format(r,
+                                                                     _stderr,
+                                                                     ' '.join(_cmd)))
+                if _returncode != 0:
+                    self.logger.error('[{0}]: FAILED: {1}'.format(r, ' '.join(_cmd)))
                 del(_env['BORG_PASSPHRASE'])
             self.logger.info('[{0}]: END BACKUP'.format(r))
         self.logger.info('END: backup')
