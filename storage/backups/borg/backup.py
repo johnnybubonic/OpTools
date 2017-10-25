@@ -170,7 +170,7 @@ class Backup(object):
             self.logger.debug('VARS: {0}'.format(vars()))
             # We don't use self.cmdExec() here because we want to explicitly pass the env
             # and format the log line differently.
-            self.logger.debug('[{0}]: Running command: {1}'.format(r, ' '.join(cmd)))
+            self.logger.debug('[{0}]: Running command: {1}'.format(r, ' '.join(_cmd)))
             if not self.args['dryrun']:
                 _out = subprocess.run(_cmd,
                                       env = _env,
