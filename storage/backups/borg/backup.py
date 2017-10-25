@@ -100,7 +100,7 @@ class Backup(object):
         
     def cmdExec(self, cmd, stdoutfh = None):
         self.logger.debug('Running command: {0}'.format(' '.join(cmd)))
-        if self.args['dryryun']:
+        if self.args['dryrun']:
             return()  # no-op
         if outfh:
             _err = subprocess.run(cmd, stdout = stdoutfh, stderr = subprocess.PIPE).stderr.decode('utf-8').strip()
