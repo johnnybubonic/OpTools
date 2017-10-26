@@ -103,13 +103,17 @@ class Backup(object):
         if self.args['dryrun']:
             return()  # no-op
         if stdoutfh:
-            _err = subprocess.run(cmd, stdout = stdoutfh, stderr = subprocess.PIPE).stderr.decode('utf-8').strip()
+            _cmd = subprocess.run(cmd, stdout = stdoutfh, stderr = subprocess.PIPE)
         else:
-            with open(os.devnull, 'w') as DEVNULL:
-                _err = subprocess.run(cmd, stdout = DEVNULL, stderr = subprocess.PIPE).stderr.decode('utf-8').strip() 
-        if _err != '':
-            self.logger.error('STDERR: {0} ({1})'.format(_err.stderr.decode('utf-8'),
-                                                         ' '.join(cmd)))
+            _cmd = subprocess.run(cmd,
+                                  stdout = subprocess.PIPE,
+                                  stderr = subprocess.PIPE)
+            _out = _cmd.stdout.decode('utf-8').strip()
+        _err = _cmd.stderr.decode('utf-8').strip()
+        _returncode = _cmd.returncode
+        if _returncode != 0:
+            self.logger.error('STDERR: ({1})\n{0}'.format(_err,
+                                                          ' '.join(cmd)))
         return()
     
     def createRepo(self):
@@ -351,11 +355,12 @@ class Backup(object):
                                        stderr = subprocess.PIPE)
                 _stdout = [i.strip() for i in _out.stdout.decode('utf-8').splitlines()]
                 _stderr = _out.stderr.decode('utf-8').strip()
+                _returncode = _out.returncode
                 output[r] = _stdout
                 self.logger.debug('[{0}]: (RESULT) {1}'.format(r,
                                                                '\n'.join(_stdout)))
-                if _stderr != '':
-                    self.logger.error('[{0}]: STDERR: {1} ({2})'.format(r,
+                if _returncode != 0:
+                    self.logger.error('[{0}]: STDERR: ({2}) ({1})'.format(r,
                                                                         _stderr,
                                                                         ' '.join(_cmd)))
             del(_env['BORG_PASSPHRASE'])
