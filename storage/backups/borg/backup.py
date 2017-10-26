@@ -201,7 +201,7 @@ class Backup(object):
                                                                      ' '.join(_cmd)))
                 if _returncode != 0:
                     self.logger.error('[{0}]: FAILED: {1}'.format(r, ' '.join(_cmd)))
-                if _err != '' and self.cron and _returncode != 0:
+                if _stderr != '' and self.cron and _returncode != 0:
                     self.logger.warning('Command {0} failed: {1}'.format(' '.join(cmd), _err))
                 del(_env['BORG_PASSPHRASE'])
             self.logger.info('[{0}]: END BACKUP'.format(r))
