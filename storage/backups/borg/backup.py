@@ -403,7 +403,7 @@ def parseArgs():
     ### DEFAULTS ###
     _date = datetime.datetime.now().strftime("%Y_%m_%d.%H_%M")
     _logfile = '/var/log/borg/{0}'.format(_date)
-    _mysqldir = os.path.abspath(os.path.join(os.path.expanduser('~'), 'bak', 'mysql'))
+    _mysqldir = os.path.abspath(os.path.join(os.path.expanduser('~'), '.bak', 'mysql'))
     _stagedir = os.path.abspath(os.path.join(os.path.expanduser('~'), '.bak', 'misc'))
     _cfgfile = os.path.abspath(os.path.join(os.path.expanduser('~'), '.config', 'optools', 'backup.json'))
     _defloglvl = 'info'
