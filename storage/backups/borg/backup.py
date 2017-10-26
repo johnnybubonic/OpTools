@@ -3,8 +3,6 @@
 # TODO: https://borgbackup.readthedocs.io/en/latest/internals/frontends.html
 # will they EVER release a public API? for now we'll just use subprocess since
 # we import it for various prep stuff anyways.
-# TODO: no silent failing?
-# TODO: so, borg -v's extra output? yeah. that goes to stderr, not stdout. gorram it. so check the _cmd.returncode
 
 import argparse
 import configparser
@@ -21,6 +19,7 @@ try:
 except ImportError:
     has_mysql = False
 try:
+    # https://www.freedesktop.org/software/systemd/python-systemd/journal.html#journalhandler-class
     from systemd import journal
     has_systemd = True
 except ImportError:
@@ -96,6 +95,12 @@ class Backup(object):
                 self.args['repo'].remove(r)
         self.logger.debug('VARS (after args cleanup): {0}'.format(vars()))
         self.logger.debug('END INITIALIZATION')
+        ### CHECK ENVIRONMENT ###
+        # If we're running from cron, we want to print errors to stdout.
+        if os.isatty(sys.stdin.fileno()):
+            self.cron = False
+        else:
+            self.cron = True
         ### END INIT ###
         
     def cmdExec(self, cmd, stdoutfh = None):
@@ -112,8 +117,9 @@ class Backup(object):
         _err = _cmd.stderr.decode('utf-8').strip()
         _returncode = _cmd.returncode
         if _returncode != 0:
-            self.logger.error('STDERR: ({1})\n{0}'.format(_err,
-                                                          ' '.join(cmd)))
+            self.logger.error('STDERR: ({1})\n{0}'.format(_err, ' '.join(cmd)))
+        if _err != '' and self.cron:
+            self.logger.warning('Command {0} failed: {1}'.format(' '.join(cmd), _err)
         return()
     
     def createRepo(self):
@@ -146,6 +152,8 @@ class Backup(object):
                                                                      ' '.join(_cmd)))
                 if _returncode != 0:
                     self.logger.error('[{0}]: FAILED: {1}'.format(r, ' '.join(_cmd)))
+                if _err != '' and self.cron and _returncode != 0:
+                    self.logger.warning('Command {0} failed: {1}'.format(' '.join(cmd), _err)
             del(_env['BORG_PASSPHRASE'])
             self.logger.info('[{0}]: END INITIALIZATION'.format(r))
         return()
@@ -193,6 +201,8 @@ class Backup(object):
                                                                      ' '.join(_cmd)))
                 if _returncode != 0:
                     self.logger.error('[{0}]: FAILED: {1}'.format(r, ' '.join(_cmd)))
+                if _err != '' and self.cron and _returncode != 0:
+                    self.logger.warning('Command {0} failed: {1}'.format(' '.join(cmd), _err)
                 del(_env['BORG_PASSPHRASE'])
             self.logger.info('[{0}]: END BACKUP'.format(r))
         self.logger.info('END: backup')
@@ -363,6 +373,8 @@ class Backup(object):
                     self.logger.error('[{0}]: STDERR: ({2}) ({1})'.format(r,
                                                                         _stderr,
                                                                         ' '.join(_cmd)))
+                if _err != '' and self.cron and _returncode != 0:
+                    self.logger.warning('Command {0} failed: {1}'.format(' '.join(cmd), _err)
             del(_env['BORG_PASSPHRASE'])
             if not self.args['archive']:
                 if self.args['numlimit'] > 0:
