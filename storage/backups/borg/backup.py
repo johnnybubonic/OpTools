@@ -373,7 +373,7 @@ class Backup(object):
                     self.logger.error('[{0}]: STDERR: ({2}) ({1})'.format(r,
                                                                         _stderr,
                                                                         ' '.join(_cmd)))
-                if _err != '' and self.cron and _returncode != 0:
+                if _stderr != '' and self.cron and _returncode != 0:
                     self.logger.warning('Command {0} failed: {1}'.format(' '.join(cmd), _err))
             del(_env['BORG_PASSPHRASE'])
             if not self.args['archive']:
