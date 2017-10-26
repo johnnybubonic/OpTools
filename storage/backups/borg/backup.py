@@ -266,7 +266,7 @@ class Backup(object):
         self.logger.debug('Databases: {0}'.format(', '.join(_DBs)))
         for db in _DBs:
             _cmd = ['mysqldump',
-                    '--result-file={0}.sql'.format(os.path.join(mysqldir, db))]
+                    '--result-file={0}.sql'.format(os.path.join(self.args['mysqldir'], db))]
             # These are database-specific options
             if db in ('information_schema', 'performance_schema'):
                 _cmd.append('--skip-lock-tables')
