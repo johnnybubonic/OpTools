@@ -101,6 +101,9 @@ class hostscanner(object):
         return()
 
     def write(self):
+        if self.args['writemode'] == 'replace':
+            if os.path.isfile(self.args['output']) and self.args['output'] != sys.stdout:
+                os.move(self.args['output'], os.path.join(self.args['output'], '.bak'))
         for h in self.keys.keys():
             for i in self.keys[h]:
                 _s = '# Automatically added via hostscan.py\n{0} {1} {2}\n'.format(i['host'],
@@ -109,11 +112,7 @@ class hostscanner(object):
                 if self.args['output'] == sys.stdout:
                     print(_s, end = '')
                 else:
-                    if self.args['writemode'] == 'append':
-                        _wm = 'a'
-                    else:
-                        _wm = 'w'
-                    with open(self.args['output'], _wm) as f:
+                    with open(self.args['output'], 'a') as f:
                                 f.write(_s)
                     os.chmod(self.args['output'], 0o644)
                     os.chown(self.args['output'],
