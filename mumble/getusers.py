@@ -43,8 +43,10 @@ def dictify(obj):
 #        if uid == 3:
 #            print(_u)
 
+print(mgmt.conn['read'])
 _server = mgmt.conn['read'].getServer(1)
 
+print(_server.getACL(0))
 
 #acl = _server.getACL(0)
 #print(acl[0])

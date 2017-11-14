@@ -13,7 +13,6 @@ import IcePy  # python-zeroc-ice in AUR
 import getpass
 import os
 import re
-import subprocess
 import sys
 import tempfile
 
@@ -45,16 +44,10 @@ class IceMgr(object):
 
     def sshTunnel(self):
         try:
-            import paramiko
+            from sshtunnel import SSHTunnelForwarder,create_logger
         except ImportError:
-            raise ImportError('You must install Paramiko to use SSH tunneling!')
-        # This is the start of an ugly, ugly hack.
-        # All because, to my knowledge, Paramiko can't guess the key type and still
-        # let us use .connect() with a passphrase on the key, etc. etc.
-        _keyidmap = {'dsa': 'DSS',
-                     'ecdsa': 'ECDSA',
-                     'ed25519': 'Ed25519',
-                     'rsa': 'RSA'}
+            raise ImportError('You must install the sshtunnel Python module to use SSH tunneling!')
+        import time
         _sshcfg = self.cfg['TUNNEL']
         # Do some munging to make this easier to deal with.
         if _sshcfg['user'] == '':
@@ -78,29 +71,35 @@ class IceMgr(object):
             if _sshcfg['key'] == '':
                 _sshcfg['key'] = '~/.ssh/id_rsa'
             _key = os.path.abspath(os.path.expanduser(_sshcfg['key']))
-            # We need to convert it to a Paramiko Pkey type.
+            # We need to get the passphrase for the key, if it's set.
             if _sshcfg['key_passphrase'].lower() == 'true':
                 _keypass = getpass.getpass(('What is the passphrase for {0}? ' +
-                                '(Will not be echoed back.)\nPassphrase: ')).encode('utf-8')
+                                '(Will not be echoed back.)\nPassphrase: ').format(_key)).encode('utf-8')
             else:
                 _keypass = None
-            # Remember that "ugly hack" I mention at the beginning of this method?
-            # Here's the rest of it. Recoil in terror.
-            _cmd = subprocess.run(['ssh-keygen', '-l', '-f', _key],
-                                  stdout = subprocess.PIPE)
-            _kt = re.sub('[()]', '', _cmd.stdout.decode('utf-8').split()[-1]).lower()
-            _keyfunc = getattr(paramiko, '{0}Key'.format(_keyidmap[_kt]))
-            _sshcfg['key'] = _keyfunc.from_private_key_file(_key,
-                                                            _keypass)
-            # That... was painful. But it *works*, darn it!
-        #self.ssh = paramiko.SSHClient()
-        self.ssh = paramiko.Transport((_sshcfg['host'],
-                                       _sshcfg['port']))
-        #self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh.connect(_sshcfg['host'],
-                         username = _sshcfg['user'],
-                         password = _ssh['passphrase'],
-                         pkey = _sshcfg['key'])
+        # To pring debug info, just add "logger=create_logger(loglevel=1)" to the params.
+        self.ssh = SSHTunnelForwarder(_sshcfg['host'],
+                                      ssh_pkey = _key,
+                                      ssh_private_key_password = _keypass,
+                                      ssh_username = _sshcfg['user'],
+                                      ssh_port = _sshcfg['port'],
+                                      local_bind_address = ('127.0.0.1', ),
+                                      remote_bind_address = (self.cfg['ICE']['host'],
+                                                             int(self.cfg['ICE']['port'])),
+                                                             set_keepalive = 3.0)
+        self.ssh.start()
+        if self.args['verbose']:
+            print('Configured tunneling for {0}:{1}({2}:{3}) => {4}:{5}'.format(
+                                                    _sshcfg['host'],
+                                                    _sshcfg['port'],
+                                                    self.cfg['ICE']['host'],
+                                                    self.cfg['ICE']['port'],
+                                                    self.ssh.local_bind_address[0],
+                                                    self.ssh.local_bind_address[1]))
+        #self.cfg['ICE']['port'] = int(self.ssh.local_bind_ports[0])
+        self.cfg['ICE']['port'] = int(self.ssh.local_bind_port)
+        self.cfg['ICE']['host'] = self.ssh.local_bind_address[0]
+        time.sleep(3)
         return()
 
     def connect(self):
@@ -115,9 +114,9 @@ class IceMgr(object):
         _conn = Ice.InitializationData()
         _conn.properties = _prop_data
         self.ice = Ice.initialize(_conn)
-        _host = 'Meta:{0} -h {1} -p {2}'.format(self.cfg['ICE']['proto'],
-                                                self.cfg['ICE']['host'],
-                                                self.cfg['ICE']['port'])
+        _host = 'Meta:{0} -h {1} -p {2} -t 1000'.format(self.cfg['ICE']['proto'],
+                                                        self.cfg['ICE']['host'],
+                                                        self.cfg['ICE']['port'])
         _ctx = self.ice.stringToProxy(_host)
         # I owe a lot of neat tricks here to:
         # https://raw.githubusercontent.com/mumble-voip/mumble-scripts/master/Helpers/mice.py
@@ -293,6 +292,9 @@ class IceMgr(object):
 
     def close(self):
         self.ice.destroy()
+        if self.cfg['TUNNEL']['enable'].lower() in ('', 'true'):
+            self.ssh.stop()
+            self.ssh.close()
         return()
 
 def parseArgs():
