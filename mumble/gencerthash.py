@@ -18,36 +18,22 @@ except ImportError:
 class color(object):
     # Windows doesn't support ANSI color escapes like sh does.
     if sys.platform == 'win32':
-        # "You should be using subprocess!" yeah yeah yeah, I know, shut up.
-        # I already have OS imported and this is a quick hack.
-        BLACK = os.system('color 0')
-        BLUE = os.system('color 1')
-        GREEN = os.system('color 2')
-        DARKCYAN = os.system('color 3')  # "Aqua" text
-        RED = os.system('color 4')
-        PURPLE = os.system('color 5')
-        YELLOW = os.system('color 6')
-        END = os.system('color 7')  # "White" text
-        GRAY = os.system('color 8')
-        CYAN = os.system('color 9') # "Light Blue" text
-        LTGREEN = os.system('color A')  # "Light Green" text
-        LTAQUA = os.system('color B')  # "Light Aqua" text
-        LTRED = os.system('color C')  # "Light Red" text
-        LTPURPLE = os.system('color D')  # "Light Purple" text
-        LTYELLOW = os.system('color E')  # "Light Yellow" text
-        BOLD = os.system('color F')  # "Bright White" text
-        UNDERLINE = None
-    else:
-        PURPLE = '\033[95m'
-        CYAN = '\033[96m'
-        DARKCYAN = '\033[36m'
-        BLUE = '\033[94m'
-        GREEN = '\033[92m'
-        YELLOW = '\033[93m'
-        RED = '\033[91m'
-        BOLD = '\033[1m'
-        UNDERLINE = '\033[4m'
-        END = '\033[0m'
+        # Gorram it, Windows.
+        # https://bugs.python.org/issue29059
+        # https://bugs.python.org/issue30075
+        # https://github.com/Microsoft/WSL/issues/1173
+        import subprocess
+        subprocess.call('', shell=True)
+    PURPLE = '\033[95m'
+    CYAN = '\033[96m'
+    DARKCYAN = '\033[36m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
 
 class Hasher(object):
     def __init__(self, args):
@@ -200,10 +186,8 @@ def parseArgs():
     if sys.platform == 'darwin':
         _cfgpath = 'PLIST:~/Library/Preferences/net.sourceforge.mumble.Mumble.plist'
     # ALL versions of windows, even Win10, on x86. Even 64-bit. I know.
-    elif sys.platform == 'win32':
-        _cfgpath = r'REG:HKEY_CURRENT_USER\Software\Mumble\Mumble\net\certificate'
-    # Some people are sensible.
-    if sys.platform == 'cygwin':
+    # And Cygwin, which currently doesn't even suppport registry reading (see blobGetter()).
+    elif sys.platform in ('win32', 'cygwin'):
         _cfgpath = r'REG:HKEY_CURRENT_USER\Software\Mumble\Mumble\net\certificate'
     elif (sys.platform == 'linux') or (re.match('.*bsd.*', sys.platform)):  # duh
         _cfgpath = 'INI:~/.config/Mumble/Mumble.conf'
@@ -240,6 +224,9 @@ def parseArgs():
                                                      '{0}INI{1}'.format(color.BOLD, color.END),
                                                      '{0}REG{1}'.format(color.BOLD, color.END),
                                                      '{0}{1}{2}'.format(color.BOLD, _defcrt, color.END)))
+                                                     # this  ^ currently prints "0m" at the end of the help message,
+                                                     # all the way on the left on Windows.
+                                                     # Why? Who knows; Microsoft is a mystery even to themselves.
     return(args)
 
 def main():
@@ -247,8 +234,9 @@ def main():
     cert = Hasher(args)
     cert.importCert()
     h = cert.hashCert()
-    print('\n\t\033[1mYour certificate\'s public hash is: \033[94m{0}\033[0m'.format(h))
-    print('\n\t\033[1mPlease provide this to the Mumble server administrator that has requested it.\033[0m\n')
+    print(('\n\t{0}Your certificate\'s public hash is: ' +
+           '{1}{2}{3}\n\n\t{0}Please provide this to the Mumble server administrator ' +
+           'that has requested it.{3}').format(color.BOLD, color.BLUE, h, color.END))
 
 if __name__ == '__main__':
     main()
