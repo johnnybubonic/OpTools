@@ -25,7 +25,9 @@ class IceMgr(object):
         if self.args['verbose']:
             import pprint
         self.getCfg()
-        self.connect()
+        if self.cfg['MURMUR']['connection'] == '':
+            self.cfg['MURMUR']['connection'] == 'ice'
+        self.connect(self.cfg['MURMUR']['connection'])
 
     def getCfg(self):
         _cfg = os.path.join(os.path.abspath(os.path.expanduser(self.args['cfgfile'])))
@@ -42,69 +44,13 @@ class IceMgr(object):
                 self.cfg[section][option] = _parser.get(section, option)
         return()
 
-    def sshTunnel(self):
-        try:
-            from sshtunnel import SSHTunnelForwarder,create_logger
-        except ImportError:
-            raise ImportError('You must install the sshtunnel Python module to use SSH tunneling!')
-        import time
-        _sshcfg = self.cfg['TUNNEL']
-        # Do some munging to make this easier to deal with.
-        if _sshcfg['user'] == '':
-            _sshcfg['user'] = getpass.getuser()
-        if _sshcfg['port'] == '':
-            _sshcfg['port'] = 22
-        else:
-            _sshcfg['port'] = int(_sshcfg['port'])
-        if _sshcfg['auth'].lower() == 'passphrase':
-            if _sshcfg['passphrase'] == '':
-                _sshcfg['passphrase'] = getpass.getpass(('What passphrase should ' +
-                                            'we use for {0}@{1}:{2}? (Will not ' +
-                                            'echo back.)\nPassphrase: ').format(
-                                                    _sshcfg['user'],
-                                                    _sshcfg['host'],
-                                                    _sshcfg['port'])).encode('utf-8')
-            else:
-                _sshcfg['passphrase'] = _sshcfg['passphrase'].encode('utf-8')
-            _sshcfg['key'] = None
-        else:
-            if _sshcfg['key'] == '':
-                _sshcfg['key'] = '~/.ssh/id_rsa'
-            _key = os.path.abspath(os.path.expanduser(_sshcfg['key']))
-            # We need to get the passphrase for the key, if it's set.
-            if _sshcfg['key_passphrase'].lower() == 'true':
-                _keypass = getpass.getpass(('What is the passphrase for {0}? ' +
-                                '(Will not be echoed back.)\nPassphrase: ').format(_key)).encode('utf-8')
-            else:
-                _keypass = None
-        # To pring debug info, just add "logger=create_logger(loglevel=1)" to the params.
-        self.ssh = SSHTunnelForwarder(_sshcfg['host'],
-                                      ssh_pkey = _key,
-                                      ssh_private_key_password = _keypass,
-                                      ssh_username = _sshcfg['user'],
-                                      ssh_port = _sshcfg['port'],
-                                      local_bind_address = ('127.0.0.1', ),
-                                      remote_bind_address = (self.cfg['ICE']['host'],
-                                                             int(self.cfg['ICE']['port'])),
-                                                             set_keepalive = 3.0)
-        self.ssh.start()
-        if self.args['verbose']:
-            print('Configured tunneling for {0}:{1}({2}:{3}) => {4}:{5}'.format(
-                                                    _sshcfg['host'],
-                                                    _sshcfg['port'],
-                                                    self.cfg['ICE']['host'],
-                                                    self.cfg['ICE']['port'],
-                                                    self.ssh.local_bind_address[0],
-                                                    self.ssh.local_bind_address[1]))
-        #self.cfg['ICE']['port'] = int(self.ssh.local_bind_ports[0])
-        self.cfg['ICE']['port'] = int(self.ssh.local_bind_port)
-        self.cfg['ICE']['host'] = self.ssh.local_bind_address[0]
-        time.sleep(3)
-        return()
-
-    def connect(self):
-        if self.cfg['TUNNEL']['enable'].lower() == 'true':
-            self.sshTunnel()
+    def connect(self, ctxtype):
+        ctxtype = ctxtype.strip().upper()
+        if ctxtype.lower() not in ('ice', 'grpc'):
+            raise ValueError('You have specified an invalid connection type.')
+        _cxcfg = self.cfg[ctxtype]
+        self.cfg[ctxtype]['spec'] = os.path.join(os.path.abspath(os.path.expanduser(self.cfg[ctxtype]['spec'])))
+        # ICE START
         _props = {'ImplicitContext': 'Shared',
                   'Default.EncodingVersion': '1.0',
                   'MessageSizeMax': str(self.cfg['ICE']['max_size'])}
@@ -155,7 +101,7 @@ class IceMgr(object):
             _slicefile.close()
             os.remove(_filepath)
         else:  # A .ice file was explicitly defined in the cfg
-            _slicedir.append(os.path.join(os.path.abspath(os.path.expanduser(self.cfg['ICE']['slice']))))
+            _slicedir.append(self.cfg[ctxtype]['spec'])
             Ice.loadSlice('', _slicedir)
         import Murmur
         self.conn = {}

@@ -1,0 +1,27 @@
+# remotehooks.py should go in your <gitolite repo>/local/hooks/repo-specific directory,
+# along with the (uncommented) format of this file configured for your particular hooks
+# "cmds" is a list of commands performed locally on the gitolite server,
+# "remotecmds" contains a recursive directory of commands to run remotely
+
+{
+    "<REPO_NAME>": {
+        "remotecmds": {
+            "<HOST_OR_IP_ADDRESS>": {
+                "<USER>": {
+                    "cmds": [
+                        "<COMMAND_1>",
+                        "<COMMAND_2>"
+                    ]
+                }
+            }
+        }
+    },
+    "<REPO2_NAME>": {
+        "cmds": [
+            [
+                "<LOCAL_COMMAND_1>",
+                "<LOCAL_COMMAND_2>"
+            ]
+        ]
+    }
+}

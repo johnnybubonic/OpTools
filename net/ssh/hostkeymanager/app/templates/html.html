@@ -1,0 +1,38 @@
+<h2>Client/Browser Information</h2>
+<p>This is information that your browser sends with its connection.</p>
+<p>
+  <ul>
+      <li><b>Client IP:</b> <a href="https://ipinfo.io/{{ visitor['ip'] }}">{{ visitor['ip'] }}</a></li>
+      <li><b>Browser:</b> {{ '<a href="{0}">{1}</a>'.format(browsers[visitor['client']['browser']][0],
+                                                            browsers[visitor['client']['browser']][1])|safe
+                              if visitor['client']['browser'] in browsers.keys()
+                              else visitor['client']['browser'].title()
+                                if visitor['client']['browser'] is not none
+                                else '(N/A)' }}</li>
+    <li><b>Language/Locale:</b> {{ visitor['client']['language'] or '(N/A)' }}</li>
+{%- set alt_os = alts[visitor['client']['os']] if visitor['client']['os'] in alts.keys() else '' %}
+      <li><b>Operating System:</b> {{ '<a href="{0}">{1}</a>{2}'.format(os[visitor['client']['os']][0],
+                                                                        os[visitor['client']['os']][1],
+                                                                        alt_os)|safe
+                                      if visitor['client']['os'] in os.keys()
+                                      else visitor['client']['os'].title()
+                                        if visitor['client']['os'] is not none
+                                        else '(N/A)' }}</li>
+      <li><b>User Agent:</b> {{ visitor['client']['str'] }}</li>
+      <li><b>Version:</b> {{ visitor['client']['version'] or '(N/A)' }}</li>
+  </ul>
+</p>
+<h2>Request Headers</h2>
+<p>These are headers sent along with the request your browser sends for the page's content.</p>
+<p>
+  <table>
+    <tr>
+      <th>Field</th>
+      <th>Value</th>
+    </tr>{% for k in visitor['headers'].keys()|sort(case_sensitive = True) %}
+    <tr>
+      <td>{{ k }}</td>
+      <td>{{ visitor['headers'][k] if visitor['headers'][k] != '' else '(N/A)' }}</td>
+    </tr>{% endfor %}
+  </table>
+</p>
