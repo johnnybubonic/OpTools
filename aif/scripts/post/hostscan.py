@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Note: for hashed known-hosts, https://gist.github.com/maxtaco/5080023
+
 import argparse
 import grp
 import os

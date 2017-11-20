@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# INCOMPLETE
+
 # See RFC 2131, Figure 1 and Table 1 (section 2)
 # Much thanks to https://github.com/igordcard/dhcplease for digging into dhcpcd
 # source for the actual file structure (and providing inspiration).
