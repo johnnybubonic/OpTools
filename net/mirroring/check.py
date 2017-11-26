@@ -57,7 +57,15 @@ class website(object):
 
     def remoteFetch(self):
         with urlopen(self.meta['url']) as _site:
-            self.site['remote'] = _site.read().decode('utf-8')
+            self.site['remote'] = _site.read()
+            self.headers = dict(_site.info())
+        # Handle gzip encoding
+        if 'Content-Encoding' in self.headers.keys():
+            if self.headers['Content-Encoding'] == 'gzip':
+                from gzip import decompress
+                self.site['remote'] = decompress(self.site['remote']).decode('utf-8')
+        else:
+            self.site['remote'] = self.site['remote'].decode('utf-8')
         _hash = hashlib.sha256(self.site['remote'].encode('utf-8'))
         self.site['remotesum'] = str(_hash.hexdigest())
         self.meta['timestamp'] = str(int(datetime.datetime.now().timestamp()))
