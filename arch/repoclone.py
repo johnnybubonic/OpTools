@@ -146,6 +146,7 @@ def parseArgs():
 def main():
     args = vars(parseArgs().parse_args())
     sync(args)
+    return()
 
 if __name__ == '__main__':
     main()
