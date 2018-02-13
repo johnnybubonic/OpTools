@@ -4,4 +4,4 @@ import grpc
 from grpc.tools import protoc
 import tempfile
 
-conn = grpc.
+channel = grpc.insecure_channel('sysadministrivia.com:50051')

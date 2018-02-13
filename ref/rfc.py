@@ -10,6 +10,7 @@ import pydoc
 from urllib.request import urlopen
 
 # TODO: non-txt format support? (i.e. PDF, HTML, etc.)
+# TODO: search function? keyword or regex, display RFC number and title
 
 def downloadRFC(destdir, rfcnum):
     rfcnum = (str(rfcnum)).lower()  # In case argparse interprets it as an int or it's entered in uppercase

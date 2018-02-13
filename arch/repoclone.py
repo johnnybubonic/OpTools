@@ -8,7 +8,11 @@ import pprint
 import subprocess
 import sys
 
-cfgfile = os.path.join(os.environ['HOME'], '.arch.repoclone.ini')
+cfgfile = os.path.join(os.environ['HOME'],
+                       '.config',
+                       'optools',
+                       'repoclone',
+                       'arch.ini')
 
 # Rsync options
 opts = [
@@ -108,6 +112,8 @@ def parseArgs():
                       help = ('The upstream mirror to sync from, must be an rsync URI '+
                               '(Default: {0}').format(liveopts['mirror']))
 # TODO: can we do this?
+# We can; we need to .format() a repo in, probably, on the src and dest.
+# Problem is the last updated/last synced files.
 #    args.add_argument('-r',
 #                      '--repos',
 #                      dest = 'repos',
