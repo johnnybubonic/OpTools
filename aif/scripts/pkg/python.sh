@@ -1,3 +1,3 @@
 #!/bin/bash
 
-pacman --needed --noconfirm -S python
+pacman --needed --noconfirm -S python python-pip python-setuptools
