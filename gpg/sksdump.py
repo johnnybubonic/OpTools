@@ -17,7 +17,7 @@ NOWstr = NOW.strftime('%Y-%m-%d')
 # TODO:
 # - cleanup/rotation should be optional
 
-cfgfile = os.path.join(os.environ['HOME'], '.sksdump.ini')
+cfgfile = os.path.join(os.environ['HOME'], '.config', 'optools', 'sksdump.ini')
 
 def getDefaults():
     # Hardcoded defaults

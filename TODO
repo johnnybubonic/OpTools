@@ -25,3 +25,5 @@ probably need to package https://packages.debian.org/source/stretch/freebsd-buil
 -net, add shorewall templater
 
 -port in sslchk
+
+-script that uses uconv(?) and pymysql to export database to .ods
