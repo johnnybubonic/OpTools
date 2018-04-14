@@ -31,7 +31,8 @@ def getDefaults():
             'sync': {'throttle': 0},
             'paths': {'basedir': '/var/lib/sks',
                       'destdir': '/srv/http/sks/dumps',
-                      'rsync': 'root@mirror.square-r00t.net:/srv/http/sks/dumps'},
+                      'rsync': 'root@mirror.square-r00t.net:/srv/http/sks/dumps',
+                      'sksbin': '/usr/bin/sks'},
             'runtime': {'nodump': None, 'nocompress': None, 'nosync': None}}
     ## Build out the default .ini.
     dflt_str = ('# IMPORTANT: This script uses certain permissions functions that require some forethought.\n' +
@@ -53,13 +54,13 @@ def getDefaults():
                 '# These services will be started/stopped, in order, before/after dumps. ' +
                 'Comma-separated.\nsvcs = {3}\n# The path to the logfile.\nlogfile = {4}\n# The number ' +
                 'of days of rotated key dumps. If None, don\'t rotate.\ndays = {5}\n# How many keys to include in each ' +
-                'dump file.\ndumpkeys = {6}\n\n').format(d['user'],
-                                                         d['group'],
-                                                         d['compress'],
-                                                         ','.join(d['svcs']),
-                                                         d['logfile'],
-                                                         d['days'],
-                                                         d['dumpkeys'])
+                'dump file.\ndumpkeys = {6}\n\n\n').format(d['user'],
+                                                           d['group'],
+                                                           d['compress'],
+                                                           ','.join(d['svcs']),
+                                                           d['logfile'],
+                                                           d['days'],
+                                                           d['dumpkeys'])
     # [sync]
     d = dflt['sync']
     dflt_str += ('# This section controls sync settings.\n[sync]\n# This setting is what the speed should be throttled to, '+
@@ -69,9 +70,11 @@ def getDefaults():
     dflt_str += ('# This section controls where stuff goes and where we should find it.\n[paths]\n# ' +
                  'Where your SKS DB is.\nbasedir = {0}\n# This is the base directory where the dumps should go.\n' +
                  '# There will be a sub-directory created for each date.\ndestdir = {1}\n# The ' +
-                 'path for rsyncing the dumps. If None, don\'t rsync.\nrsync = {2}\n\n').format(d['basedir'],
-                                                                                                d['destdir'],
-                                                                                                d['rsync'])
+                 'path for rsyncing the dumps. If None, don\'t rsync.\nrsync = {2}\n' +
+                 '# The path to the sks binary to use\nsksbin = {3}\n\n').format(d['basedir'],
+                                                                                 d['destdir'],
+                                                                                 d['rsync'],
+                                                                                 d['sksbin'])
     # [runtime]
     d = dflt['runtime']
     dflt_str += ('# This section controls runtime options. These can be overridden at the commandline.\n' +
@@ -265,6 +268,11 @@ def parseArgs():
                       default = paths['basedir'],
                       dest = 'basedir',
                       help = 'The directory which holds your SKS DB.')
+    args.add_argument('-x',
+                      '--sks-binary',
+                      default = paths['sksbin'],
+                      dest = 'sksbin',
+                      help = 'The path to the SKS binary/executable to use to performt the dumps.')
     args.add_argument('-e',
                       '--destdir',
                       default = paths['destdir'],
