@@ -149,7 +149,7 @@ def dumpDB(args):
     destPrep(args)
     os.chdir(args['basedir'])
     svcMgmt('stop', args)
-    cmd = ['sks',
+    cmd = [args['sksbin'],
            'dump',
            str(args['dumpkeys']),  # How many keys per dump?
            os.path.join(args['destdir'], NOWstr),  # Where should it go?
@@ -272,7 +272,7 @@ def parseArgs():
                       '--sks-binary',
                       default = paths['sksbin'],
                       dest = 'sksbin',
-                      help = 'The path to the SKS binary/executable to use to performt the dumps.')
+                      help = 'The path to the SKS binary/executable to use to perform the dumps.')
     args.add_argument('-e',
                       '--destdir',
                       default = paths['destdir'],
