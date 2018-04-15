@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 
-import argparse
 import configparser
 import copy
 import datetime
 import os
 import platform
-import pprint
 import re
 import socket
 import subprocess
 import sys
-from collections import OrderedDict
 
 cfgfile = os.path.join(os.environ['HOME'],
                        '.config',
@@ -155,13 +152,29 @@ class MirrorMgr(object):
             self.strvars['releases'] = [i.strip() for i in \
                                         self.repo['releases'].format(
                                                     **self.strvars).split(',')]
-            self._repo_chk(repo)
             for arch in self.strvars['arches']:
                 for rel_ver in self.strvars['releases']:
-                    self.strvars['arch'] = arch
-                    self.strvars['rel_ver'] = rel_ver
+                    self._clear_tpl(repo, arch, rel_ver)
+                    self._repo_chk(repo)
                     self._repo_sync(repo)
-            return()
+        return()
+
+    def _clear_tpl(self, repo, arch, rel_ver):
+        self.repo = copy.deepcopy(dict(self.cfg[repo]))
+        self.strvars['name'] = repo
+        # This should be safe since the only thing that makes sense here is
+        # {cur_arch}, which we populate in __init__().
+        self.strvars['arches'] = [i.strip() for i in \
+                                  self.repo['arches'].format(
+                                                **self.strvars).split(',')]
+        self.strvars['releases'] = [i.strip() for i in \
+                                    self.repo['releases'].format(
+                                                **self.strvars).split(',')]
+        self.strvars['arch'] = arch
+        self.strvars['rel_ver'] = rel_ver
+        self.strvars['name'] = repo
+        self._repo_chk(repo)
+        return()
 
     def _repo_sync(self, repo):
         # Reset the Rsync options
@@ -277,15 +290,11 @@ class MirrorMgr(object):
             pass
             return()
         # The Business-End(TM)
-        for arch in self.strvars['arches']:
-            for rel_ver in self.strvars['releases']:
-                self.strvars['arch'] = arch
-                self.strvars['rel_ver'] = rel_ver
-                chkmnt()
-                chkrsync()
-                chkdest()
-                chkdest_files()
-                chkmisc()
+        chkmnt()
+        chkrsync()
+        chkdest()
+        chkdest_files()
+        chkmisc()
         return()
 
 def main():
