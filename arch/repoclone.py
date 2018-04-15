@@ -8,6 +8,9 @@ import pprint
 import subprocess
 import sys
 
+# TODO: convert .ini to treat [section]s as repositories, with a [DEFAULT]
+# section for URL etc.
+
 cfgfile = os.path.join(os.environ['HOME'],
                        '.config',
                        'optools',
@@ -90,7 +93,7 @@ def getDefaults():
             'destination': '/srv/repos/arch',
             'mount': '/',
             'bwlimit': 0,
-            'lockfile': '/var/run/repo-sync.lck',
+            'lockfile': '/var/run/repo-sync_arch.lck',
             'logfile': '/var/log/repo/arch.log'}
     realcfg = configparser.ConfigParser(defaults = dflt)
     if not os.path.isfile(cfgfile):
