@@ -9,6 +9,7 @@ import argparse
 import datetime
 import os
 import re
+import socket
 from urllib.request import urlopen, urlparse
 # pypi/pip
 from bs4 import BeautifulSoup
@@ -18,9 +19,18 @@ try:
 except ImportError:
     bs_parser = 'html.parser'
 
+socket_orig = socket.getaddrinfo
+
+def ForceProtov4(host, port, family = 0, socktype = 0, proto = 0,
+                       flags = 0):
+    return(socket_orig(host, port, socket.AF_INET, socktype, proto, flags))
+
+def ForceProtov6(host, port, family = 0, socktype = 0, proto = 0,
+                       flags = 0):
+    return(socket_orig(host, port, socket.AF_INET6, socktype, proto, flags))
 
 class KeyStats(object):
-    def __init__(self, server, port = None, tls = True, ipv6 = None,
+    def __init__(self, server, port = None, tls = True, netproto = None,
                  proto = 'http', output = 'py', verbose = True):
         self.stats = {'server': {},
                       'keys': 0}
@@ -35,7 +45,15 @@ class KeyStats(object):
                                     None: 80}}
         self.server = server
         self.tls = tls
-        self.ipv6 = ipv6
+        self.netproto = netproto
+        # We need to do some... ugly, hacky stuff to *force* a particular
+        # network stack (IPv4 vs. IPv6).
+        # https://stackoverflow.com/a/6319043/733214
+        if self.netproto:
+            if self.netproto == 'ipv6':
+                socket.getaddrinfo = ForceProtov6
+            elif self.netproto == 'ipv4':
+                socket.getaddrinfo = ForceProtov4
         self.verbose = verbose
         self.output = output
         self.proto = proto.lower()
@@ -239,15 +257,17 @@ def parseArgs():
                               'number of keys/contact info/server info'))
     proto_grp = args.add_mutually_exclusive_group()
     proto_grp.add_argument('-4', '--ipv4',
-                           dest = 'ipv6',
+                           dest = 'netproto',
                            default = None,
-                           action = 'store_false',
+                           action = 'store_const',
+                           const = 'ipv4',
                            help = ('If specified, force IPv4 (default is ' +
                                    'system\'s preference)'))
     proto_grp.add_argument('-6', '--ipv6',
-                           dest = 'ipv6',
+                           dest = 'netproto',
                            default = None,
-                           action = 'store_true',
+                           action = 'store_const',
+                           const = 'ipv6',
                            help = ('If specified, force IPv6 (default is ' +
                                    'system\'s preference)'))
     args.add_argument('server',
