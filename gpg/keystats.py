@@ -7,6 +7,7 @@
 # stdlib
 import argparse
 import datetime
+import os
 import re
 from urllib.request import urlopen, urlparse
 # pypi/pip
@@ -161,12 +162,32 @@ class KeyStats(object):
                              #indent = 4,
                              default = str))
         elif self.output == 'yaml':
-            try:
-                import pyaml
-                print(pyaml.dump(self.stats))
-            except ImportError:
-                raise RuntimeError(('You must have PyYAML installed to use ' +
-                                    'YAML formatting'))
+            has_yaml = False
+            if 'YAML_MOD' in os.environ.keys():
+                _mod = os.environ['YAML_MOD']
+                try:
+                    import importlib
+                    yaml = importlib.import_module(_mod)
+                    has_yaml = True
+                except (ImportError, ModuleNotFoundError):
+                    raise RuntimeError(('Module "{0}" is not ' +
+                                        'installed').format(_mod))
+            else:
+                try:
+                    import yaml
+                    has_yaml = True
+                except ImportError:
+                    pass
+                try:
+                    import pyaml as yaml
+                    has_yaml = True
+                except ImportError:
+                    pass
+            if not has_yaml:
+                raise RuntimeError(('You must have the PyYAML or pyaml ' +
+                                    'module installed to use YAML ' +
+                                    'formatting'))
+            print(yaml.dump(self.stats))
         elif self.output == 'py':
             import pprint
             pprint.pprint(self.stats)
@@ -199,7 +220,11 @@ def parseArgs():
                      action = 'store_const',
                      const = 'yaml',
                      help = ('Output the data in YAML format (requires ' +
-                             'PyYAML)'))
+                             'PyYAML or pyaml module). You can prefer which ' +
+                             'one by setting an environment variable, ' +
+                             'YAML_MOD, to "yaml" or "pyaml" (for PyYAML or ' +
+                             'pyaml respectively); otherwise preference ' +
+                             'will be PyYAML > pyaml'))
     fmt.add_argument('-p', '--python',
                      default = 'py',
                      dest = 'output',
