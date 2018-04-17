@@ -1,0 +1,86 @@
+This is a collection of snippets that I tend to use frequently, or would need
+in the future.
+
+###############################################################################
+
+To programmatically import a list of modules by name:
+_____
+import importlib
+
+mods = ['os', 'sys', 'shutil', 'platform']
+
+for m in mods:
+    globals()[m] = importlib.import_module(m)
+_____
+you can then use them as if you did:
+
+import os
+import sys
+import shutil
+import platform
+etc.
+
+this breaks pep-8, but sometimes you need to programmatically import modules.
+
+ref: https://www.python.org/dev/peps/pep-0008/#imports
+
+###############################################################################
+
+To programmatically install modules via pip if they aren't installed:
+
+____
+import importlib
+import pip
+
+# I don't  *think* pip/pypi is case-sensitive, but frequently module names are
+# not the same as their package names. ugh.
+# The key is the package name, the value is the module name. We use the above
+# trick here to try to import and install if it fails.
+mods = {'PyMySQL': 'pymysql',
+        'Jinja2': 'jinja2',
+        'psutil': None,  # We show off a little bit here with this, see below.
+        'paramiko': None}  # ""
+
+for m in mods.keys():
+    modname = mods[m]
+    if not modname:
+        modname = m
+    try:
+        globals()[modname] = importlib.import_module(modname)
+    except ImportError:
+        # We use --user to avoid conflicts with the host's python system.
+        # pip.main() accepts all of pip (commandline)'s args!
+        pip.main(['install', '--user', m])
+        try:
+            globals()[modname] = importlib.import_module(modname)
+        except ImportError:
+            raise RuntimeError('Unable to install {0}!'.format(m))
+____
+
+###############################################################################
+
+To convert an argparse set of parsed arguments into a dict from a class, you
+simply do:
+____
+def GenArgs():
+    args = argparse.ArgumentParser()
+    # args here
+    return(args)
+
+def somefunc():
+    args = vars(GenArgs().parse_args())
+____
+"args" in somefunc is a dict now.
+
+###############################################################################
+
+To dynamically allocate class parameters into constants from a dict (such as
+from argparse - see above), do something like this:
+____
+class ClassName(object):
+    def __init__(self, **kwargs):
+        for i in kwargs.keys():
+            setattr(self, i, kwargs[i])
+----
+###############################################################################
+
