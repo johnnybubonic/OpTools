@@ -264,10 +264,13 @@ class MirrorMgr(object):
                 if chk == 0:
                     _open = True
                     break
-            if not _open:
-                raise RuntimeError(('Rsync on host {0}:{1} is not ' +
-                                    'accessible!').format(_split_srv[0],
-                                                          _port))
+            if os.isatty(sys.stdin.fileno()):
+                if not _open:
+                    raise RuntimeError(('Rsync on host {0}:{1} is not ' +
+                                        'accessible!').format(_split_srv[0],
+                                                              _port))
+                else:
+                    exit()
             return()
         def chkdest():
             _dest = os.path.abspath(
