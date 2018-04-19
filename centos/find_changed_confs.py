@@ -9,6 +9,7 @@ import copy
 import datetime
 import hashlib
 import os
+import re
 from sys import version_info as py_ver
 try:
     import rpm
@@ -19,9 +20,10 @@ except ImportError:
 # https://blog.fpmurphy.com/2011/08/programmatically-retrieve-rpm-package-details.html
 
 class PkgChk(object):
-    def __init__(self, dirpath, pkgs = None):
+    def __init__(self, dirpath, symlinks = True, pkgs = None):
         self.path = dirpath
         self.pkgs = pkgs
+        self.symlinks = symlinks
         self.orig_pkgs = copy.deepcopy(pkgs)
         self.pkgfilemap = {}
         self.flatfiles = []
@@ -89,6 +91,10 @@ class PkgChk(object):
                     if (f in self.flst.keys() and
                             (self.flst[f]['hash'] !=
                              self.pkgfilemap[p][f]['hash'])):
+                        if not self.symlinks:
+                            if re.search('^0+$',
+                                         self.pkgfilemap[p][f]['hash']):
+                                continue
                         r_time = datetime.datetime.fromtimestamp(
                                                 self.pkgfilemap[p][f]['date'])
                         r_hash = self.pkgfilemap[p][f]['hash']
@@ -130,6 +136,11 @@ def parseArgs():
                                                   'files that have changed ' +
                                                   'from the package\'s ' +
                                                   'defaults'))
+    args.add_argument('-l', '--ignore-symlinks',
+                      dest = 'symlinks',
+                      action = 'store_false',
+                      help = ('If specified, don\'t track files that are ' +
+                              'symlinks in the RPM'))
     args.add_argument('-p', '--package',
                       dest = 'pkgs',
                       #nargs = 1,
