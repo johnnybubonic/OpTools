@@ -217,7 +217,7 @@ class MirrorMgr(object):
             # CentOS 7 main doesn't have an i686.
             if self.strvars['rel_ver'] == 7:
                 for e in errors[:]:
-                    rgx = re.compile(('^rsync: change_dir.*/i[36]86/.*' +
+                    rgx = re.compile(('^rsync: change_dir.*/i[36]86(/|").*' +
                                       'failed:\s*No\s+such\s+file\s+or\s+' +
                                       'directory.*$'))
                     if rgx.search(e):
