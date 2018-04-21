@@ -131,6 +131,7 @@ class MirrorMgr(object):
         print(('A configuration file has been automatically generated for ' +
                'you at {0}. You should review and customize it, because it ' +
                'most likely will not work out of the box.').format(cfgfile))
+        exit('Exiting to give you the chance to customize it...')
         return()
 
     def parse_cfg(self):
@@ -216,8 +217,15 @@ class MirrorMgr(object):
             # CentOS 7 main doesn't have an i686.
             if self.strvars['rel_ver'] == 7:
                 for e in errors[:]:
-                    if re.search('^rsync: change_dir.*/6/.*$', e):
+                    rgx = re.compile(('^rsync: change_dir.*/i[36]86/.*' +
+                                      'failed:\s*No\s+such\s+file\s+or\s+' +
+                                      'directory.*$'))
+                    if rgx.search(e):
                         errors.remove(e)
+            for e in errors[:]:
+                if e.startswith(('rsync error: some files/attrs were not ' +
+                                 'transferred (see previous errors)')):
+                    errors.remove(e)
             if os.isatty(sys.stdin.fileno()) and errors:
                 print('[{0}] We encountered some errors:'.format(repo))
                 for e in errors:
