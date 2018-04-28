@@ -82,5 +82,30 @@ class ClassName(object):
         for i in kwargs.keys():
             setattr(self, i, kwargs[i])
 ----
+
 ###############################################################################
 
+To store stdout and stderr to different files in a subprocess call:
+----
+with open('/tmp/test.o', 'w') as out, open('/tmp/test.e', 'w') as err:
+    subprocess.run(['command'], stdout = out, stderr = err)
+----
+###############################################################################
+
+To use optools logging lib (or other "shared" modules):
+----
+import os
+import re
+import importlib
+spec = importlib.util.spec_from_file_location(
+                                       'logger',
+                                       '/opt/dev/optools/lib/python/logger.py')
+logger = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(logger)
+log = logger.log(name = 'project.name')
+----
+
+###############################################################################
+
+# TODO #
+https://stackoverflow.com/questions/10265193/python-can-a-class-act-like-a-module
