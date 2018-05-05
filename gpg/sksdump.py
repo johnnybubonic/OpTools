@@ -17,6 +17,8 @@ NOWstr = NOW.strftime('%Y-%m-%d')
 
 # TODO:
 # - cleanup/rotation should be optional
+# - turn into a class so we can more easily share vars across functions
+# - also, create the "CURRENT" symlink *AFTER* the dump completes?
 
 cfgfile = os.path.join(os.environ['HOME'], '.config', 'optools', 'sksdump.ini')
 
@@ -366,7 +368,7 @@ def main():
                                             str(datetime.datetime.utcnow())))
     with open(os.path.join(args['destdir'], 'LAST_COMPLETED_DUMP.txt'),
               'w') as f:
-        f.write(str(datetime.datetime.utcnow()))
+        f.write(str(datetime.datetime.utcnow()) + ' UTC\n')
 
 
 if __name__ == '__main__':
