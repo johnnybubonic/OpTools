@@ -364,6 +364,8 @@ def main():
     with open(args['logfile'], 'a') as f:
         f.write('===== {0} DONE =====\n'.format(
                                             str(datetime.datetime.utcnow())))
+    with open(os.path.join(args['destdir'], 'LAST_COMPLETED_DUMP'), 'w') as f:
+        f.write(str(datetime.datetime.utcnow()))
 
 
 if __name__ == '__main__':
