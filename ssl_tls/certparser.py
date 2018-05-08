@@ -319,20 +319,16 @@ class CertParse(object):
 
     def validDomain(self, domain):
         is_valid = False
-        try:
-            validators.domain(domain)
+        if not isinstance(validators.domain(domain),
+                          validators.utils.ValidationFailure):
             is_valid = True
-        except ValidationFailure:
-            pass
         return(is_valid)
 
     def validURL(self, url):
         is_valid = False
-        try:
-            validators.url(url)
+        if not isinstance(validators.url(url),
+                          validators.utils.ValidationFailure):
             is_valid = True
-        except ValidationFailure:
-            pass
         return(is_valid)
 
     def validPath(self, path):
