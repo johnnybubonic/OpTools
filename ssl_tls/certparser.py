@@ -63,39 +63,39 @@ class CertParse(object):
                               '"pem" or "asn1"').format(self.cert_type))
         if not self.force_type in ('url', 'domain', 'ip'):
             with open(self.target, 'rb') as f:
-                self.pkcs = OpenSSL.crypto.load_certificate(self.cert_type,
+                self.cert = OpenSSL.crypto.load_certificate(self.cert_type,
                                                             f.read())
         else:
             _cert = ssl.get_server_certificate((self.target, self.port))
-            self.pkcs = OpenSSL.crypto.load_certificate(self.cert_type,
+            self.cert = OpenSSL.crypto.load_certificate(self.cert_type,
                                                         _cert)
         return()
 
     def parseCert(self):
         certinfo = collections.OrderedDict()
         timefmt = '%Y%m%d%H%M%SZ'
-        certinfo['Subject'] = self.parse_name(self.pkcs.get_subject().\
+        certinfo['Subject'] = self.parse_name(self.cert.get_subject().\
                                                             get_components())
-        certinfo['EXPIRED'] = self.pkcs.has_expired()
-        certinfo['Issuer'] = self.parse_name(self.pkcs.get_issuer().\
+        certinfo['EXPIRED'] = self.cert.has_expired()
+        certinfo['Issuer'] = self.parse_name(self.cert.get_issuer().\
                                                             get_components())
         certinfo['Issued'] = str(datetime.datetime.strptime(
-                                    self.pkcs.get_notBefore().decode('utf-8'),
+                                    self.cert.get_notBefore().decode('utf-8'),
                                     timefmt))
         certinfo['Expires'] = str(datetime.datetime.strptime(
-                                    self.pkcs.get_notAfter().decode('utf-8'),
+                                    self.cert.get_notAfter().decode('utf-8'),
                                     timefmt))
         if self.extensions:
             certinfo['Extensions'] = self.parse_ext()
         elif self.alt_names:
             certinfo['SANs'] = self.parse_ext_san_only()
         # TODO: parse?
-        #certinfo['Pubkey'] = self.pkcs.get_pubkey()
-        certinfo['Serial'] = int(self.pkcs.get_serial_number())
-        certinfo['Signature Algorithm'] = self.pkcs.get_signature_algorithm().\
+        #certinfo['Pubkey'] = self.cert.get_pubkey()
+        certinfo['Serial'] = int(self.cert.get_serial_number())
+        certinfo['Signature Algorithm'] = self.cert.get_signature_algorithm().\
                                                                 decode('utf-8')
-        certinfo['Version'] = self.pkcs.get_version()
-        certinfo['Subject Name Hash'] = self.pkcs.subject_name_hash()
+        certinfo['Version'] = self.cert.get_version()
+        certinfo['Subject Name Hash'] = self.cert.subject_name_hash()
         certinfo['Fingerprints'] = self.gen_hashes()
         self.certinfo = certinfo
         #print(certinfo)
@@ -129,7 +129,7 @@ class CertParse(object):
                                   list(hashlib.algorithms_available)])
         cert_hash_types = [i for i in fpt_types if i in supported_types]
         for h in cert_hash_types:
-            hashes[h.upper()] = self.pkcs.digest(h).decode('utf-8')
+            hashes[h.upper()] = self.cert.digest(h).decode('utf-8')
         return(hashes)
 
     def parse_name(self, item):
@@ -159,8 +159,8 @@ class CertParse(object):
 
     def parse_ext_san_only(self):
         SANs = []
-        for idx in range(0, self.pkcs.get_extension_count()):
-            ext = self.pkcs.get_extension(idx)
+        for idx in range(0, self.cert.get_extension_count()):
+            ext = self.cert.get_extension(idx)
             name = ext.get_short_name().decode('utf-8').lower()
             x = str(ext).strip()
             if name == 'subjectaltname':
@@ -173,8 +173,8 @@ class CertParse(object):
 
     def parse_ext(self):
         exts = {}
-        for idx in range(0, self.pkcs.get_extension_count()):
-            ext = self.pkcs.get_extension(idx)
+        for idx in range(0, self.cert.get_extension_count()):
+            ext = self.cert.get_extension(idx)
             keyname = ext.get_short_name().decode('utf-8')
             value_str = str(ext).strip()
             # These should be split into lists by commas.
