@@ -196,97 +196,104 @@ class CertParse(object):
             exts[keyname] = value_str
         # These are split FURTHER into dicts but require unique... massaging.
         # authorityInfoAccess
-        _tmp = copy.deepcopy(exts['authorityInfoAccess'])
-        exts['authorityInfoAccess'] = {}
-        for i in _tmp:
-            x = [n.strip() for n in i.split('-', 1)]
-            y = [n.strip() for n in x[1].split(':', 1)]
-            exts['authorityInfoAccess'][x[0]] = {y[0]: y[1]}
+        if 'authorityInfoAccess' in exts.keys():
+            _tmp = copy.deepcopy(exts['authorityInfoAccess'])
+            exts['authorityInfoAccess'] = {}
+            for i in _tmp:
+                x = [n.strip() for n in i.split('-', 1)]
+                y = [n.strip() for n in x[1].split(':', 1)]
+                exts['authorityInfoAccess'][x[0]] = {y[0]: y[1]}
         # authorityKeyIdentifier
-        _tmp = copy.deepcopy(exts['authorityKeyIdentifier'])
-        exts['authorityKeyIdentifier'] = {_tmp.split(':', 1)[0]:
+        if 'authorityKeyIdentifier' in exts.keys():
+            _tmp = copy.deepcopy(exts['authorityKeyIdentifier'])
+            exts['authorityKeyIdentifier'] = {_tmp.split(':', 1)[0]:
                                                         _tmp.split(':', 1)[1]}
         # basicConstraints
-        _tmp = copy.deepcopy(exts['basicConstraints'])
-        exts['basicConstraints'] = {}
-        for i in _tmp:
-            x = [n.strip() for n in i.split(':', 1)]
-            if len(x) >= 1:
-                if x[1].lower() in ('true', 'false'):
-                    x[1] = (x[1].lower() == 'true')
-                exts['basicConstraints'][x[0]] = x[1]
-            else:
-                exts['basicConstraints'][x[0]] = True
+        if 'basicConstraints' in exts.keys():
+            _tmp = copy.deepcopy(exts['basicConstraints'])
+            exts['basicConstraints'] = {}
+            for i in _tmp:
+                x = [n.strip() for n in i.split(':', 1)]
+                if len(x) >= 1:
+                    if x[1].lower() in ('true', 'false'):
+                        x[1] = (x[1].lower() == 'true')
+                    exts['basicConstraints'][x[0]] = x[1]
+                else:
+                    exts['basicConstraints'][x[0]] = True
         # certificatePolicies
         # What a mess.
-        _tmp = copy.deepcopy(exts['certificatePolicies'])
-        exts['certificatePolicies'] = {}
-        last_key = None
-        for i in [n.strip() for n in _tmp]:
-            l = [y for y in i.split(':', 1) if y not in ('', None)]
-            if len(l) > 1:
-                # It MAY be a key:value.
-                if re.search('^\s+', l[1]) and last_key != 'User Notice':
-                    # It's a value.
+        if 'certificatePolicies' in exts.keys():
+            _tmp = copy.deepcopy(exts['certificatePolicies'])
+            exts['certificatePolicies'] = {}
+            last_key = None
+            for i in [n.strip() for n in _tmp]:
+                l = [y for y in i.split(':', 1) if y not in ('', None)]
+                if len(l) > 1:
+                    # It MAY be a key:value.
+                    if re.search('^\s+', l[1]) and last_key != 'User Notice':
+                        # It's a value.
+                        last_key = l[0].strip()
+                        exts['certificatePolicies'][last_key] = l[1].strip()
+                    elif re.search('^\s+', l[1]):
+                        k = l[0].strip()
+                        exts['certificatePolicies'][last_key][k] = l[1].strip()
+                else:
+                    # Standalone key line
                     last_key = l[0].strip()
-                    exts['certificatePolicies'][last_key] = l[1].strip()
-                elif re.search('^\s+', l[1]):
-                    k = l[0].strip()
-                    exts['certificatePolicies'][last_key][k] = l[1].strip()
-            else:
-                # Standalone key line
-                last_key = l[0].strip()
-                exts['certificatePolicies'][last_key] = {}
+                    exts['certificatePolicies'][last_key] = {}
         # ct_precert_scts
-        # another mess.
-        _tmp = copy.deepcopy(exts['ct_precert_scts'])
-        exts['ct_precert_scts'] = {}
-        last_key = None
-        last_sub_key = None
-        cnt = 0
-        for i in [n.strip() for n in _tmp]:
-            l = [y for y in i.split(':', 1) if y not in ('', None)]
-            if len(l) > 1:
-                print(l)
-                # Is it a line continuation (of a hex value)?
-                if ((re.search('^[0-9A-Z]{2}$', l[0])) and
+        # another mess. a much. much, bigger mess.
+        if 'ct_precert_scts' in exts.keys():
+            _tmp = copy.deepcopy(exts['ct_precert_scts'])
+            exts['ct_precert_scts'] = {}
+            last_key = None
+            last_sub_key = None
+            cnt = 0
+            for i in [n.strip() for n in _tmp]:
+                l = [y for y in i.split(':', 1) if y not in ('', None)]
+                if len(l) > 1:
+                    print(l)
+                    # Is it a line continuation (of a hex value)?
+                    if ((re.search('^[0-9A-Z]{2}$', l[0])) and
                                 (re.search('^[0-9A-Z:]*:?$', ':'.join(l)))):
-                    exts['ct_precert_scts'][last_key][cnt][last_sub_key] += \
-                                                                    ':'.join(l)
-                    continue
-                # It MAY be a key:value.
-                if re.search('^\s+', l[1]) and (
+                        exts['ct_precert_scts'][last_key][cnt]\
+                                                [last_sub_key] += ':'.join(l)
+                        continue
+                    # It MAY be a key:value.
+                    if re.search('^\s+', l[1]) and (
                                             last_key !=
                                             'Signed Certificate Timestamp'):
-                    # It's a value.
+                        # It's a value.
+                        last_key = l[0].strip()
+                        val = l[1].strip()
+                        if val.lower() == 'none':
+                            val = None
+                        exts['ct_precert_scts'][last_key] = val
+                    elif re.search('^\s+', l[1]):
+                        last_sub_key = l[0].strip()
+                        val = l[1].strip()
+                        if val.lower() == 'none':
+                            val = None
+                        if last_sub_key == 'Signature':
+                            val += ' '
+                        exts['ct_precert_scts'][last_key][cnt]\
+                                                        [last_sub_key] = val
+                else:
+                    # Standalone key line
                     last_key = l[0].strip()
-                    val = l[1].strip()
-                    if val.lower() == 'none':
-                        val = None
-                    exts['ct_precert_scts'][last_key] = val
-                elif re.search('^\s+', l[1]):
-                    last_sub_key = l[0].strip()
-                    val = l[1].strip()
-                    if val.lower() == 'none':
-                        val = None
-                    if last_sub_key == 'Signature':
-                        val += ' '
-                    exts['ct_precert_scts'][last_key][cnt][last_sub_key] = val
-            else:
-                # Standalone key line
-                last_key = l[0].strip()
-                if last_key == 'Signed Certificate Timestamp':
-                    if last_key not in exts['ct_precert_scts'].keys():
-                        exts['ct_precert_scts'][last_key] = [{}]
-                    else:
-                        exts['ct_precert_scts'][last_key].append({})
-                        cnt += 1
-        # some laaaast bit of cleanup...
-        if 'Signed Certificate Timestamp' in exts['ct_precert_scts'].keys():
-            for i in exts['ct_precert_scts']['Signed Certificate Timestamp']:
-                if 'Signature' in i.keys():
-                    d = i['Signature'].split()
-                    i['Signature'] = {d[0]: d[1]}
+                    if last_key == 'Signed Certificate Timestamp':
+                        if last_key not in exts['ct_precert_scts'].keys():
+                            exts['ct_precert_scts'][last_key] = [{}]
+                        else:
+                            exts['ct_precert_scts'][last_key].append({})
+                            cnt += 1
+            # some laaaast bit of cleanup...
+            if 'Signed Certificate Timestamp' in exts['ct_precert_scts']:
+                for i in exts['ct_precert_scts']\
+                                            ['Signed Certificate Timestamp']:
+                    if 'Signature' in i.keys():
+                        d = i['Signature'].split()
+                        i['Signature'] = {d[0]: d[1]}
         return(exts)
 
     def get_domain_from_url(self, url):
