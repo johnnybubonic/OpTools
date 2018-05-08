@@ -89,8 +89,7 @@ class CertParse(object):
             certinfo['Extensions'] = self.parse_ext()
         elif self.alt_names:
             certinfo['SANs'] = self.parse_ext_san_only()
-        # TODO: parse?
-        #certinfo['Pubkey'] = self.cert.get_pubkey()
+        certinfo['Pubkey'] = self.get_pubkey()
         certinfo['Serial'] = int(self.cert.get_serial_number())
         certinfo['Signature Algorithm'] = self.cert.get_signature_algorithm().\
                                                                 decode('utf-8')
@@ -98,7 +97,6 @@ class CertParse(object):
         certinfo['Subject Name Hash'] = self.cert.subject_name_hash()
         certinfo['Fingerprints'] = self.gen_hashes()
         self.certinfo = certinfo
-        #print(certinfo)
         return()
 
     def print(self, json_fmt = None):
@@ -115,6 +113,17 @@ class CertParse(object):
                 print(output)
             return()
         return(output)
+
+    def get_pubkey(self):
+        pubkey = {}
+        key = self.cert.get_pubkey()
+        pubkey['Bit Length'] = key.bits()
+        # I wish there was a more comfortable way of comparing these.
+        if key.type() == OpenSSL.crypto.TYPE_RSA:
+            pubkey['Algorithm'] = 'RSA'
+        elif key.type() == OpenSSL.crypto.TYPE_DSA:
+            pubkey['Algorithm'] = 'DSA'
+        return(pubkey)
 
     def gen_hashes(self):
         hashes = {}
@@ -252,7 +261,6 @@ class CertParse(object):
             for i in [n.strip() for n in _tmp]:
                 l = [y for y in i.split(':', 1) if y not in ('', None)]
                 if len(l) > 1:
-                    print(l)
                     # Is it a line continuation (of a hex value)?
                     if ((re.search('^[0-9A-Z]{2}$', l[0])) and
                                 (re.search('^[0-9A-Z:]*:?$', ':'.join(l)))):
