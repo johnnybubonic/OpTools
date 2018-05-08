@@ -239,13 +239,26 @@ class CertParse(object):
                 l = [y for y in i.split(':', 1) if y not in ('', None)]
                 if len(l) > 1:
                     # It MAY be a key:value.
-                    if re.search('^\s+', l[1]) and last_key != 'User Notice':
-                        # It's a value.
-                        last_key = l[0].strip()
-                        exts['certificatePolicies'][last_key] = l[1].strip()
-                    elif re.search('^\s+', l[1]):
-                        k = l[0].strip()
-                        exts['certificatePolicies'][last_key][k] = l[1].strip()
+                    if re.search('^\s+', l[1]):
+                        val = l[1].strip()
+                        if last_key == 'Policy':
+                            if not isinstance(exts['certificatePolicies']\
+                                                                    [last_key],
+                                              list):
+                                exts['certificatePolicies'][last_key] = [
+                                        exts['certificatePolicies'][last_key]]
+                            exts['certificatePolicies'][last_key].append(val)
+                        # I can't seem to get CPS as a separate dict.
+                        # Patches welcome.
+                        # Also, are CPS and User Notice *subitems* of Policy
+                        # items?
+                        elif last_key not in ('User Notice', 'CPS'):
+                            # It's a value.
+                            last_key = l[0].strip()
+                            exts['certificatePolicies'][last_key] = val
+                        else:
+                            k = l[0].strip()
+                            exts['certificatePolicies'][last_key][k] = val
                 else:
                     # Standalone key line
                     last_key = l[0].strip()
