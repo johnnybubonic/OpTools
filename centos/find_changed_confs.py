@@ -45,7 +45,7 @@ class PkgChk(object):
                 for f in pkg.fiFromHeader():
                     if not f[0].startswith(self.path):
                         continue
-                    if f[12] == 0 * 64:
+                    if f[12] == '0' * 64:
                         _hash = None
                     else:
                         _hash = f[12]
