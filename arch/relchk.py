@@ -76,11 +76,6 @@ if os.path.isfile(cfg['arch']['path']):
             up2date = True
 
 if not up2date:
-    print('Downloading...')
     os.makedirs(os.path.dirname(cfg['arch']['path']), exist_ok = True)
     with open(cfg['arch']['path'], 'wb') as f, urlopen(iso) as u:
         f.write(u.read())
-else:
-    print('No need to download; we are up to date')
-
-print('Done')
