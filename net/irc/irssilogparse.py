@@ -115,15 +115,31 @@ colormap = {8: {'0': ('97', '107'),
                                               '{0[0]};{0[1]};{0[2]}m'}}}
 # These are special "control characters" Irssi uses.
 reset_char = '\x1b[0m'
+bold_char = '\x1b[1m'
+invert_char = '\x1b[7m'
 # Used for Irssi-specific escapes/controls.
 irssi_ctrl = {'a': '\x1b[5m',  # Blink
               'b': '\x1b[4m',  # Underline
-              'c': '\x1b[1m',  # Bold
-              'd': '\x1b[7m',  # Reverse
-              'e': '\t',  # Indent
+              'c': bold_char,  # Bold
+              'd': invert_char,  # Reverse (unused; color_inverter() is called)
+              #'e': '\t',  # Indent
+              'e': None,  # Indent
               'f': None,  # "f" is an indent func, so no-op
               'g': reset_char,  # Reset
-              'h': None}  # Monospace (no-op)
+              'h': None,  # Monospace (no-op)
+              '>': bold_char,  # Undocumented? Seems to be bold/highlight.
+              ';': bold_char}  # Undocumented? Seems to be bold/highlight.
+# This is used for inversion on the colors.
+# # the foreground color (dynamic)
+# fg = '\x1b[39m'
+# # the background color (dynamic)
+# bg = '\x1b[49m'
+# the value to reset the foreground text (not changed)
+def_fg = '\x1b[39m'
+# the value to reset the background text (not changed)
+def_bg = '\x1b[49m'
+# if the state is currently inverted (dynamic)
+is_inverted = False
 
 def get_palette():
     # Return 8, 256, or 'truecolor'
@@ -140,31 +156,38 @@ def get_palette():
         curses.endwin()
         return(c)
 
+def color_inverter(data = None):
+    # global fg
+    # global bg
+    global is_inverted
+    #fg, bg = bg, fg
+    if is_inverted:
+        char = '\x1b[27m'
+    else:
+        char = '\x1b[7m'
+    is_inverted = (not is_inverted)
+    return(char)
+
+
 def color_converter(data_in, palette_map):
     # Only used if logParser().args['color'] = True
     # Convert mIRC/Irssi color coding to ANSI color codes.
     # A sub-function that generates the replacement characters.
-    fg = '39'
-    bg = '49'
-    # the value to reset the foreground text
-    def_fg = '\x1b[39m'
-    # the value to reset the background text
-    def_bg = '\x1b[49m'
+    global fg
+    global bg
+    global is_inverted
     _colors = colormap[palette_map]
     def _repl(ch_in):
-        nonlocal bg
-        nonlocal fg
         ch_out = ''
         _ch = {'stripped': re.sub('^[\x00-\x7f]', '', ch_in.group()),
-               'ctrl': re.sub('^\x04([a-h]|[0-9]|;|>)/?.*$', '\g<1>',
+               #'ctrl': re.sub('^\x04([a-h]|[0-9]|;|>)/?.*$', '\g<1>',
+               'ctrl': re.sub('^\x04([^/])/?.*$', '\g<1>',
                               ch_in.group())}
         # We assign this separately as we use an existing dict entry.
         # This is the "color code" (if it exists).
-        _ch['c'] = [re.sub('^0?([0-9])',
+        _ch['c'] = [re.sub('^0?([0-9]{1,2}).*',
                            '\g<1>',
                            i.strip()) for i in _ch['stripped'].split(',', 1)]
-        pprint.pprint(_ch)
-        pprint.pprint(ch_in.group())
         # Color-handling
         if _ch['ctrl'].startswith('\x03'):
             if len(_ch['c']) == 1:
@@ -174,35 +197,47 @@ def color_converter(data_in, palette_map):
             else:
                 raise RuntimeError('Parsing error! "{0}"'.format(
                                                                 ch_in.group()))
-            ch_out = _colors['ansi_wrap']['fg'].format(_colors[_ch['c'][0]])
+            fg = _colors['ansi_wrap']['fg'].format(_colors[_ch['c'][0]])
+            ch_out = fg
             if not fg_only:
-                ch_out += _colors['ansi_wrap']['bg'].format(
-                                                        _colors[_ch['c'][1]])
+                bg = _colors['ansi_wrap']['bg'].format(_colors[_ch['c'][1]])
+                ch_out += bg
         # Control-character handling
-        elif _ch['ctrl'].startswith('\x04'):
+        else:
             if _ch['ctrl'] in irssi_ctrl:
-                ch_out = irssi_ctrl[_ch['ctrl']]
+                if irssi_ctrl[_ch['ctrl']]:
+                    ch_out = irssi_ctrl[_ch['ctrl']]
+                    if _ch['ctrl'] == 'g':
+                        color_inverter()
+            elif re.search('^[0-9]', _ch['ctrl']):
+                # pass
+                ch_out = _colors['ansi_wrap']['fg'].format(
+                                                        _colors[_ch['c'][0]])
+            else:
+                print(_ch['ctrl'])
         return(ch_out)
     #color_ptrn = re.compile('\x03[0-9]{1,2}(,[0-9]{1,2})?')
-    catch = re.compile('(\x03[0-9](,[0-9]{1, 2})?|'
-                       '\x04([a-h]|;|[0-9]/?))')
-    # These get replaced in the order they're defined here.
-    regex = {'nick': re.compile('\x04[89]/'),
-             'bold': re.compile('(\x02|\x04(;|[a-h]|>))/?'),
-             ## Doublecheck this. what is the significance of \x04(.*) chars?
-             'control': re.compile('\x04(g|c|[389;]/?|e|>)?/?'),
-             'color_clear': re.compile('\x0f(g|c|[389;]/?|e)?/?')}
+    catch = re.compile('(\x03[0-9]{2}(,[0-9]{1, 2})?|'
+                       '\x04([a-h]|;/|>/|[0-9]/?))')
+    # These are some non-programmatic regexes.
+    # Clean up the nick.
+    nick_re = re.compile('(\x048/\s*)')
+    # mIRC uses a different tag for reset.
+    mirc_rst = re.compile('\x0f')
+    # mIRC and Irssi tags, respectively, for inversion.
+    re_invert = re.compile('(\x16|\x04d)')
     data = data_in.splitlines()
     for idx, line in enumerate(data[:]):
         # Get some preliminary replacements out of the way.
-        line = regex['nick'].sub(' ', line, 1)
-        #line = regex['bold'].sub(bold, line)
-        #line = regex['control'].sub(reset_char, line)
-        #line = regex['color_clear'].sub(def_fg + def_bg, line)
+        line = nick_re.sub(' ', line, 1)
+        line = re_invert.sub(color_inverter, line)
+        line = mirc_rst.sub(reset_char, line)
         # This is like 90% of the magic, honestly.
         line = catch.sub(_repl, line)
         if not line.endswith(reset_char):
             line += reset_char
+        # Since we clear all formatting at the end of each line
+        is_inverted = False
         data[idx] = line
     return('\n'.join(data))
 
