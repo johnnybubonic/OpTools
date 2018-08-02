@@ -4,8 +4,14 @@
 # https://github.com/myano/jenni/wiki/IRC-String-Formatting
 # https://www.mirc.com/colors.html
 # https://en.wikipedia.org/wiki/ANSI_escape_code
+# http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 # https://github.com/shabble/irssi-docs/wiki/Formats#Colourising-Text-in-IRC-Messages
+# https://askubuntu.com/a/528938
 
+# Sorry for the copious comments, but the majority of the Irssi log stuff isn't
+# really documented... anywhere. Just the color codes and \x03.
+# And the log2ansi.pl script is... well, perl, so minus points for that, but
+# the names are obtuse and perl's ugly af.
 
 import argparse
 import curses
@@ -36,7 +42,8 @@ cmprsn_map = {'text/plain': None,  # Plain ol' text
 # - 8 (3/4 bit color values, 8 colors)
 # - 256 (8-bit, 256 colors)
 # - 'truecolor' (24-bit, ISO-8613-3, 16777216 colors)
-# Keys are the mIRC color value
+# Keys are the mIRC color value. Reference the links above for reference on
+# what the values map to.
 # Values are:
 # - 8: tuple for ANSI fg and bg values
 # - 256: single value (same number is used for fg and bg)
@@ -102,14 +109,26 @@ colormap = {8: {'0': ('97', '107'),
                           '13': ('255', '0', '255'),
                           '14': ('127', '127', '127'),
                           '15': ('210', '210', '210'),
-                          'ansi_wrap': {'fg': '\x1b[38;2;{0[0]},{0[1]},{0[2]}',
-                                        'bg': '\x1b[48;2;{0[0]},'
-                                              '{0[1]},{0[2]}'}}}
+                          'ansi_wrap': {'fg': '\x1b[38;2;'
+                                              '{0[0]};{0[1]};{0[2]}m',
+                                        'bg': '\x1b[48;2;'
+                                              '{0[0]};{0[1]};{0[2]}m'}}}
+# These are special "control characters" Irssi uses.
+reset_char = '\x1b[0m'
+# Used for Irssi-specific escapes/controls.
+irssi_ctrl = {'a': '\x1b[5m',  # Blink
+              'b': '\x1b[4m',  # Underline
+              'c': '\x1b[1m',  # Bold
+              'd': '\x1b[7m',  # Reverse
+              'e': '\t',  # Indent
+              'f': None,  # "f" is an indent func, so no-op
+              'g': reset_char,  # Reset
+              'h': None}  # Monospace (no-op)
 
 def get_palette():
     # Return 8, 256, or 'truecolor'
     colorterm = os.getenv('COLORTERM', None)
-    if colorterm == 'truecolor':
+    if colorterm in ('truecolor', '24bit'):
         # TODO: 24-bit support (16777216 colors) instead of 8-bit.
         # See note above.
         #return('truecolor')
@@ -124,42 +143,66 @@ def get_palette():
 def color_converter(data_in, palette_map):
     # Only used if logParser().args['color'] = True
     # Convert mIRC/Irssi color coding to ANSI color codes.
-    color_ptrn = re.compile('\x03[0-9]{1,2}(,[0-9]{1,2})?')
-    _colors = colormap[palette_map]
-    # the value to reset formatting to the terminal default
-    reset_char = '\x1b[0m'
+    # A sub-function that generates the replacement characters.
+    fg = '39'
+    bg = '49'
     # the value to reset the foreground text
     def_fg = '\x1b[39m'
     # the value to reset the background text
     def_bg = '\x1b[49m'
-    regex = {'nick': re.compile('\x04[89]/'),
-             'bold': re.compile('\x02'),
-             ## Doublecheck this. what is the significance of \x04(.*) chars?
-             'reset': re.compile('\x04(g|c|[389;]/?|e|>)?/?'),
-             'color_clear': re.compile('\x0f(g|c|[389;]/?|e)?/?')}
-    # A sub-function that generates the replacement characters.
+    _colors = colormap[palette_map]
     def _repl(ch_in):
-        _ch = ch_in.group().lstrip('\x03')
-        _chars = [i.strip() for i in _ch.split(',', 1)]
-        if len(_chars) == 1:
-            ch_out = _colors['ansi_wrap']['fg'].format(_chars[0])
-        elif len(_chars) == 2:
-            ch_out = (_colors['ansi_wrap']['fg'].format(_chars[0]) +
-                      _colors['ansi_wrap']['bg'].format(_chars[1]))
-        else:
-            raise RuntimeError('Parsing error! "{0}"'.format(ch_in))
+        nonlocal bg
+        nonlocal fg
+        ch_out = ''
+        _ch = {'stripped': re.sub('^[\x00-\x7f]', '', ch_in.group()),
+               'ctrl': re.sub('^\x04([a-h]|[0-9]|;|>)/?.*$', '\g<1>',
+                              ch_in.group())}
+        # We assign this separately as we use an existing dict entry.
+        # This is the "color code" (if it exists).
+        _ch['c'] = [re.sub('^0?([0-9])',
+                           '\g<1>',
+                           i.strip()) for i in _ch['stripped'].split(',', 1)]
+        pprint.pprint(_ch)
+        pprint.pprint(ch_in.group())
+        # Color-handling
+        if _ch['ctrl'].startswith('\x03'):
+            if len(_ch['c']) == 1:
+                fg_only = True
+            elif len(_ch['c']) == 2:
+                fg_only = False
+            else:
+                raise RuntimeError('Parsing error! "{0}"'.format(
+                                                                ch_in.group()))
+            ch_out = _colors['ansi_wrap']['fg'].format(_colors[_ch['c'][0]])
+            if not fg_only:
+                ch_out += _colors['ansi_wrap']['bg'].format(
+                                                        _colors[_ch['c'][1]])
+        # Control-character handling
+        elif _ch['ctrl'].startswith('\x04'):
+            if _ch['ctrl'] in irssi_ctrl:
+                ch_out = irssi_ctrl[_ch['ctrl']]
         return(ch_out)
+    #color_ptrn = re.compile('\x03[0-9]{1,2}(,[0-9]{1,2})?')
+    catch = re.compile('(\x03[0-9](,[0-9]{1, 2})?|'
+                       '\x04([a-h]|;|[0-9]/?))')
+    # These get replaced in the order they're defined here.
+    regex = {'nick': re.compile('\x04[89]/'),
+             'bold': re.compile('(\x02|\x04(;|[a-h]|>))/?'),
+             ## Doublecheck this. what is the significance of \x04(.*) chars?
+             'control': re.compile('\x04(g|c|[389;]/?|e|>)?/?'),
+             'color_clear': re.compile('\x0f(g|c|[389;]/?|e)?/?')}
     data = data_in.splitlines()
     for idx, line in enumerate(data[:]):
         # Get some preliminary replacements out of the way.
         line = regex['nick'].sub(' ', line, 1)
-        line = regex['reset'].sub(reset_char, line)
-        line = regex['color_clear'].sub(def_fg + def_bg, line)
-        # TODO: use ptrn.sub(_repl, line) instead since that works and
-        # this does not
-        # First set is text color
-        # Second set, if present, is bg color
-        line = color_ptrn.sub(_repl, line)
+        #line = regex['bold'].sub(bold, line)
+        #line = regex['control'].sub(reset_char, line)
+        #line = regex['color_clear'].sub(def_fg + def_bg, line)
+        # This is like 90% of the magic, honestly.
+        line = catch.sub(_repl, line)
+        if not line.endswith(reset_char):
+            line += reset_char
         data[idx] = line
     return('\n'.join(data))
 
@@ -291,7 +334,7 @@ def parseArgs():
     args.add_argument('-H', '--html',
                       dest = 'html',
                       action = 'store_true',
-                      help = ('Render HTML output'))
+                      help = ('Render HTML output (requires ansi2html)'))
     args.add_argument(dest = 'logfile',
                       default = None,
                       nargs = '?',
@@ -313,5 +356,8 @@ if __name__ == '__main__':
     #pprint.pprint(l.data, width = cols)
     #pprint.pprint(repr(l.data).split('\\n'))
     print(l.data)
+    with open('/tmp/log.raw', 'w') as f:
+        for line in repr(l.data).split('\\n'):
+            f.write(line + '\n')
     # l.parseLog()
     # print(l.data.decode('utf-8'))
