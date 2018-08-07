@@ -108,8 +108,8 @@ class MirrorMgr(object):
         self.get_cfg()
         self.chk_cur_ver()
         self.parse_cfg()
-        self.log = logger.log(os.path.abspath(os.path.expanduser(
-                                               logfile = self.cfg['DEFAULT'])),
+        self.log = logger.log(logfile = os.path.abspath(os.path.expanduser(
+                                                        self.cfg['DEFAULT'])),
                               logname = 'optools.repoclone.centos',
                               loglvl = _loglevel)
 
