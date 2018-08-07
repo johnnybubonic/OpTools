@@ -33,12 +33,14 @@ _loglevel = 'warning'
 
 class cur_ver(object):
     def __init__(self):
-        _distname = platform.linux_distribution()[0]
-        if not re.search('^CentOS( Linux)$', _distname, re.IGNORECASE):
+        # TODO: .dist() is deprecated, as is linux_distribution.
+        # switch to distro? https://pypi.org/project/distro
+        _distname = platform.dist()[0]
+        if not re.search('^CentOS( Linux)?$', _distname, re.IGNORECASE):
             raise ValueError(('You have specified "{cur_ver}" in your ' +
                               'config, but you are not running this script ' +
                               'on CentOS!'))
-        _ver = platform.linux_distribution()[1].split('.')
+        _ver = platform.dist()[1].split('.')
         self.full = '.'.join(_ver)
         self.maj = int(_ver[0])
         self.min = int(_ver[1])
@@ -92,7 +94,8 @@ class MirrorMgr(object):
     def __init__(self):
         self.cfg = configparser.ConfigParser(
                         interpolation = configparser.ExtendedInterpolation(),
-                        defaults = dflts['DEFAULT'])
+                        defaults = dflts['DEFAULT'],
+                        allow_no_value = True)
         self.strvars = {'cur_ver': None,
                         'name': None,
                         'arches': [],
@@ -132,7 +135,8 @@ class MirrorMgr(object):
     def gen_cfg(self):
         cfg = configparser.ConfigParser(
                         interpolation = configparser.ExtendedInterpolation(),
-                        defaults = dflts['DEFAULT'])
+                        defaults = dflts['DEFAULT'],
+                        allow_no_value = True)
         for i in dflts.keys():
             if i != 'DEFAULT':
                 cfg[i] = copy.deepcopy(dflts[i])
