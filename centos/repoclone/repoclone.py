@@ -24,10 +24,10 @@ _logmodpath = os.path.abspath(os.path.join(_selfpath,
                                            'lib',
                                            'python',
                                            'logger.py'))
-logger = importlib.util.module_from_spec(
-                                        importlib.util.spec_from_file_location(
-                                                                  'logger',
-                                                                  _logmodpath))
+log_spec = importlib.util.spec_from_file_location('logger', _logmodpath)
+logger = importlib.util.module_from_spec(log_spec)
+log_spec.loader.exec_module(logger)
+
 _loglevel = 'warning'
 #_loglevel = 'debug'
 
