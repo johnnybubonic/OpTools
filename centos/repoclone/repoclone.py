@@ -19,11 +19,11 @@ cfgfile = os.path.join(os.environ['HOME'],
 
 # Set up the logger.
 _selfpath = os.path.abspath(os.path.realpath(os.path.expanduser(__file__)))
-_logmodpath = os.path.join(_selfpath,
-                           '..', '..', '..',
-                           'lib',
-                           'python',
-                           'logger.py')
+_logmodpath = os.path.abspath(os.path.join(_selfpath,
+                                           '..', '..', '..',
+                                           'lib',
+                                           'python',
+                                           'logger.py'))
 logger = importlib.util.module_from_spec(
                                         importlib.util.spec_from_file_location(
                                                                   'logger',
