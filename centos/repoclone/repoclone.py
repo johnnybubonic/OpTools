@@ -18,7 +18,7 @@ cfgfile = os.path.join(os.environ['HOME'],
                        'centos.ini')
 
 # Set up the logger.
-_selfpath = os.path.abspath(os.path.expanduser(__file__))
+_selfpath = os.path.abspath(os.path.realpath(os.path.expanduser(__file__)))
 _logmodpath = os.path.join(_selfpath,
                            '..', '..', '..',
                            'lib',
