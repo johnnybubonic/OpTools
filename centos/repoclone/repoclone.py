@@ -3,6 +3,7 @@
 import configparser
 import copy
 import datetime
+import importlib
 import os
 import platform
 import re
@@ -15,6 +16,20 @@ cfgfile = os.path.join(os.environ['HOME'],
                        'optools',
                        'repoclone',
                        'centos.ini')
+
+# Set up the logger.
+_selfpath = os.path.abspath(os.path.expanduser(__file__))
+_logmodpath = os.path.join(_selfpath,
+                           '..', '..', '..',
+                           'lib',
+                           'python',
+                           'logger.py')
+logger = importlib.util.module_from_spec(
+                                        importlib.util.spec_from_file_location(
+                                                                  'logger',
+                                                                  _logmodpath))
+_loglevel = 'warning'
+#_loglevel = 'debug'
 
 class cur_ver(object):
     def __init__(self):
@@ -90,6 +105,10 @@ class MirrorMgr(object):
         self.get_cfg()
         self.chk_cur_ver()
         self.parse_cfg()
+        self.log = logger.log(os.path.abspath(os.path.expanduser(
+                                               logfile = self.cfg['DEFAULT'])),
+                              logname = 'optools.repoclone.centos',
+                              loglvl = _loglevel)
 
     def get_cfg(self):
         with open(cfgfile, 'r') as f:

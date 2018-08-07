@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 # Pythonized automated way of running https://sysadministrivia.com/news/hardening-ssh-security
+# TODO: check for cryptography module. if it exists, we can do this entirely pythonically
+#       without ever needing to use subprocess/ssh-keygen, i think!
 
 import datetime
 import glob

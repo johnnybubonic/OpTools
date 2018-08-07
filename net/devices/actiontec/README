@@ -1,0 +1,122 @@
+This has been confirmed to work for, at the very least, my own Verizon Fi-OS
+Actiontec MI424WR-GEN3I on firmware 40.21.24. It might work on other models as
+well, but this hasn't been tested.
+
+No non-stdlib modules are required.
+
+Place your routers credentials in ~/.config/optools/actiontec_mgmt.json
+in the following format:
+(pay close attention to the quoting)
+(minified json is OK/whitespace-insensitive):
+_______________________________________________________________________________
+                {
+                    "ip_addr": "192.168.1.1",
+                    "user": "admin",
+                    "password": "admin",
+                    "ssl": false,
+                    "port": 23
+                }
+_______________________________________________________________________________
+
+IF:
+
+- That file isn't found:
+-- A default (blank) one will be created (with secure permissions). All values
+   will be null (see below).
+   
+- "ip_addr" is null:
+-- You will be prompted for the IP address interactively. (If you don't know
+   the IP address of it, it's probably the default -- "192.168.1.1".)
+
+- "user" is null:
+-- You will be prompted for the username to log in interactively. (If you don't
+   know the username, it's probably the default -- "admin".)
+
+- "password" is null:
+-- You will be prompted for the password. When being prompted, it will NOT echo
+   back (like a sudo prompt).
+   
+- "ssl" is null:
+-- The default (false) will be used.
+
+- "port" is null:
+-- The default port (23) will be used.
+
+
+
+TIPS:
+
+- You need to ensure that you have the management interface enabled. Log into
+  your Actiontec's web interface, and:
+  1.) "Advanced" button (at the top)
+  2.) "Yes" button
+  3.) a.) Choose "Local administration" if you'll be managing the device within
+          the network it provides.[0]
+      b.) Choose "Remote administration" if you'll be managing the device
+          outside the network it provides (i.e. over the Internet).[0]
+      3.5) The "Telnet" options are what you want, ignore the "Web" settings.
+  4.) Select the protocols/ports you'll be using. SEE FOOTNOTE 0 ([0])!
+  5.) Click the "Apply" button.
+
+- "ip_addr" can also be a host/DNS name -- just make sure it resolves on your
+  local machine to your Actiontec IP address! The default, at least on mine,
+  was "wireless_broadband_router" (can be changed via Advanced > Yes > System
+  Settings > Wireless Broadband Router's Hostname):
+  
+        [bts@cylon ~]$ nslookup wireless_broadband_router 192.168.1.1
+        Server:		192.168.1.1
+        Address:	192.168.1.1#53
+
+        Name:	wireless_broadband_router
+        Address: 192.168.1.1
+        Name:	wireless_broadband_router
+        Address: <YOUR_PUBLIC_IP_ADDRESS>
+
+
+- Unfortunately it's a necessity to store the password in plaintext currently.
+  Future versions may give the option of encrypting it via GPG and using an
+  existing GPG agent session to unlock (if there's demand for such a feature).
+  Make sure your machine's files are safe (I recommend full-disk encryption).
+  
+
+[0] NOTE: ENABLING MANAGEMENT CAN BE HIGHLY INSECURE, *ESPECIALLY* IF ENABLING
+          "REMOTE ADMINISTRATION"! *ONLY* DO THIS IF YOU UNDERSTAND THE RISKS
+          AND HAVE ACCOUNTED FOR THEM. TELNET PASSES CREDENTIALS IN PLAINTEXT
+          BY DEFAULT, AND IF SOMEONE NASTY GETS THEIR HANDS ON YOUR DEVICE'S
+          CREDENTIALS THEY CAN DO *VERY* NASTY THINGS. I REFUSE ANY AND ALL
+          LIABILITY YOU OPEN YOURSELF UP TO BY ENABLING THIS. AT *LEAST* USE
+          THE "USING SECURE TELNET OVER SSL PORT"[1] OPTION.
+          YOU HAVE BEEN WARNED.
+
+[1] NOTE: Even if using SSL, it's HIGHLY insecure and not to be trusted. The
+          key has been leaked (as of 2018-04-12):
+                    https://code.google.com/archive/p/littleblackbox/
+          and it uses VERY weak ciphers, at that:
+          _____________________________________________________________________
+          | ssl-cert: Subject: commonName=ORname_Jungo: OpenRG Products Group/|
+          |           countryName=US                                          |
+          | Not valid before: 2004-06-03T11:11:43                             |
+          |_Not valid after:  2024-05-29T11:11:43                             |
+          |_ssl-date: 2018-04-12T09:42:22+00:00; -1s from scanner time.       |
+          |_ssl-known-key: Found in Little Black Box 0.1 -                    |
+          |         http://code.google.com/p/littleblackbox/                  |
+          |         (SHA-1: 4388 33c0 94f6 afc8 64c6 0e4a 6f57 e9f4 d128 1411)|
+          | sslv2:                                                            |
+          |   SSLv2 supported                                                 |
+          |   ciphers:                                                        |
+          |     SSL2_RC4_128_WITH_MD5                                         |
+          |     SSL2_RC4_64_WITH_MD5                                          |
+          |     SSL2_RC2_128_CBC_EXPORT40_WITH_MD5                            |
+          |     SSL2_RC4_128_EXPORT40_WITH_MD5                                |
+          |     SSL2_DES_192_EDE3_CBC_WITH_MD5                                |
+          |     SSL2_RC2_128_CBC_WITH_MD5                                     |
+          |_    SSL2_DES_64_CBC_WITH_MD5                                      |
+          |___________________________________________________________________|
+          
+          It's generally probably not even worth it, to be honest. You'll get
+          more security mileage out of firewalling off to select hosts/nets.
+          But, if you insist on having it and using it, you will ALSO need to
+          install the following module:
+          
+                        ssltelnet
+                        https://pypi.python.org/pypi/ssltelnet

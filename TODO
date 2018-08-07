@@ -27,3 +27,8 @@ probably need to package https://packages.debian.org/source/stretch/freebsd-buil
 -port in sslchk
 
 -script that uses uconv(?) and pymysql to export database to .ods
+
+-IRC
+-- i should use the python IRC module on pypi to join an irc network (freenode, probably, for my personal interests) and
+   run an iteration over all nicks in a channel with /ctcp <nick> version. handy when i'm trying to find someone running
+   a certain platform/client i have some questions about.

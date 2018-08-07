@@ -7,6 +7,30 @@
 # http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
 # https://github.com/shabble/irssi-docs/wiki/Formats#Colourising-Text-in-IRC-Messages
 # https://askubuntu.com/a/528938
+# <irssi.git>/themes/default.theme and ..docs/formats.txt holds SOME clues to
+# these.
+# e.g.
+# # text to insert at the beginning of each non-message line
+# line_start = "%B-%n!%B-%n ";
+#
+# # timestamp styling, nothing by default
+# timestamp = "$*";
+#
+# # any kind of text that needs hilighting, default is to bold
+# hilight = "%_$*%_";
+#####################
+# ^D = \x04
+# ^D8/ = bold dark grey (14)
+# ^D9/ = cyan (10)
+# ^Dg  = color/fmting? reset
+# ^D;/ = bold light cyan(11)
+# ^Dc  = bold
+# ^D>/ =  (incl. bell for ">"?)
+## The key seems to be /opt/dev/optools/net/irc/irssilogparse.py (& assoc. .c file)
+## see also <irssi.git>/src/core/log.c/h
+## !!! HUGE THANKS to Nei@Freenode#irssi! He pointed me to http://anti.teamidiot.de/static/nei/*/Code/Irssi/control2format.pl
+# which nicely maps those internal command/control chars to the irssi
+# templated stuff in their official docs (e.g. %b).
 
 # Sorry for the copious comments, but the majority of the Irssi log stuff isn't
 # really documented... anywhere. Just the color codes and \x03.
@@ -70,8 +94,8 @@ colormap = {8: {'0': ('97', '107'),
                 '13': ('95', '105'),
                 '14': ('90', '100'),
                 '15': ('37', '47'),
-                'ansi_wrap': {'fg': '\x1b[{0}',
-                              'bg': ';{0}m'}},
+                'ansi_wrap': {'fg': '\x1b[{0[0]}',
+                              'bg': ';{0[1]}m'}},
             ## https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
             256: {'0': '15',
                   '1': '0',
@@ -148,7 +172,8 @@ def get_palette():
         # TODO: 24-bit support (16777216 colors) instead of 8-bit.
         # See note above.
         #return('truecolor')
-        return(256)
+        #return(256)
+        return(8)
     else:
         curses.initscr()
         curses.start_color()
@@ -189,7 +214,8 @@ def color_converter(data_in, palette_map):
                            '\g<1>',
                            i.strip()) for i in _ch['stripped'].split(',', 1)]
         # Color-handling
-        if _ch['ctrl'].startswith('\x03'):
+        #if _ch['ctrl'].startswith('\x03'):
+        if re.search('[\x00-\x03]', _ch['ctrl']):
             if len(_ch['c']) == 1:
                 fg_only = True
             elif len(_ch['c']) == 2:
@@ -202,6 +228,9 @@ def color_converter(data_in, palette_map):
             if not fg_only:
                 bg = _colors['ansi_wrap']['bg'].format(_colors[_ch['c'][1]])
                 ch_out += bg
+            else:
+                if palette_map == 8:
+                    ch_out += 'm'
         # Control-character handling
         else:
             if _ch['ctrl'] in irssi_ctrl:
@@ -210,11 +239,14 @@ def color_converter(data_in, palette_map):
                     if _ch['ctrl'] == 'g':
                         color_inverter()
             elif re.search('^[0-9]', _ch['ctrl']):
-                # pass
                 ch_out = _colors['ansi_wrap']['fg'].format(
                                                         _colors[_ch['c'][0]])
+                if palette_map == 8:
+                    ch_out += 'm'
             else:
-                print(_ch['ctrl'])
+                # _ch['ctrl'] is not found and we don't have a color number
+                # to look up, so leave ch_out as ''
+                pass
         return(ch_out)
     #color_ptrn = re.compile('\x03[0-9]{1,2}(,[0-9]{1,2})?')
     catch = re.compile('(\x03[0-9]{2}(,[0-9]{1, 2})?|'
@@ -384,12 +416,17 @@ if __name__ == '__main__':
     l = irssiLogParser(args)
     import shutil
     cols = shutil.get_terminal_size().columns
+    #print('ARGS:')
     #pprint.pprint(l.args, width = cols)
-    pprint.pprint(l.raw, width = cols)
-    with open('/tmp/freenode.formatted', 'r') as f:
-        print(f.read())
+    # print('RAW')
+    # pprint.pprint(l.raw, width = cols)
+    # with open('/tmp/freenode.formatted', 'r') as f:
+    #     print(f.read())
+    #print('DATA')
     #pprint.pprint(l.data, width = cols)
+    #print('DATA (REPR)')
     #pprint.pprint(repr(l.data).split('\\n'))
+    print('DATA')
     print(l.data)
     with open('/tmp/log.raw', 'w') as f:
         for line in repr(l.data).split('\\n'):
