@@ -247,8 +247,7 @@ class Backup(object):
             self.logger.info('[{0}]: BEGIN RESTORE'.format(r))
             _cmd = ['borg',
                     'extract',
-                    '-v', '--stats',
-                    '--compression', 'lzma,9']
+                    '-v', '--stats']
             # if 'excludes' in self.cfg['repos'][r].keys():
             #     for e in self.cfg['repos'][r]['excludes']:
             #         _cmd.extend(['--exclude', e])
