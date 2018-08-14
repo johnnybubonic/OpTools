@@ -13,8 +13,6 @@ import lxml.etree
 # Serialize BSD mtree spec files into XML.
 # On arch, BSD mtree is ported in the AUR as nmtree.
 
-# THIS IS INCOMPLETE!
-
 class MtreeXML(object):
     def __init__(self, spec):
         # spec is a string or bytes
