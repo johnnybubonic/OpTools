@@ -96,7 +96,10 @@ class PkgIndexer(object):
 
     def _gen_json(self):
         import json
-        self.report = json.dumps(self.pkgs, default = str, indent = 4)
+        if self.args['plain']:
+            self.report = json.dumps([p['name'] for p in self.pkgs], indent = 4)
+        else:
+            self.report = json.dumps(self.pkgs, default = str, indent = 4)
         return()
 
     def _gen_xml(self):
@@ -106,7 +109,10 @@ class PkgIndexer(object):
             _attrib = copy.deepcopy(p)
             for i in ('built', 'installed', 'sizerpm', 'sizedisk'):
                 _attrib[i] = str(_attrib[i])
-            _pkg = etree.Element('package', attrib = _attrib)
+            if self.args['plain']:
+                _pkg = etree.Element('package', attrib = {'name': p['name']})
+            else:
+                _pkg = etree.Element('package', attrib = _attrib)
             _xml.append(_pkg)
             #del(_attrib['name'])  # I started to make it a more complex, nested structure... is that necessary?
         if self.args['header']:
