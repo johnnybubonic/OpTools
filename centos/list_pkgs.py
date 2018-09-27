@@ -91,7 +91,7 @@ class PkgIndexer(object):
         for p in self.pkgs:
             _csv.writerow(p)
         _buf.seek(0, 0)
-        self.report = _buf.read()
+        self.report = _buf.read().replace('\r\n', '\n')
         return()
 
     def _gen_json(self):
