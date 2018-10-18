@@ -11,7 +11,7 @@ def waiter(seconds = 1):
     max = len(anims) - 1
     global is_done
     print('Beginning dhparam gen...')
-    # This is just an example commant that takes a looong time.
+    # This is just an example command that takes a looong time.
     c = subprocess.Popen(['openssl', 'dhparam', '-out', '/tmp/dhpem', '4096'],
     #c = subprocess.Popen(['openssl', 'genrsa', '-out', '/tmp/dhpem', '4096'],
                          stdout = subprocess.PIPE,

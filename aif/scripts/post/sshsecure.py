@@ -4,13 +4,101 @@
 # TODO: check for cryptography module. if it exists, we can do this entirely pythonically
 #       without ever needing to use subprocess/ssh-keygen, i think!
 
+# Thanks to https://stackoverflow.com/a/39126754.
+
+# stdlib
 import datetime
 import glob
 import os
 import pwd
 import re
 import shutil
-import subprocess
+import subprocess  # REMOVE WHEN SWITCHING TO PURE PYTHON
+#### PREP FOR PURE PYTHON IMPLEMENTATION ####
+# # non-stdlib - testing and automatic install if necessary.
+# # TODO #
+# - cryptography module won't generate new-format "openssh-key-v1" keys.
+# - See https://github.com/pts/py_ssh_keygen_ed25519 for possible conversion to python 3
+# - https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key
+# - https://github.com/pyca/cryptography/issues/3509 and https://github.com/paramiko/paramiko/issues/1136
+# has_crypto = False
+# pure_py = False
+# has_pip = False
+# pipver = None
+# try:
+#     import cryptography
+#     has_crypto = True
+# except ImportError:
+#     # We'll try to install it. We set up the logic below.
+#     try:
+#         import pip
+#         has_pip = True
+#         # We'll use these to create a temporary lib path and remove it when done.
+#         import sys
+#         import tempfile
+#     except ImportError:
+#         # ABSOLUTE LAST fallback, if we got to THIS case, is to use subprocess.
+#         has_pip = False
+#         import subprocess
+#
+# # Try installing it then!
+# if not all((has_crypto, )):
+#     # venv only included after python 3.3.x. We fallback to subprocess if we can't do dis.
+#     if sys.hexversion >= 0x30300f0:
+#         has_ensurepip = False
+#         import venv
+#         if not has_pip and sys.hexversion >= 0x30400f0:
+#             import ensurepip
+#             has_ensurepip = True
+#         temppath = tempfile.mkdtemp('_VENV')
+#         v = venv.create(temppath)
+#         if has_ensurepip and not has_pip:
+#             # This SHOULD be unnecessary, but we want to try really hard.
+#             ensurepip.bootstrap(root = temppath)
+#             import pip
+#             has_pip = True
+#         if has_pip:
+#             pipver = pip.__version__.split('.')
+#             # A thousand people are yelling at me for this.
+#             if int(pipver[0]) >= 10:
+#                 from pip._internal import main as pipinstall
+#             else:
+#                 pipinstall = pip.main
+#             if int(pipver[0]) >= 8:
+#                 pipcmd = ['install',
+#                           '--prefix={0}'.format(temppath),
+#                           '--ignore-installed']
+#             else:
+#                 pipcmd = ['install',
+#                           '--install-option="--prefix={0}"'.format(temppath),
+#                           '--ignore-installed']
+#             # Get the lib path.
+#             libpath = os.path.join(temppath, 'lib')
+#             if os.path.exists('{0}64'.format(libpath)) and not os.path.islink('{0}64'.format(libpath)):
+#                 libpath += '64'
+#             for i in os.listdir(libpath):  # TODO: make this more sane. We cheat a bit here by making assumptions.
+#                 if re.search('python([0-9]+(\.[0-9]+)?)?$', i):
+#                     libpath = os.path.join(libpath, i)
+#                     break
+#             libpath = os.path.join(libpath, 'site-packages')
+#             sys.prefix = temppath
+#             for m in ('cryptography', 'ed25519'):
+#                 pipinstall(['install', 'cryptography'])
+#             sys.path.append(libpath)
+#             try:
+#                 import cryptography
+#                 has_crypto = True
+#             except ImportError:  # All that trouble for nothin'. Shucks.
+#                 pass
+#
+# if all((has_crypto, )):
+#     pure_py = True
+#
+# if pure_py:
+#     from cryptography.hazmat.primitives import serialization as crypto_serialization
+#     from cryptography.hazmat.primitives.asymmetric import rsa
+#     from cryptography.hazmat.backends import default_backend as crypto_default_backend
+#
 
 conf_options = {}
 conf_options['sshd'] = {'KexAlgorithms': 'curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256',
@@ -31,12 +119,13 @@ conf_options['ssh'] = {'Host': {'*': {'KexAlgorithms': 'curve25519-sha256@libssh
                                       'PubkeyAuthentication': 'yes',
                                       'HostKeyAlgorithms': 'ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ssh-ed25519,ssh-rsa'}}}
 # Uncomment below if Github still needs diffie-hellman-group-exchange-sha1 sometimes.
+# For what it's worth, it doesn't seem to.
 #conf_options['ssh']['Host']['github.com'] = {'KexAlgorithms': 'curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256,' +
 #                                             'diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha1'}
 
 
 def hostKeys(buildmoduli):
-    # Starting haveged should help lessen the time load, but not much.
+    # Starting haveged should help lessen the time load a non-negligible amount, especially on virtual platforms.
     if os.path.lexists('/usr/bin/haveged'):
         # We could use psutil here, but then that's a python dependency we don't need.
         # We could parse the /proc directory, but that's quite unnecessary. pgrep's installed by default on Arch.

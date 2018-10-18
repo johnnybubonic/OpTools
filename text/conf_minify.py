@@ -31,21 +31,15 @@ class ConfStripper(object):
         if not self.comments:
             if len(self.comment_syms) == 1:
                 if self.inline:
-                    self.regexes.append(re.compile(
-                                                '^(.*){0}.*'.format(
-                                                        self.comment_syms[0])))
+                    self.regexes.append(re.compile('^([^{0}]*){0}.*'.format(self.comment_syms[0])))
                 else:
-                    self.regexes.append(re.compile(
-                                                '^(\s*){0}.*'.format(
-                                                        self.comment_syms[0])))
+                    self.regexes.append(re.compile('^(\s*){0}.*'.format(self.comment_syms[0])))
             else:
                 syms = '|'.join(self.comment_syms)
                 if self.inline:
-                    self.regexes.append(re.compile(
-                                                '^(.*)({0}).*'.format(syms)))
+                    self.regexes.append(re.compile('^(.*)({0}).*'.format(syms)))
                 else:
-                    self.regexes.append(re.compile(
-                                                '^(\s*)({0}).*'.format(syms)))
+                    self.regexes.append(re.compile( '^(\s*)({0}).*'.format(syms)))
         return()
 
     def parse(self, path):
@@ -73,7 +67,7 @@ class ConfStripper(object):
             return(None)
         try:
             with open(path, 'r') as f:
-                conf = [i.strip() for i in f.readlines()]
+                conf = f.readlines()
         except UnicodeDecodeError:  # It's a binary file. Oops.
             if self.cli:
                 print('{0}: Binary file? (is not UTF-8/ASCII)'.format(path))
@@ -89,8 +83,13 @@ class ConfStripper(object):
         # Okay, so now we can actually parse.
         # Comments first.
         for idx, line in enumerate(conf):
+            if line.strip() == '':
+                continue
             for r in self.regexes:
                 conf[idx] = r.sub('\g<1>', conf[idx])
+            if conf[idx].strip() == '':  # The line was "deleted".
+                conf[idx] = None
+        conf = [i for i in conf if i is not None]
         # Then leading spaces...
         if not self.leading:
             for idx, line in enumerate(conf):
@@ -101,7 +100,7 @@ class ConfStripper(object):
                 conf[idx] = conf[idx].rstrip()
         # Lastly, if set, remove blank lines.
         if not self.whitespace:
-            conf = [i for i in conf if i != '']
+            conf = [i for i in conf if i.strip() != '']
         return(conf)
 
     def recurse(self, path):
@@ -139,8 +138,7 @@ class ConfStripper(object):
                 f.write(new_content)
         except PermissionError:
             if self.cli:
-                print('{0}: Cannot write (insufficient permission)'.format(
-                                                                        path))
+                print('{0}: Cannot write (insufficient permission)'.format(path))
             return()
         return()
 
@@ -160,9 +158,7 @@ class ConfStripper(object):
         return(realpaths)
 
 def parseArgs():
-    args = argparse.ArgumentParser(description = ('Remove extraneous ' +
-                                                  'formatting/comments from ' +
-                                                  'files'))
+    args = argparse.ArgumentParser(description = ('Remove extraneous formatting/comments from files'))
     args.add_argument('-c', '--keep-comments',
                       dest = 'comments',
                       action = 'store_true',
@@ -172,15 +168,13 @@ def parseArgs():
                       dest = 'comment_syms',
                       action = 'append',
                       default = [],
-                      help = ('The character(s) to be treated as comments. ' +
-                              'Can be specified multiple times (one symbol ' +
-                              'per flag, please, unless a specific sequence ' +
-                              'denotes a comment). Default is just #'))
+                      help = ('The character(s) to be treated as comments. '
+                              'Can be specified multiple times (one symbol per flag, please, unless a specific '
+                              'sequence denotes a comment). Default is just #'))
     args.add_argument('-i', '--no-inline',
                       dest = 'inline',
                       action = 'store_false',
-                      help = ('If specified, do NOT parse the files as ' +
-                              'having inline comments (the default is to ' +
+                      help = ('If specified, do NOT parse the files as having inline comments (the default is to '
                               'look for inline comments)'))
     args.add_argument('-s', '--keep-whitespace',
                       dest = 'whitespace',
@@ -189,17 +183,15 @@ def parseArgs():
     args.add_argument('-t', '--keep-trailing',
                       dest = 'trailing',
                       action = 'store_true',
-                      help = ('If specified, retain trailing whitespace on ' +
-                              'lines'))
+                      help = ('If specified, retain trailing whitespace on lines'))
     args.add_argument('-l', '--no-leading-whitespace',
                       dest = 'leading',
                       action = 'store_false',
                       help = ('If specified, REMOVE leading whitespace'))
-    args.add_argument('-d', '--dry-run',
+    args.add_argument('-w', '--write',
                       dest = 'dry_run',
-                      action = 'store_true',
-                      help = ('If specified, don\'t actually overwrite the ' +
-                              'file(s) - just print to stdout instead'))
+                      action = 'store_false',
+                      help = ('If specified, overwrite the file(s) instead of just printing to stdout'))
     args.add_argument('-S', '--no-symlinks',
                       dest = 'symlinks',
                       action = 'store_false',
@@ -207,10 +199,8 @@ def parseArgs():
     args.add_argument('paths',
                       metavar = 'PATH/TO/DIR/OR/FILE',
                       nargs = '+',
-                      help = ('The path(s) to the file(s) to strip down. If ' +
-                              'a directory is given, files will ' +
-                              'recursively be modified (unless -d/--dry-run ' +
-                              'is specified). Can be specified multiple ' +
+                      help = ('The path(s) to the file(s) to strip down. If a directory is given, files will '
+                              'recursively be printed (unless -w/--write is specified). Can be specified multiple '
                               'times'))
     return(args)
 

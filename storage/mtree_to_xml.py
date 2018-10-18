@@ -159,6 +159,8 @@ class MtreeXML(object):
             return(out)
         def _unset_parse(unsetline):
             out = {}
+            if unsetline[1] == 'all':
+                return(copy.deepcopy(self._tplitem))
             for i in unsetline:
                 out[i] = self._tplitem[i]
             return(out)

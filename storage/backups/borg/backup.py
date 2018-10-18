@@ -45,6 +45,12 @@ class Backup(object):
         if self.args['oper'] == 'backup':
             for d in (self.args['mysqldir'], self.args['stagedir']):
                 os.makedirs(d, exist_ok = True, mode = 0o700)
+        if self.args['oper'] == 'restore':
+            self.args['target_dir'] = os.path.abspath(os.path.expanduser(
+                                                    self.args['target_dir']))
+            os.makedirs(os.path.dirname(self.args['oper']),
+                        exist_ok = True,
+                        mode = 0o700)
         ### LOGGING ###
         # Thanks to:
         # https://web.archive.org/web/20170726052946/http://www.lexev.org/en/2013/python-logging-every-day/
@@ -255,7 +261,8 @@ class Backup(object):
                                                   self.cfg['config']['host'],
                                                   r,
                                                   self.args['archive']))
-            # TODO: support specific path of extract?
+            _cmd.append(os.path.abspath(self.args['target_dir']))
+            # TODO: support specific path inside archive?
             # if so, append path(s) here.
             _env['BORG_PASSPHRASE'] = self.cfg['repos'][r]['password']
             self.logger.debug('VARS: {0}'.format(vars()))

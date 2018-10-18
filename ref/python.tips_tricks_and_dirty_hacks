@@ -26,7 +26,7 @@ ref: https://www.python.org/dev/peps/pep-0008/#imports
 
 ###############################################################################
 
-To programmatically install modules via pip if they aren't installed:
+To programmatically install modules via pip if they aren't installed (BROKEN IN RECENT PIP VERSIONS; pip._internal.main() i think):
 
 ____
 import importlib
@@ -109,3 +109,12 @@ log = logger.log(name = 'project.name')
 
 # TODO #
 https://stackoverflow.com/questions/10265193/python-can-a-class-act-like-a-module
+
+
+###############################################################################
+
+To issue an equivalent of "reset" command in linux, assuming console is ANSI-compat,
+
+print('\x1bc', end = '')
+
+###############################################################################
