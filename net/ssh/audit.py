@@ -38,7 +38,6 @@ class SSHAuthInfo(object):
             self._ssh.auth_none('')
         except paramiko.ssh_exception.BadAuthenticationType as err:
             secopts = self._ssh.get_security_options()
-            print(secopts.key_types)
             if self.info['methods']:
                 # https://stackoverflow.com/a/1257769
                 self.info['methods'] = err.allowed_types
