@@ -118,3 +118,17 @@ To issue an equivalent of "reset" command in linux, assuming console is ANSI-com
 print('\x1bc', end = '')
 
 ###############################################################################
+
+
+To get the default route via pyroute2,
+----
+import socket
+from pyroute2 import IPDB
+ip = IPDB()
+def_rt = ip.routes['default']  # a route object
+iface = ip.interfaces[def_rt.oif]  # an interface object. name is e.g. iface.ifname, IPs are in tuple-of-tuples iface.ipaddr, etc.
+gw = def_rt.gateway  # etc.
+ip.release()
+----
+
+###############################################################################

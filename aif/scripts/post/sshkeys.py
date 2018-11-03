@@ -12,9 +12,9 @@ def copyKeys(keystring, user = 'root'):
     homedir = os.path.expanduser('~{0}'.format(user))
     sshdir = '{0}/.ssh'.format(homedir)
     authfile = '{0}/authorized_keys'.format(sshdir)
+    os.makedirs(sshdir, mode = 0o700, exist_ok = True)
     with open(authfile, 'a') as f:
         f.write(keystring)
-    os.makedirs(sshdir, mode = 0o700, exist_ok = True)
     for basedir, dirs, files in os.walk(sshdir):
         os.chown(basedir, uid, gid)
         os.chmod(basedir, 0o700)
