@@ -2,6 +2,7 @@
 
 import argparse
 import configparser
+import copy
 import datetime
 import os
 import pprint
@@ -34,6 +35,8 @@ opts = [
        ]
 
 def sync(args):
+    # TODO: this should be a class, probably, instead as there's a lot of shared data across what should be multiple
+    # functions.
     with open(os.devnull, 'w') as devnull:
         mntchk = subprocess.run(['findmnt', args['mount']], stdout = devnull, stderr = devnull)
     if mntchk.returncode != 0:
@@ -52,8 +55,17 @@ def sync(args):
     cmd = [rsync]  # the path to the binary
     cmd.extend(opts)  # the arguments
     # TODO: implement repos here?
-    cmd.append(os.path.join(args['mirror'], '.'))  # the path on the remote mirror
-    cmd.append(os.path.join(args['destination'], '.'))  # the local destination
+    # end TODO
+    # The https://git.server-speed.net/users/flo/bin/tree/syncrepo.sh script uses http(s). to check for lastupdate.
+    # I don't, because not all mirrors *have* http(s).
+    check_cmd = copy.deepcopy(cmd)
+    check_cmd.append(os.path.join(args['mirror'], 'lastupdate'))
+    check_cmd.append(os.path.join(args['destination'], 'lastupdate'))
+    update_cmd = copy.deepcopy(cmd)
+    update_cmd.append(os.path.join(args['mirror'], 'lastsync'))
+    update_cmd.append(os.path.join(args['destination'], 'lastsync'))
+    cmd.append(os.path.join(args['mirror'], '.'))  # the path on the remote mirror (full sync)
+    cmd.append(os.path.join(args['destination'], '.'))  # the local destination (full sync)
     if os.path.isfile(args['lockfile']):
         with open(args['lockfile'], 'r') as f:
             existingpid = f.read().strip()
@@ -65,25 +77,44 @@ def sync(args):
     else:
         with open(args['lockfile'], 'w') as f:
             f.write(str(os.getpid()))
-    with open(args['logfile'], 'a') as log:
-        c = subprocess.run(cmd, stdout = log, stderr = subprocess.PIPE)
+    # determine if we need to do a full sync.
+    # TODO: clean this up. there's a lot of code duplication here, and it should really be a function.
+    with open(os.path.join(args['destination'], 'lastupdate'), 'r') as f:
+        oldupdate = datetime.datetime.utcfromtimestamp(int(f.read().strip()))
+    with open(os.devnull, 'wb') as devnull:
+        # TODO: when i clean this up, change this to do error detection
+        c = subprocess.run(check_cmd, stdout = devnull, stderr = devnull)
+        c2 = subprocess.run(update_cmd, stdout = devnull, stderr = devnull)
+    with open(os.path.join(args['destination'], 'lastupdate'), 'r') as f:
+        newupdate = datetime.datetime.utcfromtimestamp(int(f.read().strip()))
+    if newupdate > oldupdate:
+        with open(args['logfile'], 'a') as log:
+            c = subprocess.run(cmd, stdout = log, stderr = subprocess.PIPE)
         now = int(datetime.datetime.timestamp(datetime.datetime.utcnow()))
         with open(os.path.join(args['destination'], 'lastsync'), 'w') as f:
             f.write(str(now) + '\n')
-        os.remove(args['lockfile'])
-        # Only report errors at the end of the run if we aren't running in cron. Otherwise, log them.
-        errors = c.stderr.decode('utf-8').splitlines()
-        if os.isatty(sys.stdin.fileno()) and errors:
-            print('We encountered some errors:')
+    else:
+        # No-op. Stderr should be empty.
+        c = subprocess.run(['echo'], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        now = int(datetime.datetime.timestamp(datetime.datetime.utcnow()))
+    # always write the "lastcheck" timestamp. This is something I personally do since other mirrors only update
+    # lastsync when syncs are needed.
+    with open(os.path.join(args['destination'], 'lastcheck'), 'w') as f:
+        f.write(str(now) + '\n')
+    os.remove(args['lockfile'])
+    # Only report errors at the end of the run if we aren't running in cron. Otherwise, log them.
+    errors = c.stderr.decode('utf-8').splitlines()
+    if os.isatty(sys.stdin.fileno()) and errors:
+        print('We encountered some errors:')
+        for e in errors:
+            if e.startswith('symlink has no referent: '):
+                print('Broken upstream symlink: {0}'.format(e.split()[1].replace('"', '')))
+            else:
+                print(e)
+    elif errors:
+        with open(args['logfile'], 'a') as f:
             for e in errors:
-                if e.startswith('symlink has no referent: '):
-                    print('Broken upstream symlink: {0}'.format(e.split()[1].replace('"', '')))
-                else:
-                    print(e)
-        else:
-            with open(args['logfile'], 'a') as f:
-                for e in errors:
-                    f.write('{0}\n'.format(e))
+                f.write('{0}\n'.format(e))
     return()
 
 def getDefaults():
