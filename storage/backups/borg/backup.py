@@ -5,6 +5,8 @@
 # we import it for various prep stuff anyways.
 # TODO: change loglevel of borg itself in subprocess to match the argparse?
 # --debug, --info (same as -v/--verbose), --warning, --error, --critical
+# TODO: switch to XML-based cfg instead of JSON. add automatic converter.
+# TODO: modify config to add repo to cfg for init? or add new operation, "add"
 
 import argparse
 import configparser

@@ -97,9 +97,7 @@ def sync(args):
         # No-op. Stderr should be empty.
         c = subprocess.run(['echo'], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         now = int(datetime.datetime.timestamp(datetime.datetime.utcnow()))
-    # always write the "lastcheck" timestamp. This is something I personally do since other mirrors only update
-    # lastsync when syncs are needed.
-    with open(os.path.join(args['destination'], 'lastcheck'), 'w') as f:
+    with open(args['lastcheck'], 'w') as f:
         f.write(str(now) + '\n')
     os.remove(args['lockfile'])
     # Only report errors at the end of the run if we aren't running in cron. Otherwise, log them.
@@ -122,6 +120,7 @@ def getDefaults():
     dflt = {'mirror': 'rsync://mirror.square-r00t.net/arch/',
             'repos': 'core,extra,community,multilib,iso/latest',
             'destination': '/srv/repos/arch',
+            'lastcheck': '/srv/http/arch.lastcheck',
             'mount': '/',
             'bwlimit': 0,
             'lockfile': '/var/run/repo-sync_arch.lck',
@@ -159,12 +158,18 @@ def parseArgs():
                       dest = 'destination',
                       default = liveopts['destination'],
                       help = 'The destination directory to sync to. Default: {0}'.format(liveopts['destination']))
+    args.add_argument('-c', '--last-check',
+                      dest = 'lastcheck',
+                      default = liveopts['lastcheck'],
+                      help = ('The file to update with a timestamp on every run. Per spec, this must be outside the '
+                              'repository webroot'))
     args.add_argument('-b',
                       '--bwlimit',
                       dest = 'bwlimit',
                       default = liveopts['bwlimit'],
                       type = int,
-                      help = 'The amount, in Kilobytes per second, to throttle the sync to. Default is to not throttle (0).')
+                      help = ('The amount, in Kilobytes per second, to throttle the sync to. Default is to not '
+                              'throttle (0).'))
     args.add_argument('-l',
                       '--log',
                       dest = 'logfile',

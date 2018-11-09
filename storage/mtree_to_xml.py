@@ -13,6 +13,8 @@ import lxml.etree
 # Serialize BSD mtree spec files into XML.
 # On arch, BSD mtree is ported in the AUR as nmtree.
 
+# TODO: use bitwise operations to convert octal modes back and forth. ex. at https://stackoverflow.com/a/1746850
+
 class MtreeXML(object):
     def __init__(self, spec):
         # spec is a string or bytes
