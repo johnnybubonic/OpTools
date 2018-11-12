@@ -132,3 +132,41 @@ ip.release()
 ----
 
 ###############################################################################
+
+
+dropping privileges to non-root user (and restoring):
+https://stackoverflow.com/questions/2699907/dropping-root-permissions-in-python
+https://stackoverflow.com/questions/15705439/drop-root-privileges-for-certain-operations-in-python
+
+NOTE: if you want to *remove the ability* to restore back to root privs, use os.setgid(running_gid) and os.setuid(running_uid) instead.
+
+reference:
+http://timetobleed.com/5-things-you-dont-know-about-user-ids-that-will-destroy-you/
+https://nanopdf.com/download/setuid-demystified_pdf
+
+----
+import os, pwd, grp
+import subprocess
+
+my_uid = pwd.getpwuid(os.geteuid()).pw_uid
+my_gid = grp.getgrgid(os.getegid()).gr_gid
+my_grps = os.getgroups()
+try:
+    os.remove('/tmp/usertest')
+    os.remove('/tmp/parenttest')
+except:
+    pass
+if os.getuid() != 0:
+    exit('need root')
+running_uid = pwd.getpwnam(uid_name).pw_uid
+running_gid = grp.getgrnam(gid_name).gr_gid
+os.setgroups([])
+os.setegid(running_gid)
+os.seteuid(running_uid)
+old_umask = os.umask(0o022)
+subprocess.run(['touch', '/tmp/usertest'])
+os.seteuid(my_uid)
+os.setegid(my_gid)
+os.setgroups(my_grps)
+os.umask(old_umask)
+subprocess.run(['touch', '/tmp/parenttest'])

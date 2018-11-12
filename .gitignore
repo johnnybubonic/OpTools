@@ -22,5 +22,6 @@ __pycache__/
 *.run
 *.7z
 *.rar
+*.sqlite3
 *.deb
 .idea/
