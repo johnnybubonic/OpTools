@@ -92,8 +92,9 @@ class PkgChk(object):
                             (self.flst[f]['hash'] !=
                              self.pkgfilemap[p][f]['hash'])):
                         if not self.symlinks:
-                            if re.search('^0+$',
-                                         self.pkgfilemap[p][f]['hash']):
+                            if ((not self.pkgfilemap[p][f]['hash'])
+                                or re.search('^0+$',
+                                             self.pkgfilemap[p][f]['hash'])):
                                 continue
                         r_time = datetime.datetime.fromtimestamp(
                                                 self.pkgfilemap[p][f]['date'])
