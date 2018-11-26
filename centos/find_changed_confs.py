@@ -4,6 +4,8 @@
 # Definitely probably won't work on 5.x since they use MD5(?), and 6.5? and up
 # use SHA256.
 
+# TODO: add support for .rpm files (like list_files_package.py)
+
 import argparse
 import copy
 import datetime

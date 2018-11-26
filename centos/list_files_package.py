@@ -6,6 +6,7 @@
 
 import argparse
 import json
+import os
 import re
 # For when CentOS/RHEL switch to python 3 by default (if EVER).
 import sys
@@ -13,7 +14,7 @@ pyver = sys.version_info
 try:
     import rpm
 except ImportError:
-    exit('This script only runs on RHEL/CentOS/other RPM-based distros.')
+    exit('This script only runs on the system-provided Python on RHEL/CentOS/other RPM-based distros.')
 
 def all_pkgs():
     # Gets a list of all packages.
@@ -29,70 +30,106 @@ class FileGetter(object):
         self.symlinks = symlinks
         self.verbose = verbose
         self.trns = rpm.TransactionSet()
+        self.files = {}
+        for p in kwargs['pkgs']:
+            if p not in self.files.keys():
+                self.getFiles(p)
+        if kwargs['rpm_files']:
+            self.getLocalFiles(kwargs['rpm_files'])
 
-    def getfiles(self, pkgnm):
-        files = {}
-        for pkg in self.trns.dbMatch('name', pkgnm):
-            # The canonical package name
-            _pkgnm = pkg.sprintf('%{NAME}')
-            # Return just a list of files, or a dict of filepath:hash
-            # if verbose is enabled.
+    def getLocalFiles(self, rpm_files):
+        # Needed because the rpm module can't handle arbitrary rpm files??? If it can, someone let me know.
+        import yum
+        for r in rpm_files:
+            pkg = yum.YumLocalPackage(ts = self.trns,
+                                      filename = r)
+            _pkgnm = pkg.hdr.sprintf('%{NAME}')
+            if _pkgnm in self.files:
+                continue
             if self.verbose:
-                files[_pkgnm] = {}
+                self.files[_pkgnm] = {}
             else:
-                files[_pkgnm] = []
-            for f in pkg.fiFromHeader():
+                self.files[_pkgnm] = []
+            for f in pkg.hdr.fiFromHeader():
                 _symlink = (True if re.search('^0+$', f[12]) else False)
                 if self.verbose:
                     if _symlink:
                         if self.symlinks:
-                            files[_pkgnm][f[0]] = '(symbolic link)'
+                            self.files[_pkgnm][f[0]] = '(symbolic link or directory)'
                         continue
-                    files[_pkgnm][f[0]] = f[12]
+                    self.files[_pkgnm][f[0]] = f[12]
                 else:
                     # Skip if it is a symlink but they aren't enabled
                     if _symlink and not self.symlinks:
                         continue
                     else:
-                        files[_pkgnm].append(f[0])
-                    files[_pkgnm].sort()
-        return(files)
+                        self.files[_pkgnm].append(f[0])
+                    self.files[_pkgnm].sort()
+        return()
+
+    def getFiles(self, pkgnm):
+        for pkg in self.trns.dbMatch('name', pkgnm):
+            # The canonical package name
+            _pkgnm = pkg.sprintf('%{NAME}')
+            # Return just a list of files, or a dict of filepath:hash if verbose is enabled.
+            if self.verbose:
+                self.files[_pkgnm] = {}
+            else:
+                self.files[_pkgnm] = []
+            for f in pkg.fiFromHeader():
+                _symlink = (True if re.search('^0+$', f[12]) else False)
+                if self.verbose:
+                    if _symlink:
+                        if self.symlinks:
+                            self.files[_pkgnm][f[0]] = '(symbolic link)'
+                        continue
+                    self.files[_pkgnm][f[0]] = f[12]
+                else:
+                    # Skip if it is a symlink but they aren't enabled
+                    if _symlink and not self.symlinks:
+                        continue
+                    else:
+                        self.files[_pkgnm].append(f[0])
+                    self.files[_pkgnm].sort()
+        return()
 
 def parseArgs():
-    args = argparse.ArgumentParser(description = (
-                    'This script allows you get a list of files for a given '
-                    'package name(s) without installing any extra packages '
-                    '(such as yum-utils for repoquery).'))
+    args = argparse.ArgumentParser(description = ('This script allows you get a list of files for a given package '
+                                                  'name(s) without installing any extra packages (such as yum-utils '
+                                                  'for repoquery). It is highly recommended to use at least one '
+                                                  '-r/--rpm, -p/--package, or both.'))
     args.add_argument('-l', '--ignore-symlinks',
                       dest = 'symlinks',
                       action = 'store_false',
-                      help = ('If specified, don\'t report files that are ' +
-                              'symlinks in the RPM'))
+                      help = ('If specified, don\'t report files that are symlinks in the RPM'))
     args.add_argument('-v', '--verbose',
                       dest = 'verbose',
                       action = 'store_true',
                       help = ('If specified, include the hashes of the files'))
+    args.add_argument('-r', '--rpm',
+                      dest = 'rpm_files',
+                      metavar = 'PATH/TO/RPM',
+                      action = 'append',
+                      default = [],
+                      help = ('If specified, use this RPM file instead of the system\'s RPM database. Can be '
+                              'specified multiple times'))
     args.add_argument('-p', '--package',
                       dest = 'pkgs',
                       #nargs = 1,
                       metavar = 'PKGNAME',
                       action = 'append',
                       default = [],
-                      help = ('If specified, restrict the list of ' +
-                              'packages to check against to only this ' +
-                              'package. Can be specified multiple times. ' +
-                              'HIGHLY RECOMMENDED'))
+                      help = ('If specified, restrict the list of packages to check against to only this package. Can '
+                              'be specified multiple times. HIGHLY RECOMMENDED'))
     return(args)
 
 def main():
     args = vars(parseArgs().parse_args())
-    if not args['pkgs']:
-        prompt_str = (
-            'You have not specified any package names.\nThis means we will '
-            'get file lists for EVERY SINGLE installed package.\nThis is a '
-            'LOT of output and can take a few moments.\nIf this was a '
-            'mistake, you can hit ctrl-c now.\nOtherwise, hit the enter key '
-            'to continue.\n')
+    args['rpm_files'] = [os.path.abspath(os.path.expanduser(i)) for i in args['rpm_files']]
+    if not any((args['rpm_files'], args['pkgs'])):
+        prompt_str = ('You have not specified any package names.\nThis means we will get file lists for EVERY SINGLE '
+                      'installed package.\nThis is a LOT of output and can take a few moments.\nIf this was a mistake, '
+                      'you can hit ctrl-c now.\nOtherwise, hit the enter key to continue.\n')
         sys.stderr.write(prompt_str)
         if pyver.major >= 3:
             input()
@@ -100,11 +137,7 @@ def main():
             raw_input()
         args['pkgs'] = all_pkgs()
     gf = FileGetter(**args)
-    file_rslts = {}
-    for p in args['pkgs']:
-        if p not in file_rslts.keys():
-            file_rslts[p] = gf.getfiles(p)
-    print(json.dumps(file_rslts, indent = 4))
+    print(json.dumps(gf.files, indent = 4))
     return()
 
 if __name__ == '__main__':
