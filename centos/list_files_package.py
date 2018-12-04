@@ -144,7 +144,8 @@ def main():
                 raw_input()
             args['pkgs'] = all_pkgs()
     else:
-        args = {'pkgs': all_pkgs()}
+        args = {'pkgs': all_pkgs(),
+                'rpm_files': []}
     gf = FileGetter(**args)
     print(json.dumps(gf.files, indent = 4))
     return()
