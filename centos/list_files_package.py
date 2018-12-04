@@ -4,7 +4,13 @@
 # Lets you get a list of files for a given package name(s) without installing
 # any extra packages (such as yum-utils for repoquery).
 
-import argparse
+# NOTE: If you're on CentOS 6.x, since it uses such an ancient version of python you need to either install
+# python-argparse OR just resign to using it for all packages with none of the features.
+try:
+    import argparse
+    has_argparse = True
+except ImportError:
+    has_argparse = False
 import json
 import os
 import re
@@ -124,18 +130,21 @@ def parseArgs():
     return(args)
 
 def main():
-    args = vars(parseArgs().parse_args())
-    args['rpm_files'] = [os.path.abspath(os.path.expanduser(i)) for i in args['rpm_files']]
-    if not any((args['rpm_files'], args['pkgs'])):
-        prompt_str = ('You have not specified any package names.\nThis means we will get file lists for EVERY SINGLE '
-                      'installed package.\nThis is a LOT of output and can take a few moments.\nIf this was a mistake, '
-                      'you can hit ctrl-c now.\nOtherwise, hit the enter key to continue.\n')
-        sys.stderr.write(prompt_str)
-        if pyver.major >= 3:
-            input()
-        elif pyver.major == 2:
-            raw_input()
-        args['pkgs'] = all_pkgs()
+    if has_argparse:
+        args = vars(parseArgs().parse_args())
+        args['rpm_files'] = [os.path.abspath(os.path.expanduser(i)) for i in args['rpm_files']]
+        if not any((args['rpm_files'], args['pkgs'])):
+            prompt_str = ('You have not specified any package names.\nThis means we will get file lists for EVERY SINGLE '
+                          'installed package.\nThis is a LOT of output and can take a few moments.\nIf this was a mistake, '
+                          'you can hit ctrl-c now.\nOtherwise, hit the enter key to continue.\n')
+            sys.stderr.write(prompt_str)
+            if pyver.major >= 3:
+                input()
+            elif pyver.major == 2:
+                raw_input()
+            args['pkgs'] = all_pkgs()
+    else:
+        args = {'pkgs': all_pkgs()}
     gf = FileGetter(**args)
     print(json.dumps(gf.files, indent = 4))
     return()
