@@ -8,12 +8,17 @@ def index():
     # First we define interactive browsers
     _intbrowsers = {'camino': ['http://caminobrowser.org/', 'Camino'],
                     'chrome': ['https://www.google.com/chrome/', 'Google Chrome'],
+                    'edge': ['https://www.microsoft.com/en-us/windows/microsoft-edge',
+                             'Microsoft Edge'],
                     'firefox': ['https://www.mozilla.org/firefox/', 'Mozilla Firefox'],
                     'galeon': ['http://galeon.sourceforge.net/', 'Galeon'],
                     'kmeleon': ['http://kmeleonbrowser.org/', 'K-Meleon'],
                     'konqueror': ['https://konqueror.org/', 'Konqueror'],
                     'links': ['http://links.twibright.com/', 'Links'],
-                    'lynx': ['http://lynx.browser.org/', 'Lynx']}
+                    'msie': ['https://en.wikipedia.org/wiki/Internet_Explorer',
+                             'Microsoft Internet Explorer'],
+                    'lynx': ['http://lynx.browser.org/', 'Lynx'],
+                    'safari': ['https://www.apple.com/safari/', 'Apple Safari']}
     _os = {'aix': ['https://www.ibm.com/power/operating-systems/aix', 'AIX'],
            'amiga': ['http://www.amiga.org/', 'Amiga'],
            'android': ['https://www.android.com/', 'Android'],
@@ -30,6 +35,7 @@ def index():
            'wii': ['http://wii.com/', 'Wii'],
            'windows': ['https://www.microsoft.com/windows/', 'Windows']}
     _alts = {'amiga': ' (have you tried <a href="http://aros.sourceforge.net/">AROS</a> yet?)',
+             'android': ' (have you tried <a href="https://lineageos.org/">LineageOS</a> yet?)',
              'macos': ' (have you tried <a href="https://elementary.io/">ElementaryOS</a> yet?)',
              'sgi': ' (have you tried <a href="http://www.maxxinteractive.com">MaXX</a> yet?)',
              'windows': ' (have you tried <a href="https://https://reactos.org/">ReactOS</a> yet?)'}
