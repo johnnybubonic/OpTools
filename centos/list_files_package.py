@@ -45,6 +45,7 @@ class FileGetter(object):
 
     def getLocalFiles(self, rpm_files):
         # Needed because the rpm module can't handle arbitrary rpm files??? If it can, someone let me know.
+        # According to http://rpm5.org/docs/api/classRpmhdr.html#_details I can.
         import yum
         for r in rpm_files:
             pkg = yum.YumLocalPackage(ts = self.trns,
