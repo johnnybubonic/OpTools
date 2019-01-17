@@ -6,12 +6,15 @@
 
 # Thanks to https://stackoverflow.com/a/39126754.
 
+# Also, I need to re-write this. It's getting uglier.
+
 # stdlib
 import datetime
 import glob
 import os
 import pwd
 import re
+import signal
 import shutil
 import subprocess  # REMOVE WHEN SWITCHING TO PURE PYTHON
 #### PREP FOR PURE PYTHON IMPLEMENTATION ####
@@ -100,12 +103,16 @@ import subprocess  # REMOVE WHEN SWITCHING TO PURE PYTHON
 #     from cryptography.hazmat.backends import default_backend as crypto_default_backend
 #
 
+# We need static backup suffixes.
+tstamp = int(datetime.datetime.utcnow().timestamp())
+
 # TODO: associate various config directives with version, too.
 # For now, we use this for primarily CentOS 6.x, which doesn't support ED25519 and probably some of the MACs.
 # Bastards.
 # https://ssh-comparison.quendi.de/comparison/cipher.html at some point in the future...
 # TODO: maybe implement some parsing of the ssh -Q stuff? https://superuser.com/a/869005/984616
 # If you encounter a version incompatibility, please let me know!
+# nmap --script ssh2-enum-algos -PN -sV -p22 <host>
 magic_ver = 6.5
 ssh_ver = subprocess.run(['ssh', '-V'], stderr = subprocess.PIPE).stderr.decode('utf-8').strip().split()[0]
 ssh_ver = float(re.sub('^(Open|Sun_)SSH_([0-9\.]+)(p[0-9]+)?,.*$', '\g<2>', ssh_ver))
@@ -121,13 +128,13 @@ conf_options = {}
 conf_options['sshd'] = {'KexAlgorithms': 'diffie-hellman-group-exchange-sha256',
                         'Protocol': '2',
                         'HostKey': ['/etc/ssh/ssh_host_rsa_key'],
-                        #'PermitRootLogin': 'prohibit-password',
+                        #'PermitRootLogin': 'prohibit-password',  # older daemons don't like "prohibit-..."
                         'PermitRootLogin': 'without-password',
                         'PasswordAuthentication': 'no',
                         'ChallengeResponseAuthentication': 'no',
                         'PubkeyAuthentication': 'yes',
                         'Ciphers': 'aes256-ctr,aes192-ctr,aes128-ctr',
-                        'MACs': ('hmac-sha2-512,hmac-sha2-256')}
+                        'MACs': 'hmac-sha2-512,hmac-sha2-256'}
 if has_ed25519:
     conf_options['sshd']['HostKey'].append('/etc/ssh/ssh_host_ed25519_key')
     conf_options['sshd']['KexAlgorithms'] = ','.join(('curve25519-sha256@libssh.org',
@@ -176,7 +183,7 @@ def hostKeys(buildmoduli):
         os.remove('/etc/ssh/moduli.all')
     for suffix in ('', '.pub'):
         for k in glob.glob('/etc/ssh/ssh_host_*key{0}'.format(suffix)):
-            os.rename(k, '{0}.old.{1}'.format(k, int(datetime.datetime.utcnow().timestamp())))
+            os.rename(k, '{0}.old.{1}'.format(k, tstamp))
     if has_ed25519:
         subprocess.run(['ssh-keygen', '-t', 'ed25519', '-f', '/etc/ssh/ssh_host_ed25519_key', '-q', '-N', ''])
     subprocess.run(['ssh-keygen', '-t', 'rsa', '-b', '4096', '-f', '/etc/ssh/ssh_host_rsa_key', '-q', '-N', ''])
@@ -209,7 +216,7 @@ def config(opts, t):
     special['ssh']['opts'] = ['Host', 'Match']
     special['ssh']['args'] = ['canonical', 'exec', 'host', 'originalhost', 'user', 'localuser']
     cf = '/etc/ssh/{0}_config'.format(t)
-    shutil.copy2(cf, '{0}.bak.{1}'.format(cf, int(datetime.datetime.utcnow().timestamp())))
+    shutil.copy2(cf, '{0}.bak.{1}'.format(cf, tstamp))
     with open(cf, 'r') as f:
         conf = f.readlines()
     conf.append('\n\n# Added per https://sysadministrivia.com/news/hardening-ssh-security\n\n')
@@ -301,19 +308,48 @@ def clientKeys(user = 'root'):
         with open('{0}/id_{1}.pub'.format(sshdir, k), 'r') as f:
             pubkeys[user][k] = f.read()
     return(pubkeys)
-        
+
+def daemonMgr():
+    # We're about to do somethin' stupid. Let's make it a teeny bit less stupid.
+    with open(os.devnull, 'w') as devnull:
+        confchk = subprocess.run(['sshd', '-T'], stdout = devnull)
+    if confchk.returncode != 0:
+        for suffix in ('', '.pub'):
+            for k in glob.glob('/etc/ssh/ssh_host_*key{0}'.format(suffix)):
+                os.rename('{0}.old.{1}'.format(k, tstamp), k)
+            for conf in ('', 'd'):
+                cf = '/etc/ssh/ssh{0}_config'.format(conf)
+                os.rename('{0}.{1}'.format(cf, tstamp),
+                          cf)
+        exit('OOPS. We goofed. Backup restored and bailing out.')
+    pidfile = '/var/run/sshd.pid'
+    # We need to restart sshd once we're done. I feel dirty doing this, but this is the most cross-platform way I can
+    # do it. First, we need the path to the PID file.
+    # TODO: do some kind of better way of doing this.
+    with open('/etc/ssh/sshd_config', 'r') as f:
+        for line in f.readlines():
+            if re.search('^\s*PidFile\s+.*', line):
+                pidfile = re.sub('^\s*PidFile\s+(.*)(#.*)?$', '\g<1>', line)
+                break
+    with open(pidfile, 'r') as f:
+        pid = int(f.read().strip())
+    os.kill(pid, signal.SIGHUP)
+    return()
+
 def main():
     _chkfile = '/etc/ssh/.aif-generated'
     if not os.path.isfile(_chkfile):
-        #Warning: The moduli stuff takes a LONG time to run. Hours.
+        # Warning: The moduli stuff can take a LONG time to run. Hours.
         buildmoduli = True
         hostKeys(buildmoduli)
+        restart = True
     for t in ('sshd', 'ssh'):
         config(conf_options[t], t)
     clientKeys()
     with open(_chkfile, 'w') as f:
         f.write(('ssh, sshd, and hostkey configurations/keys have been modified by sshsecure.py from OpTools.\n'
                  'https://git.square-r00t.net/OpTools/\n'))
+    daemonMgr()
     return()
 
 if __name__ == '__main__':
