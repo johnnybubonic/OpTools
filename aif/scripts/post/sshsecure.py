@@ -175,8 +175,14 @@ def hostKeys(buildmoduli):
                 subprocess.run(['haveged'], stdout = devnull)
     #Warning: The moduli stuff takes a LONG time to run. Hours.
     if buildmoduli:
-        subprocess.run(['ssh-keygen', '-G', '/etc/ssh/moduli.all', '-b', '4096', '-q'])
-        subprocess.run(['ssh-keygen', '-T', '/etc/ssh/moduli.safe', '-f', '/etc/ssh/moduli.all', '-q'])
+        subprocess.run(['ssh-keygen',
+                        '-G', '/etc/ssh/moduli.all',
+                        '-b', '4096',
+                        '-q'])
+        subprocess.run(['ssh-keygen',
+                        '-T', '/etc/ssh/moduli.safe',
+                        '-f', '/etc/ssh/moduli.all',
+                        '-q'])
         if os.path.lexists('/etc/ssh/moduli'):
             os.rename('/etc/ssh/moduli', '/etc/ssh/moduli.old')
         os.rename('/etc/ssh/moduli.safe', '/etc/ssh/moduli')
@@ -185,8 +191,17 @@ def hostKeys(buildmoduli):
         for k in glob.glob('/etc/ssh/ssh_host_*key{0}'.format(suffix)):
             os.rename(k, '{0}.old.{1}'.format(k, tstamp))
     if has_ed25519:
-        subprocess.run(['ssh-keygen', '-t', 'ed25519', '-f', '/etc/ssh/ssh_host_ed25519_key', '-q', '-N', ''])
-    subprocess.run(['ssh-keygen', '-t', 'rsa', '-b', '4096', '-f', '/etc/ssh/ssh_host_rsa_key', '-q', '-N', ''])
+        subprocess.run(['ssh-keygen',
+                        '-t', 'ed25519',
+                        '-f', '/etc/ssh/ssh_host_ed25519_key',
+                        '-q',
+                        '-N', ''])
+    subprocess.run(['ssh-keygen',
+                    '-t', 'rsa',
+                    '-b', '4096',
+                    '-f', '/etc/ssh/ssh_host_rsa_key',
+                    '-q',
+                    '-N', ''])
     # We currently don't use this, but for simplicity's sake let's return the host keys.
     hostkeys = {}
     for k in supported_keys:
@@ -290,11 +305,31 @@ def clientKeys(user = 'root'):
     if has_ed25519:
         if not os.path.lexists('{0}/id_ed25519'.format(sshdir)) \
                 and not os.path.lexists('{0}/id_ed25519.pub'.format(sshdir)):
-            subprocess.run(['ssh-keygen', '-t', 'ed25519', '-o', '-a', '100',
-                            '-f', '{0}/id_ed25519'.format(sshdir), '-q', '-N', ''])
+            subprocess.run(['ssh-keygen',
+                            '-t', 'ed25519',
+                            '-o',
+                            '-a', '100',
+                            '-f', '{0}/id_ed25519'.format(sshdir),
+                            '-q',
+                            '-N', ''])
     if not os.path.lexists('{0}/id_rsa'.format(sshdir)) and not os.path.lexists('{0}/id_rsa.pub'.format(sshdir)):
-        subprocess.run(['ssh-keygen', '-t', 'rsa', '-b', '4096', '-o', '-a', '100',
-                        '-f', '{0}/id_rsa'.format(sshdir), '-q', '-N', ''])
+        if has_ed25519:
+            subprocess.run(['ssh-keygen',
+                            '-t', 'rsa',
+                            '-b', '4096',
+                            '-o',
+                            '-a', '100',
+                            '-f', '{0}/id_rsa'.format(sshdir),
+                            '-q',
+                            '-N', ''])
+        else:
+            subprocess.run(['ssh-keygen',
+                            '-t', 'rsa',
+                            '-b', '4096',
+                            '-a', '100',
+                            '-f', '{0}/id_rsa'.format(sshdir),
+                            '-q',
+                            '-N', ''])
     for basedir, dirs, files in os.walk(sshdir):
         os.chown(basedir, uid, gid)
         os.chmod(basedir, 0o700)
@@ -343,7 +378,6 @@ def main():
     # This is where I'd put a psutil call... IF I HAD ONE.
     if os.path.isfile(self_pidfile):
         is_running = subprocess.run(['pgrep', '-F', self_pidfile], stdout = subprocess.PIPE)
-    if is_running:
         if is_running.stdout.decode('utf-8').strip() != '':
             # We're still running. Exit gracefully.
             print('We seem to still be running from a past execution; exiting')
