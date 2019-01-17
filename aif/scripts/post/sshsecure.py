@@ -338,14 +338,16 @@ def daemonMgr():
 
 def main():
     self_pidfile = '/tmp/sshsecure.pid'
+    is_running = False
     # First, check to see if we're already running.
     # This is where I'd put a psutil call... IF I HAD ONE.
     if os.path.isfile(self_pidfile):
-    is_running = subprocess.run(['pgrep', '-F', self_pidfile], stdout = subprocess.PIPE)
-    if is_running.stdout.decode('utf-8').strip() != '':
-        # We're still running. Exit gracefully.
-        print('We seem to still be running from a past execution; exiting')
-        exit(0)
+        is_running = subprocess.run(['pgrep', '-F', self_pidfile], stdout = subprocess.PIPE)
+    if is_running:
+        if is_running.stdout.decode('utf-8').strip() != '':
+            # We're still running. Exit gracefully.
+            print('We seem to still be running from a past execution; exiting')
+            exit(0)
     else:
         with open(self_pidfile, 'w') as f:
             f.write(str(os.getpid()))
