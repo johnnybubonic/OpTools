@@ -105,6 +105,7 @@ class FileExtractor(object):
         return()
 
     def extractFiles(self):
+        # TODO: globbing or regex on self.paths?
         # If we have yum, we can, TECHNICALLY, do this with:
         # http://yum.baseurl.org/api/yum/rpmUtils/miscutils.html#rpmUtils.miscutils.rpm2cpio
         # But nope. We can't selectively decompress members based on path with rpm2cpio-like funcs.
