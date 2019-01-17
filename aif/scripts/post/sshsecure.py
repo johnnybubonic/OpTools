@@ -337,12 +337,23 @@ def daemonMgr():
     return()
 
 def main():
+    self_pidfile = '/tmp/sshsecure.pid'
+    # First, check to see if we're already running.
+    # This is where I'd put a psutil call... IF I HAD ONE.
+    if os.path.isfile(self_pidfile):
+    is_running = subprocess.run(['pgrep', '-F', self_pidfile], stdout = subprocess.PIPE)
+    if is_running.stdout.decode('utf-8').strip() != '':
+        # We're still running. Exit gracefully.
+        print('We seem to still be running from a past execution; exiting')
+        exit(0)
+    else:
+        with open(self_pidfile, 'w') as f:
+            f.write(str(os.getpid()))
     _chkfile = '/etc/ssh/.aif-generated'
     if not os.path.isfile(_chkfile):
         # Warning: The moduli stuff can take a LONG time to run. Hours.
         buildmoduli = True
         hostKeys(buildmoduli)
-        restart = True
     for t in ('sshd', 'ssh'):
         config(conf_options[t], t)
     clientKeys()
@@ -350,6 +361,7 @@ def main():
         f.write(('ssh, sshd, and hostkey configurations/keys have been modified by sshsecure.py from OpTools.\n'
                  'https://git.square-r00t.net/OpTools/\n'))
     daemonMgr()
+    os.remove(self_pidfile)
     return()
 
 if __name__ == '__main__':
