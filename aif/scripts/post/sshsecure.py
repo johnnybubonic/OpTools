@@ -348,9 +348,12 @@ def main():
             # We're still running. Exit gracefully.
             print('We seem to still be running from a past execution; exiting')
             exit(0)
+        else:
+            # It's a stale PID file.
+            os.remove(self_pidfile)
     else:
         with open(self_pidfile, 'w') as f:
-            f.write(str(os.getpid()))
+            f.write(str(os.getpid()) + '\n')
     _chkfile = '/etc/ssh/.aif-generated'
     if not os.path.isfile(_chkfile):
         # Warning: The moduli stuff can take a LONG time to run. Hours.
