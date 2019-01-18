@@ -29,8 +29,7 @@ goodbye = True
 #   loginlength  - How long they've been logged in (in minutes).
 #   logintime    - When they logged in.
 #   timeout      - The allowed length of time for inactivity until a timeout.
-goodbye_mesg = ('You have been logged in for {loginlength} seconds (since {logintime}) on '
-                '{terminal} ({pid}).\n'
+goodbye_mesg = ('You have been logged in for {loginlength} (since {logintime}) on {terminal} ({pid}).\n'
                 'However, as per security policy, you have exceeded the allowed idle timeout ({timeout}).\n'
                 'As such, your session will now be terminated. Please feel free to reconnect.')
 # exclude these usernames
@@ -71,7 +70,7 @@ if timeout == 'auto':
                     continue
     # Finally, set a default. 5 minutes is sensible.
     timeout = 300
-
+pretty_timeout = datetime.timedelta(seconds = timeout)
 
 def get_idle(user):
     idle_time = None
@@ -104,7 +103,7 @@ for user in psutil.users():
                     'terminal': user.terminal,
                     'loginlength': login_length,
                     'logintime': datetime.datetime.fromtimestamp(user.started),
-                    'timeout': timeout}
+                    'timeout': pretty_timeout}
         fmtd_goodbye = goodbye_mesg.format(**fmt_vals)
         if only_ssh:
             if parent_pid in ssh_pids:
