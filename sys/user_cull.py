@@ -87,7 +87,10 @@ def get_idle(user):
 for user in psutil.users():
     if user.name in exclude_users:
         continue
-    login_pid = user.pid
+    try:
+        login_pid = user.pid
+    except AttributeError:
+        continue  # Doesn't have a PID
     login_length = (datetime.datetime.utcnow() - datetime.datetime.fromtimestamp(user.started))
     if login_length.total_seconds() < timeout:
         continue  # they haven't even been logged in for long enough yet.
