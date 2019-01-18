@@ -93,6 +93,7 @@ for user in psutil.users():
     if login_length.total_seconds() < timeout:
         continue  # they haven't even been logged in for long enough yet.
     idle_time = get_idle(user)
+    parent_pid = psutil.Process(user.pid).ppid()
     try:
         diff = idle_time.total_seconds() >= timeout
     except AttributeError:
@@ -106,17 +107,17 @@ for user in psutil.users():
                     'timeout': timeout}
         fmtd_goodbye = goodbye_mesg.format(**fmt_vals)
         if only_ssh:
-            if psutil.Process(user.pid).ppid() in ssh_pids:
+            if parent_pid in ssh_pids:
                 if goodbye:
                     subprocess.run(['write',
                                     user.name,
                                     user.terminal],
                                    input = fmtd_goodbye.encode('utf-8'))
-                psutil.Process(user.pid).terminate()
+                psutil.Process(parent_pid).terminate()
         else:
             if goodbye:
                 subprocess.run(['write',
                                 user.name,
                                 user.terminal],
                                input = fmtd_goodbye.encode('utf-8'))
-            psutil.Process(user.pid).terminate()
+            psutil.Process(parent_pid).terminate()
