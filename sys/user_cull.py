@@ -70,24 +70,15 @@ if timeout == 'auto':
     timeout = 300
 
 
-def kill_user(user):
-    pass
-
 def get_idle(user):
     idle_time = None
-    pty = user.terminal
-    for sssn in subprocess.run(['who', '-u'], stdout = subprocess.PIPE).stdout.decode('utf-8').splitlines():
-        session = sssn.split()
-        # This is probably overkill, but.
-        if not all((
-                (session[0] != user.name),
-                (session[1] != user.terminal),
-                (session[5] != user.pid))):
-            continue
+    try:
         # https://unix.stackexchange.com/a/332704/284004
         last_used = datetime.datetime.fromtimestamp(os.stat('/dev/{0}'.format(user.terminal)).st_atime)
         idle_time = datetime.datetime.utcnow() - last_used
-        break
+    except FileNotFoundError:
+        # It's probably a graphical login (e.g. gnome uses ::1) - you're on your own.
+        pass
     return(idle_time)
 
 
@@ -99,7 +90,12 @@ for user in psutil.users():
     if login_length.total_seconds() < timeout:
         continue  # they haven't even been logged in for long enough yet.
     idle_time = get_idle(user)
-    if idle_time.total_seconds() >= timeout:
+    try:
+        diff = idle_time.total_seconds() >= timeout
+    except AttributeError:
+        # Something went wrong when getting idle_time. probably a graphical desktop login.
+        diff = False
+    if diff:
         fmt_vals = {'pid': user.pid,
                     'terminal': user.terminal,
                     'loginlength': login_length,
