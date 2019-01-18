@@ -48,7 +48,7 @@ if timeout == 'auto':
         if not os.path.isfile(f):
             continue
         with open(f, 'r') as fh:
-            conf = f.read()
+            conf = fh.read()
         for line in conf.splitlines():
             if tmout_re.search(line):
                 try:
