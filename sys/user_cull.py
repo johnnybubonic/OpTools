@@ -100,11 +100,12 @@ for user in psutil.users():
         continue  # they haven't even been logged in for long enough yet.
     idle_time = get_idle(user)
     if idle_time.total_seconds() >= timeout:
-        fmtd_goodbye = goodbye_mesg.format({'pid': user.pid,
-                                            'terminal': user.terminal,
-                                            'loginlength': login_length,
-                                            'logintime': datetime.datetime.fromtimestamp(user.started),
-                                            'timeout': timeout})
+        fmt_vals = {'pid': user.pid,
+                    'terminal': user.terminal,
+                    'loginlength': login_length,
+                    'logintime': datetime.datetime.fromtimestamp(user.started),
+                    'timeout': timeout}
+        fmtd_goodbye = goodbye_mesg.format(**fmt_vals)
         if only_ssh:
             if user.pid in ssh_pids:
                 if goodbye:
