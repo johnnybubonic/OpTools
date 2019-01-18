@@ -106,7 +106,7 @@ for user in psutil.users():
                     'timeout': timeout}
         fmtd_goodbye = goodbye_mesg.format(**fmt_vals)
         if only_ssh:
-            if user.pid in ssh_pids:
+            if psutil.Process(user.pid).ppid() in ssh_pids:
                 if goodbye:
                     subprocess.run(['write',
                                     user.name,
