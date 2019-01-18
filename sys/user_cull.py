@@ -5,6 +5,9 @@
 #   - SSH timeout can be overridden client-side
 #   - $TMOUT can be overridden user-side
 # we need to actually kill the sshd process attached to the SSH session.
+# This does have some limitations, though. Namely, it doesn't work for screen/tmux sessions.
+# specifically if they happen to be using byobu with a status bar that updates, because that process
+# gathering information for the status bar counts as "activity". Go figure.
 
 import datetime
 import os
@@ -35,7 +38,7 @@ exclude_users = []
 
 
 # Get the SSHD PIDs.
-ssh_pids = [p for p in psutil.process_iter() if p.name() == 'sshd']
+ssh_pids = [p.pid for p in psutil.process_iter() if p.name() == 'sshd']
 # If the timeout is set to auto, try to find it.
 if timeout == 'auto':
     import re
