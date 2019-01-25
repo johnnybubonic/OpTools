@@ -17,25 +17,11 @@ import socket
 import ssl
 from urllib import parse
 # PyPi/PIP
-# These are handled automagically.
-# If you'd rather install them via your distro's package manager (YOU SHOULD),
-# then install them first then run this script.
-# Otherwise you'll have to use pip to remove them.
-thrd_prty = {'OpenSSL': 'pyOpenSSL',
-             #'pyasn1': 'pyasn1',
-             #'jinja2': 'Jinja2',
-             'validators': 'validators'}
+import OpenSSL
+import validators
+#import pyasn1
 
 cols = shutil.get_terminal_size((80, 20)).columns
-
-for mod in thrd_prty:
-    try:
-        globals()[mod] = importlib.import_module(mod)
-    except ImportError:
-        import pip
-        pip.main(['install', '--quiet', '--quiet', '--quiet',
-                  '--user', thrd_prty[mod]])
-        globals()[mod] = importlib.import_module(mod)
 
 class CertParse(object):
     def __init__(self, target, port = 443, force = None, cert_type = 'pem',
