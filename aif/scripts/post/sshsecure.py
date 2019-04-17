@@ -345,6 +345,10 @@ def clientKeys(user = 'root'):
     return(pubkeys)
 
 def daemonMgr():
+    # In case the script is running without sshd running.
+    pidfile = '/var/run/sshd.pid'
+    if not os.path.isfile(pidfile):
+        return()
     # We're about to do somethin' stupid. Let's make it a teeny bit less stupid.
     with open(os.devnull, 'w') as devnull:
         confchk = subprocess.run(['sshd', '-T'], stdout = devnull)
@@ -357,7 +361,6 @@ def daemonMgr():
                 os.rename('{0}.{1}'.format(cf, tstamp),
                           cf)
         exit('OOPS. We goofed. Backup restored and bailing out.')
-    pidfile = '/var/run/sshd.pid'
     # We need to restart sshd once we're done. I feel dirty doing this, but this is the most cross-platform way I can
     # do it. First, we need the path to the PID file.
     # TODO: do some kind of better way of doing this.
