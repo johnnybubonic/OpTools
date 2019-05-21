@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://git.square-r00t.net/OpTools/plain/storage/backups/borg"
+           xmlns:borg="http://git.square-r00t.net/OpTools/plain/storage/backups/borg"
+           elementFormDefault="qualified">
+    <xs:simpleType name="posixuser">
+        <xs:restriction base="xs:token">
+            <xs:pattern value="[a-z_]([a-z0-9_-]{0,31}|[a-z0-9_-]{0,30}$)"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="blocktext">
+        <xs:restriction base="xs:string">
+            <xs:whiteSpace value="preserve"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <!-- START ROOT -->
+    <xs:element name="borg">
+        <xs:complexType>
+            <xs:choice>
+                <!-- START SERVER -->
+                <!-- This allows multiple backup destinations to be specified. -->
+                <xs:element name="server" minOccurs="1" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <!-- START REPO -->
+                            <xs:element name="repo" minOccurs="1" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:choice minOccurs="1" maxOccurs="unbounded">
+                                        <xs:element name="path" minOccurs="1"
+                                                    maxOccurs="unbounded" type="xs:anyURI"/>
+                                        <xs:element name="exclude" minOccurs="0"
+                                                    maxOccurs="unbounded" type="xs:anyURI"/>
+                                        <!-- This gets messy. We essentially preserve whitespace, allowing
+                                             either an inline script to be executed (written to a temp file) or
+                                             a path to an external script/command to be specified. -->
+                                        <xs:element name="prep" minOccurs="0"
+                                                    maxOccurs="unbounded">
+                                            <xs:complexType>
+                                                <xs:simpleContent>
+                                                    <xs:extension base="borg:blocktext">
+                                                        <xs:attribute name="inline" type="xs:boolean"
+                                                                      default="0"/>
+                                                    </xs:extension>
+                                                </xs:simpleContent>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:choice>
+                                    <xs:attribute name="name" type="xs:token" use="required"/>
+                                    <!-- Optional. If not specified, the password will
+                                         be interactively (and securely) prompted for. -->
+                                    <xs:attribute name="password" type="xs:string" use="optional"/>
+                                </xs:complexType>
+                                <xs:unique name="uniquePath">
+                                    <xs:selector xpath="borg:path"/>
+                                    <xs:field xpath="."/>
+                                </xs:unique>
+                            </xs:element>
+                            <!-- END REPO -->
+                        </xs:sequence>
+                        <!-- "target" should be either a local filesystem path or the remote hostname. -->
+                        <!-- This should *not* contain a path if it's remote. If it does, you set up Borg wrong. -->
+                        <xs:attribute name="target" type="xs:anyURI" use="required"/>
+                        <!-- Only used if "target" is a remote host. -->
+                        <!-- See "BORG_RSH" at https://borgbackup.readthedocs.io/en/stable/usage/general.html -->
+                        <xs:attribute name="rsh" type="xs:string" use="optional"/>
+                        <!-- Only used if "target" is a remote host. -->
+                        <!-- The remote host SSH user. -->
+                        <xs:attribute name="user" type="borg:posixuser" use="optional"/>
+                    </xs:complexType>
+                </xs:element>
+                <!-- END SERVER -->
+            </xs:choice>
+            <xs:attribute name="borgpath" default="borg" use="optional"/>
+        </xs:complexType>
+        <xs:unique name="uniqueServer">
+            <xs:selector xpath="borg:server"/>
+            <xs:field xpath="@target"/>
+        </xs:unique>
+    </xs:element>
+    <!-- END ROOT -->
+</xs:schema>
