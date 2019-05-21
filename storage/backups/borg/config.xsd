@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="http://git.square-r00t.net/OpTools/plain/storage/backups/borg"
+           xmlns="http://git.square-r00t.net/OpTools/plain/storage/backups/borg"
            xmlns:borg="http://git.square-r00t.net/OpTools/plain/storage/backups/borg"
            elementFormDefault="qualified">
     <xs:simpleType name="posixuser">
