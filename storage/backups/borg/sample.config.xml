@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<borg xmlns="http://git.square-r00t.net/OpTools/tree/storage/backups/borg/"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://git.square-r00t.net/OpTools/plain/storage/backups/borg/config.xsd">
+    <server target=" fq.dn.tld" rsh="ssh -p 22" user="root">
+        <repo name="testrepo" password="SuperSecretPassword">
+            <path>/a</path>
+            <exclude>/a/b</exclude>
+            <prep inline="1">#!/bin/bash
+                # this is block text
+            </prep>
+        </repo>
+    </server>
+</borg>
