@@ -3,7 +3,9 @@
            targetNamespace="http://git.square-r00t.net/OpTools/plain/storage/backups/borg"
            xmlns="http://git.square-r00t.net/OpTools/plain/storage/backups/borg"
            xmlns:borg="http://git.square-r00t.net/OpTools/plain/storage/backups/borg"
-           elementFormDefault="qualified">
+           elementFormDefault="unqualified"
+           attributeFormDefault="unqualified">
+
     <xs:simpleType name="posixuser">
         <xs:restriction base="xs:token">
             <xs:pattern value="[a-z_]([a-z0-9_-]{0,31}|[a-z0-9_-]{0,30}$)"/>
@@ -14,6 +16,7 @@
             <xs:whiteSpace value="preserve"/>
         </xs:restriction>
     </xs:simpleType>
+
     <!-- START ROOT -->
     <xs:element name="borg">
         <xs:complexType>
