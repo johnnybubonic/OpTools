@@ -16,7 +16,6 @@ import logging
 import logging.handlers
 import os
 import re
-# TODO: use borg module directly?
 import subprocess
 import sys
 # TODO: virtual env?
@@ -40,11 +39,12 @@ except ImportError:
     has_systemd = False
 
 ### LOG LEVEL MAPPINGS ###
-loglvls = {'critical': logging.CRITICAL,
-           'error': logging.ERROR,
-           'warning': logging.WARNING,
-           'info': logging.INFO,
-           'debug': logging.DEBUG}
+loglvls = {
+    'critical': logging.CRITICAL,
+    'error': logging.ERROR,
+    'warning': logging.WARNING,
+    'info': logging.INFO,
+    'debug': logging.DEBUG}
 
 
 ### THE GUTS ###
@@ -137,8 +137,7 @@ class Backup(object):
         if self.args['dryrun']:
             return ()  # no-op
         if stdoutfh:
-            _cmd = subprocess.run(cmd,
-                                  stdout = stdoutfh,
+            _cmd = subprocess.run(cmd, stdout = stdoutfh,
                                   stderr = subprocess.PIPE)
         else:
             _cmd = subprocess.run(cmd,
@@ -304,6 +303,79 @@ class Backup(object):
                 del (_env['BORG_PASSPHRASE'])
             self.logger.info('[{0}]: END RESTORE'.format(r))
         self.logger.info('END: restore')
+        return()
+
+    def miscBak(self, pkgr):
+        self.logger.info('BEGIN: miscBak()')
+        _cmd = None
+        for p in os.environ['PATH'].split(':'):
+            d = os.path.expanduser(p)
+            if os.path.isfile(os.path.join(d, pkgr)):
+                _pkgr = pkgr
+                self.logger.debug('Package tool found at {0}'.format(_pkgr))
+            else:
+                _pkgr = 'pacman'
+                self.logger.debug('Using {0} as package tool'.format(_pkgr))
+        with open(os.path.join(self.args['stagedir'], 'pkg.lst'), 'w') as f:
+            _cmd = [_pkgr,
+                    '-Qet',
+                    '--color',
+                    'never']
+            self.cmdExec(_cmd, stdoutfh = f)
+        self.logger.info('END: miscBak()')
+        return()
+
+    def mysqlBak(self):
+        self.logger.info('BEGIN: mysqlBak()')
+        if not has_mysql:
+            self.logger.error(
+                    'You need to install the PyMySQL module to back up MySQL databases. Skipping.')
+            return ()
+        # These are mysqldump options shared by ALL databases
+        _mysqlopts = ['--routines',
+                      '--add-drop-database',
+                      '--add-drop-table',
+                      '--allow-keywords',
+                      '--complete-insert',
+                      '--create-options',
+                      '--extended-insert']
+        _DBs = []
+        _mycnf = os.path.expanduser(os.path.join('~', '.my.cnf'))
+        if not os.path.isfile(_mycnf):
+            exit(
+                    '{0}: ERROR: Cannot get credentials for MySQL (cannot find ~/.my.cnf)!')
+        _mycfg = configparser.ConfigParser()
+        _mycfg._interpolation = configparser.ExtendedInterpolation()
+        _mycfg.read(_mycnf)
+        _sqlcfg = {s: dict(_mycfg.items(s)) for s in _mycfg.sections()}
+        if 'host' not in _sqlcfg.keys():
+            _socketpath = '/var/run/mysqld/mysqld.sock'  # correct for Arch, YMMV.
+            _mysql = pymysql.connect(unix_socket = _socketpath,
+                                     user = _sqlcfg['client']['user'],
+                                     passwd = _sqlcfg['client']['password'])
+        else:
+            _mysql = pymysql.connect(host = _sqlcfg['client']['host'],
+                                     user = _sqlcfg['client']['user'],
+                                     port = _sqlcfg['client']['port'],
+                                     passwd = _sqlcfg['client']['password'])
+        _cur = _mysql.cursor()
+        _cur.execute('SHOW DATABASES')
+        for row in _cur.fetchall():
+            _DBs.append(row[0])
+        self.logger.debug('Databases: {0}'.format(', '.join(_DBs)))
+        for db in _DBs:
+            _cmd = ['mysqldump',
+                    '--result-file={0}.sql'.format(
+                            os.path.join(self.args['mysqldir'], db))]
+            # These are database-specific options
+            if db in ('information_schema', 'performance_schema'):
+                _cmd.append('--skip-lock-tables')
+            elif db == 'mysql':
+                _cmd.append('--flush-privileges')
+            _cmd.extend(_mysqlopts)
+            _cmd.append(db)
+            self.cmdExec(_cmd)
+        self.logger.info('END: mysqlBak()')
         return()
 
     def listRepos(self):
@@ -587,6 +659,7 @@ def parseArgs():
     return (args)
 
 def convertConf(cfgfile):
+    import json
     try:
         with open(cfgfile, 'r') as f:
             oldcfg = json.load(f)
@@ -676,19 +749,13 @@ def main():
     if not args['oper']:
         rawargs.print_help()
         exit(0)
-    if 'moarhelp' in args.keys() and args['moarhelp']:
-        printMoarHelp()
     if args['oper'] == 'convert':
         convertConf(args['cfgfile'])
         return()
     else:
-        try:
-            with open(args['cfgfile'], 'r') as f:
-                json.load(f)
-                args['cfgfile'] = convertConf(args['cfgfile'])
-        except json.decoder.JSONDecodeError:
-            # It's not JSON. It's either already XML or invalid config.
-            pass
+        args['cfgfile'] = convertConf(args['cfgfile'])
+    if 'moarhelp' in args.keys() and args['moarhelp']:
+        printMoarHelp()
     # The "Do stuff" part
     bak = Backup(args)
     if args['oper'] == 'list':

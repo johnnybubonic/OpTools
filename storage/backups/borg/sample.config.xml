@@ -2,13 +2,63 @@
 <borg xmlns="http://git.square-r00t.net/OpTools/tree/storage/backups/borg/"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://git.square-r00t.net/OpTools/plain/storage/backups/borg/config.xsd">
+    <!-- "target" = either the local filesystem (absolute) path or the remote host
+          "rsh" = (remote host only) the ssh command to use. The default is given below.
+          "user" = (remote host only) the ssh user to use. -->
     <server target=" fq.dn.tld" rsh="ssh -p 22" user="root">
+        <!-- "name" = the repositoriy name.
+             "password" = the repository's password for the key. If not specified, you will be prompted
+                          to enter it interactively and securely. -->
         <repo name="testrepo" password="SuperSecretPassword">
+            <!-- Each path entry is a path to back up.
+                 See https://borgbackup.readthedocs.io/en/stable/usage/create.html for examples of globbing, etc. -->
             <path>/a</path>
+            <!-- Each exclude entry should be a subdirectory of a <path> (otherwise it wouldn't match, obviously).
+                 See https://borgbackup.readthedocs.io/en/stable/usage/create.html for examples of globbing etc. -->
             <exclude>/a/b</exclude>
+            <!-- Prep items are executed in non-guaranteed order (but are likely to be performed in order given).
+                 If you require them to be in a specific order, you should use a wrapper script and
+                 use that as a prep item. -->
+            <!-- "inline" = if true/1, the provided text will be temporarily written to disk, executed, and deleted.
+                            if false/0, the provided text is assumed to be a single-shot command/path to a script. -->
+            <!-- If using inline especially, take note of and use XML escape characters:
+                 " = &quot;
+                 ' = &apos;
+                 < = &lt;
+                 > = &gt;
+                 & = &amp; -->
             <prep inline="1">#!/bin/bash
                 # this is block text
             </prep>
+            <prep inline="0">/usr/local/bin/someprep.sh</prep>
+            <!-- Plugins are direct Python modules, and are alternatives to prep items.
+                 They must:
+                 - be in the Python's path environment (or a path must be provided, either absolute or relative to
+                   execution)
+                 - contain a class called <module>.Backup() (which will execute all tasks on initialization)
+                 See plugins/ directory for examples and below for example of invocation. -->
+            <plugins>
+                <!-- Each plugin item MUST define a "name" attribute. This is the name of the module to import.
+                     "path" = (optional) the directory containing the plugin module; it must end in .py -->
+                <plugin name="mysql" path="./plugins">
+                    <!-- Param elements are optional. Each param element MUST define a "key" attribute; this is
+                         the name of the parameter. (For positional attributes, this should match the name used
+                         by the <module>.Backup().init() parameter name.)
+                         If you want a parameter to be provided but with a None value, make it self-enclosed
+                         (e.g. '<param key="someparam"/>').
+                         If you need to serialize pythonic objects (lists, dicts, booleans),
+                         then set the "json" attribute to 1/true and provide the data in minified JSON format. -->
+                    <param key="dbs" json="true">["db1", "db2"]</param>
+                    <param key="splitdumps" json="true">true</param>
+                    <param key="dumpopts" json="true">["--routines", "--add-drop-database", "--add-drop-table", "--allow-keywords", "--complete-insert", "--create-options", "--extended-insert"]</param>
+                </plugin>
+                <plugin name="ldap" path="./plugins">
+                    <param key="server">ldap://my.server.tld</param>
+                    <param key="binddn">cn=Manager,dc=server,dc=tld</param>
+                    <param key="password">SuperSecretPassword</param>
+                    <param key="splitldifs" json="true">false</param>
+                </plugin>
+            </plugins>
         </repo>
     </server>
 </borg>
