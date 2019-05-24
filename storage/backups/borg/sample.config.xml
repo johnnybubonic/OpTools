@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <borg xmlns="http://git.square-r00t.net/OpTools/tree/storage/backups/borg/"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://git.square-r00t.net/OpTools/plain/storage/backups/borg/config.xsd">
-    <!-- "target" = either the local filesystem (absolute) path or the remote host
-          "rsh" = (remote host only) the ssh command to use. The default is given below.
-          "user" = (remote host only) the ssh user to use. -->
-    <server target=" fq.dn.tld" rsh="ssh -p 22" user="root">
+      xsi:schemaLocation="http://git.square-r00t.net/OpTools/plain/storage/backups/borg/config.xsd"
+      borgpath="/usr/bin/borg">
+    <!-- You can have multiple server elements, but each one *MUST* have a unique "target" attribute. -->
+    <!-- "target" = either the local filesystem path (absolute or relative to execution) or the remote host
+         "remote" = 1/true if "target" is a remote host or 0/false if it's a local filepath
+         "rsh" = (remote host only) the ssh command to use. The default is given below.
+         "user" = (remote host only) the ssh user to use. -->
+    <server target="fq.dn.tld" remote="true" rsh="ssh -p 22" user="root">
+        <!-- You can (and probably will) have multiple repos for each server. -->
         <!-- "name" = the repositoriy name.
              "password" = the repository's password for the key. If not specified, you will be prompted
-                          to enter it interactively and securely. -->
-        <repo name="testrepo" password="SuperSecretPassword">
+                          to enter it interactively and securely.
+             "compression" = see https://borgbackup.readthedocs.io/en/stable/usage/create.html (-C option) -->
+        <repo name="testrepo" password="SuperSecretPassword" compression="lzma,9">
             <!-- Each path entry is a path to back up.
                  See https://borgbackup.readthedocs.io/en/stable/usage/create.html for examples of globbing, etc. -->
             <path>/a</path>
@@ -20,13 +25,16 @@
                  If you require them to be in a specific order, you should use a wrapper script and
                  use that as a prep item. -->
             <!-- "inline" = if true/1, the provided text will be temporarily written to disk, executed, and deleted.
-                            if false/0, the provided text is assumed to be a single-shot command/path to a script. -->
+                            if false/0, the provided text is assumed to be a single-shot command/path to a script
+                            (arguments are not currently supported, but may be in the future). -->
             <!-- If using inline especially, take note of and use XML escape characters:
-                 " = &quot;
-                 ' = &apos;
-                 < = &lt;
-                 > = &gt;
-                 & = &amp; -->
+                     " = &quot;
+                     ' = &apos;
+                     < = &lt;
+                     > = &gt;
+                     & = &amp;
+                 and note that whitespace (including leading!) *is* preserved. -->
+            <!-- It *MUST* return 0 on success. -->
             <prep inline="1">#!/bin/bash
                 # this is block text
             </prep>
@@ -47,10 +55,11 @@
                          If you want a parameter to be provided but with a None value, make it self-enclosed
                          (e.g. '<param key="someparam"/>').
                          If you need to serialize pythonic objects (lists, dicts, booleans),
-                         then set the "json" attribute to 1/true and provide the data in minified JSON format. -->
-                    <param key="dbs" json="true">["db1", "db2"]</param>
+                         then set the "json" attribute to 1/true and provide the data in minified
+                         JSON format (also referred to as "compressed JSON") - see "tools/minify_json.py -h". -->
+                    <param key="dbs" json="true">["db1","db2"]</param>
                     <param key="splitdumps" json="true">true</param>
-                    <param key="dumpopts" json="true">["--routines", "--add-drop-database", "--add-drop-table", "--allow-keywords", "--complete-insert", "--create-options", "--extended-insert"]</param>
+                    <param key="dumpopts" json="true">["--routines","--add-drop-database","--add-drop-table","--allow-keywords","--complete-insert","--create-options","--extended-insert"]</param>
                 </plugin>
                 <plugin name="ldap" path="./plugins">
                     <param key="server">ldap://my.server.tld</param>

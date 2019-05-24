@@ -26,6 +26,7 @@ class Backup(object):
         self.outdir = os.path.abspath(os.path.expanduser(outdir))
         self.cfg = os.path.abspath(os.path.expanduser(cfg))
         os.makedirs(self.outdir, exist_ok = True)
+        os.chmod(self.outdir, mode = 0o0700)
         if not os.path.isfile(self.cfg):
             raise OSError(('{0} does not exist!').format(self.cfg))
         if not dumpopts:

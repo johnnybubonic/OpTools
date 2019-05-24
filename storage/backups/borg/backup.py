@@ -8,25 +8,20 @@
 # TODO: modify config to add repo to cfg for init? or add new operation, "add"
 
 import argparse
-import configparser
 import datetime
 import json
 import getpass
 import logging
 import logging.handlers
 import os
+import pwd
 import re
-# TODO: use borg module directly?
+# TODO: use borg module directly instead of subprocess?
 import subprocess
 import sys
+import tempfile
 # TODO: virtual env?
-try:
-    from lxml import etree
-    has_lxml = True
-except ImportError:
-    import xml.etree.ElementTree as etree  # https://docs.python.org/3/library/xml.etree.elementtree.html
-    has_lxml = False
-
+from lxml import etree  # A lot safer and easier to use than the stdlib xml module.
 try:
     import pymysql  # not stdlib; "python-pymysql" in Arch's AUR
     has_mysql = True
@@ -46,21 +41,21 @@ loglvls = {'critical': logging.CRITICAL,
            'info': logging.INFO,
            'debug': logging.DEBUG}
 
+### DEFAULT NAMESPACE ###
+dflt_ns = 'http://git.square-r00t.net/OpTools/tree/storage/backups/borg/'
+
 
 ### THE GUTS ###
 class Backup(object):
     def __init__(self, args):
         self.args = args
-        ### DIRECTORIES ###
-        if self.args['oper'] == 'backup':
-            for d in (self.args['mysqldir'], self.args['stagedir']):
-                os.makedirs(d, exist_ok = True, mode = 0o700)
+        self.ns = '{{{0}}}'.format(dflt_ns)
         if self.args['oper'] == 'restore':
-            self.args['target_dir'] = os.path.abspath(os.path.expanduser(
-                                                    self.args['target_dir']))
-            os.makedirs(os.path.dirname(self.args['oper']),
+            self.args['target_dir'] = os.path.abspath(os.path.expanduser(self.args['target_dir']))
+            os.makedirs(self.args['target_dir'],
                         exist_ok = True,
                         mode = 0o700)
+        self.repos = {}
         ### LOGGING ###
         # Thanks to:
         # https://web.archive.org/web/20170726052946/http://www.lexev.org/en/2013/python-logging-every-day/
@@ -69,26 +64,22 @@ class Backup(object):
         # and user K900_ on r/python for entertaining my very silly question.
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(loglvls[self.args['loglevel']])
-        _logfmt = logging.Formatter(
-                fmt = ('{levelname}:{name}: {message} ({asctime}; '
-                       '{filename}:{lineno})'),
-                style = '{',
-                datefmt = '%Y-%m-%d %H:%M:%S')
-        _journalfmt = logging.Formatter(
-                fmt = '{levelname}:{name}: {message} ({filename}:{lineno})',
-                style = '{',
-                datefmt = '%Y-%m-%d %H:%M:%S')
+        _logfmt = logging.Formatter(fmt = ('{levelname}:{name}: {message} ({asctime}; {filename}:{lineno})'),
+                                    style = '{',
+                                    datefmt = '%Y-%m-%d %H:%M:%S')
+        _journalfmt = logging.Formatter(fmt = '{levelname}:{name}: {message} ({filename}:{lineno})',
+                                        style = '{',
+                                        datefmt = '%Y-%m-%d %H:%M:%S')
         handlers = []
         if self.args['disklog']:
             os.makedirs(os.path.dirname(self.args['logfile']),
                         exist_ok = True,
                         mode = 0o700)
             # TODO: make the constraints for rotation in config?
-            handlers.append(
-                    logging.handlers.RotatingFileHandler(self.args['logfile'],
-                                                         encoding = 'utf8',
-                                                         maxBytes = 100000,
-                                                         backupCount = 1))
+            handlers.append(logging.handlers.RotatingFileHandler(self.args['logfile'],
+                                                                 encoding = 'utf8',
+                                                                 maxBytes = 100000,
+                                                                 backupCount = 1))
         if self.args['verbose']:
             handlers.append(logging.StreamHandler())
         if has_systemd:
@@ -100,156 +91,241 @@ class Backup(object):
             h.setFormatter(_logfmt)
             h.setLevel(loglvls[self.args['loglevel']])
             self.logger.addHandler(h)
+        ### END LOGGING ###
         self.logger.debug('BEGIN INITIALIZATION')
         ### CONFIG ###
         if not os.path.isfile(self.args['cfgfile']):
-            self.logger.error(
-                    '{0} does not exist'.format(self.args['cfgfile']))
+            self.logger.error('{0} does not exist'.format(self.args['cfgfile']))
             exit(1)
-        with open(self.args['cfgfile'], 'r') as f:
-            self.cfg = json.loads(f.read())
-        ### END LOGGING ###
-        ### ARGS CLEANUP ###
-        self.logger.debug('VARS (before args cleanup): {0}'.format(vars()))
-        self.args['repo'] = [i.strip() for i in self.args['repo'].split(',')]
-        if 'all' in self.args['repo']:
-            self.args['repo'] = list(self.cfg['repos'].keys())
-        for r in self.args['repo'][:]:
-            if r == 'all':
-                self.args['repo'].remove(r)
-            elif r not in self.cfg['repos'].keys():
-                self.logger.warning(
-                        'Repository {0} is not configured; skipping.'.format(
-                                r))
-                self.args['repo'].remove(r)
-        self.logger.debug('VARS (after args cleanup): {0}'.format(vars()))
-        self.logger.debug('END INITIALIZATION')
+        try:
+            with open(self.args['cfgfile'], 'rb') as f:
+                self.cfg = etree.fromstring(f.read())
+        except etree.XMLSyntaxError:
+            self.logger.error('{0} is invalid XML'.format(self.args['cfgfile']))
+            raise ValueError(('{0} does not seem to be valid XML. '
+                              'See sample.config.xml for an example configuration.').format(self.args['cfgfile']))
+        self.borgbin = self.cfg.attrib.get('borgpath', '/usr/bin/borg')
         ### CHECK ENVIRONMENT ###
         # If we're running from cron, we want to print errors to stdout.
         if os.isatty(sys.stdin.fileno()):
             self.cron = False
         else:
             self.cron = True
-        ### END INIT ###
+        self.logger.debug('END INITIALIZATION')
+        self.buildRepos()
 
-    def cmdExec(self, cmd, stdoutfh = None):
-        self.logger.debug('Running command: {0}'.format(' '.join(cmd)))
-        if self.args['dryrun']:
-            return ()  # no-op
-        if stdoutfh:
-            _cmd = subprocess.run(cmd,
-                                  stdout = stdoutfh,
-                                  stderr = subprocess.PIPE)
-        else:
-            _cmd = subprocess.run(cmd,
-                                  stdout = subprocess.PIPE,
-                                  stderr = subprocess.PIPE)
-            _out = _cmd.stdout.decode('utf-8').strip()
-        _err = _cmd.stderr.decode('utf-8').strip()
-        _returncode = _cmd.returncode
-        if _returncode != 0:
-            self.logger.error('STDERR: ({1})\n{0}'.format(_err, ' '.join(cmd)))
-        if _err != '' and self.cron:
-            self.logger.warning(
-                    'Command {0} failed: {1}'.format(' '.join(cmd), _err))
+    def buildRepos(self):
+        def getRepo(server, reponames = None):
+            if not reponames:
+                reponames = []
+            repos = []
+            for repo in server.findall('{0}repo'.format(self.ns)):
+                if reponames and repo.attrib['name'] not in reponames:
+                    continue
+                r = {}
+                for a in repo.attrib:
+                    r[a] = repo.attrib[a]
+                for e in ('path', 'exclude'):
+                    r[e] = [i.text for i in repo.findall(self.ns + e)]
+                for prep in repo.findall('{0}prep'.format(self.ns)):
+                    if 'prep' not in r:
+                        r['prep'] = []
+                    if prep.attrib.get('inline', 'true').lower()[0] in ('0', 'f'):
+                        with open(os.path.abspath(os.path.expanduser(prep.text)), 'r') as f:
+                            r['prep'].append(f.read())
+                    else:
+                        r['prep'].append(prep.text)
+                plugins = repo.find('{0}plugins'.format(self.ns))
+                if plugins is not None:
+                    r['plugins'] = {}
+                    for plugin in plugins.findall('{0}plugin'.format(self.ns)):
+                        pname = plugin.attrib['name']
+                        r['plugins'][pname] = {'path': plugin.attrib.get('path'),
+                                               'params': {}}
+                        for param in plugin.findall('{0}param'.format(self.ns)):
+                            paramname = param.attrib['key']
+                            if param.attrib.get('json', 'false').lower()[0] in ('1', 't'):
+                                r['plugins'][pname]['params'][paramname] = json.loads(param.text)
+                            else:
+                                r['plugins'][pname]['params'][paramname] = param.text
+                repos.append(r)
+            return(repos)
+        self.logger.debug('VARS (before args cleanup): {0}'.format(vars(self)))
+        self.args['repo'] = [i.strip() for i in self.args['repo'].split(',')]
+        self.args['server'] = [i.strip() for i in self.args['server'].split(',')]
+        if 'all' in self.args['repo']:
+            self.args['repo'] = None
+        if 'all' in self.args['server']:
+            self.args['server'] = []
+            for server in self.cfg.findall('{0}server'.format(self.ns)):
+                # The server elements are uniquely constrained to the "target" attrib.
+                # *NO TWO <server> ELEMENTS WITH THE SAME target= SHOULD EXIST.*
+                self.args['server'].append(server.attrib['target'])
+        for server in self.cfg.findall('{0}server'.format(self.ns)):
+            sname = server.attrib['target']
+            if sname not in self.args['server']:
+                continue
+            self.repos[sname] = {}
+            for x in server.attrib:
+                if x != 'target':
+                    self.repos[sname][x] = server.attrib[x]
+                self.repos[sname]['repos'] = getRepo(server, reponames = self.args['repo'])
+        self.logger.debug('VARS (after args cleanup): {0}'.format(vars(self)))
         return()
 
     def createRepo(self):
-        _env = os.environ.copy()
-        _env['BORG_RSH'] = self.cfg['config']['ctx']
-        for r in self.args['repo']:
-            self.logger.info('[{0}]: BEGIN INITIALIZATION'.format(r))
-            _cmd = ['borg',
+        for server in self.repos:
+            _env = os.environ.copy()
+            # https://github.com/borgbackup/borg/issues/2273
+            # https://borgbackup.readthedocs.io/en/stable/internals/frontends.html
+            _env['LANG'] = 'en_US.UTF-8'
+            _env['LC_CTYPE'] = 'en_US.UTF-8'
+            if self.repos[server]['remote'].lower()[0] in ('1', 't'):
+                _env['BORG_RSH'] = self.repos[server]['rsh']
+            _user = self.repos[server].get('user', pwd.getpwuid(os.geteuid()).pw_name)
+            for repo in self.repos[server]['repos']:
+                self.logger.info('[{0}]: BEGIN INITIALIZATION'.format(repo['name']))
+                _loc_env = _env.copy()
+                if 'password' not in repo:
+                    print('Password not supplied for {0}:{1}.'.format(server, repo['name']))
+                    _loc_env['BORG_PASSPHRASE'] = getpass.getpass('Password (will NOT echo back): ')
+                else:
+                    _loc_env['BORG_PASSPHRASE'] = repo['password']
+            _cmd = [self.borgbin,
+                    '--log-json',
+                    '--{0}'.format(self.args['loglevel']),
                     'init',
-                    '-v',
-                    '{0}@{1}:{2}'.format(self.cfg['config']['user'],
-                                         self.cfg['config']['host'],
-                                         r)]
-            _env['BORG_PASSPHRASE'] = self.cfg['repos'][r]['password']
-            # We don't use self.cmdExec() here either because
-            # again, custom env, etc.
-            self.logger.debug('VARS: {0}'.format(vars()))
+                    '-e', 'repokey']
+            if self.repos[server]['remote'].lower()[0] in ('1', 't'):
+                repo_tgt = '{0}@{1}'.format(_user, server)
+            else:
+                repo_tgt = os.path.abspath(os.path.expanduser(server))
+            _cmd.append('{0}:{1}'.format(repo_tgt,
+                                         repo['name']))
+            self.logger.debug('VARS: {0}'.format(vars(self)))
             if not self.args['dryrun']:
                 _out = subprocess.run(_cmd,
-                                      env = _env,
+                                      env = _loc_env,
                                       stdout = subprocess.PIPE,
                                       stderr = subprocess.PIPE)
                 _stdout = _out.stdout.decode('utf-8').strip()
                 _stderr = _out.stderr.decode('utf-8').strip()
                 _returncode = _out.returncode
-                self.logger.debug('[{0}]: (RESULT) {1}'.format(r, _stdout))
+                self.logger.debug('[{0}]: (RESULT) {1}'.format(repo['name'], _stdout))
                 # sigh. borg uses stderr for verbose output.
-                self.logger.debug('[{0}]: STDERR: ({2})\n{1}'.format(r,
+                self.logger.debug('[{0}]: STDERR: ({2})\n{1}'.format(repo['name'],
                                                                      _stderr,
-                                                                     ' '.join(
-                                                                             _cmd)))
+                                                                     ' '.join(_cmd)))
                 if _returncode != 0:
                     self.logger.error(
-                            '[{0}]: FAILED: {1}'.format(r, ' '.join(_cmd)))
-                if _err != '' and self.cron and _returncode != 0:
-                    self.logger.warning(
-                            'Command {0} failed: {1}'.format(' '.join(cmd),
-                                                             _err))
-            del (_env['BORG_PASSPHRASE'])
-            self.logger.info('[{0}]: END INITIALIZATION'.format(r))
+                            '[{0}]: FAILED: {1}'.format(repo['name'], ' '.join(_cmd)))
+                if _stderr != '' and self.cron and _returncode != 0:
+                    self.logger.warning('Command {0} failed: {1}'.format(' '.join(_cmd),
+                                                                         _stderr))
+            self.logger.info('[{0}]: END INITIALIZATION'.format(repo['name']))
         return()
 
     def create(self):
         # TODO: support "--strip-components N"?
-        _env = os.environ.copy()
-        _env['BORG_RSH'] = self.cfg['config']['ctx']
         self.logger.info('START: backup')
-        for r in self.args['repo']:
-            self.logger.info('[{0}]: BEGIN BACKUP'.format(r))
-            if 'prep' in self.cfg['repos'][r].keys():
-                for prep in self.cfg['repos'][r]['prep']:
-                    self.logger.info(
-                            '[{0}]: Running prepfunc {1}'.format(r, prep))
-                    eval('self.{0}'.format(
-                            prep))  # I KNOW, IT'S TERRIBLE. so sue me.
-                    self.logger.info(
-                            '[{0}]: Finished prepfunc {1}'.format(r, prep))
-            _cmd = ['borg',
-                    'create',
-                    '-v', '--stats',
-                    '--compression', 'lzma,9']
-            if 'excludes' in self.cfg['repos'][r].keys():
-                for e in self.cfg['repos'][r]['excludes']:
-                    _cmd.extend(['--exclude', e])
-            _cmd.append('{0}@{1}:{2}::{3}'.format(self.cfg['config']['user'],
-                                                  self.cfg['config']['host'],
-                                                  r,
+        for server in self.repos:
+            _env = os.environ.copy()
+            if self.repos[server]['remote'].lower()[0] in ('1', 't'):
+                _env['BORG_RSH'] = self.repos[server].get('rsh', None)
+            _env['LANG'] = 'en_US.UTF-8'
+            _env['LC_CTYPE'] = 'en_US.UTF-8'
+            _user = self.repos[server].get('user', pwd.getpwuid(os.geteuid()).pw_name)
+            for repo in self.repos[server]['repos']:
+                _loc_env = _env.copy()
+                if 'password' not in repo:
+                    print('Password not supplied for {0}:{1}.'.format(server, repo['name']))
+                    _loc_env['BORG_PASSPHRASE'] = getpass.getpass('Password (will NOT echo back): ')
+                else:
+                    _loc_env['BORG_PASSPHRASE'] = repo['password']
+                self.logger.info('[{0}]: BEGIN BACKUP: {1}'.format(server, repo['name']))
+                if 'prep' in repo:
+                    tmpdir = os.path.abspath(os.path.expanduser('~/.cache/.optools_backup'))
+                    os.makedirs(tmpdir, exist_ok = True)
+                    os.chmod(tmpdir, mode = 0o0700)
+                    for idx, prep in enumerate(repo['prep']):
+                        exec_tmp = tempfile.mkstemp(prefix = '_optools.backup.',
+                                                    suffix = '._tmpexc',
+                                                    text = True,
+                                                    dir = tmpdir)[1]
+                        os.chmod(exec_tmp, mode = 0o0700)
+                        with open(exec_tmp, 'w') as f:
+                            f.write(prep)
+                        prep_out = subprocess.run([exec_tmp],
+                                                  stdout = subprocess.PIPE,
+                                                  stderr = subprocess.PIPE)
+                        if prep_out.returncode != 0:
+                            err = ('Prep job {0} ({1}) for server {2} (repo {3}) '
+                                   'returned non-zero').format(idx, exec_tmp, server, repo)
+                            logging.warning(err)
+                            logging.debug('STDOUT: {0}'.format(prep_out.stdout.decode('utf-8')))
+                            logging.debug('STDERR: {0}'.format(prep_out.stderr.decode('utf-8')))
+                        else:
+                            os.remove(exec_tmp)
+                if 'plugins' in repo:
+                    import importlib
+                    _orig_path = sys.path
+                    for plugin in repo['plugins']:
+                        if repo['plugins'][plugin]['path']:
+                            sys.path.insert(1, repo['plugins'][plugin]['path'] + sys.path)
+                        optools_tmpmod = importlib.import_module(plugin, package = None)
+                        if not repo['plugins'][plugin]['params']:
+                            optools_tmpmod.Backup()
+                        else:
+                            optools_tmpmod.Backup(**repo['plugins'][plugin]['params'])
+                        del(sys.modules[plugin])
+                        del(optools_tmpmod)
+                        sys.path = _orig_path
+                # This is where we actually do the thing.
+                _cmd = [self.borgbin,
+                        '--log-json',
+                        '--{0}'.format(self.args['loglevel']),
+                        'create',
+                        '--stats']
+                if 'compression' in repo:
+                    _cmd.extend(['--compression', repo['compression']])
+                if 'exclude' in repo:
+                    for e in repo['exclude']:
+                        _cmd.extend(['--exclude', e])
+                if self.repos[server]['remote'].lower()[0] in ('1', 't'):
+                    repo_tgt = '{0}@{1}'.format(_user, server)
+                else:
+                    repo_tgt = os.path.abspath(os.path.expanduser(server))
+                _cmd.append('{0}:{1}::{2}'.format(repo_tgt,
+                                                  repo['name'],
                                                   self.args['archive']))
-            for p in self.cfg['repos'][r]['paths']:
-                _cmd.append(p)
-            _env['BORG_PASSPHRASE'] = self.cfg['repos'][r]['password']
-            self.logger.debug('VARS: {0}'.format(vars()))
-            # We don't use self.cmdExec() here because we want to explicitly
-            # pass the env and format the log line differently.
-            self.logger.debug(
-                    '[{0}]: Running command: {1}'.format(r, ' '.join(_cmd)))
-            if not self.args['dryrun']:
-                _out = subprocess.run(_cmd,
-                                      env = _env,
-                                      stdout = subprocess.PIPE,
-                                      stderr = subprocess.PIPE)
-                _stdout = _out.stdout.decode('utf-8').strip()
-                _stderr = _out.stderr.decode('utf-8').strip()
-                _returncode = _out.returncode
-                self.logger.debug('[{0}]: (RESULT) {1}'.format(r, _stdout))
-                self.logger.error('[{0}]: STDERR: ({2})\n{1}'.format(r,
-                                                                     _stderr,
-                                                                     ' '.join(
-                                                                             _cmd)))
-                if _returncode != 0:
-                    self.logger.error(
-                            '[{0}]: FAILED: {1}'.format(r, ' '.join(_cmd)))
-                if _stderr != '' and self.cron and _returncode != 0:
-                    self.logger.warning(
-                            'Command {0} failed: {1}'.format(' '.join(_cmd),
-                                                             _stderr))
-                del (_env['BORG_PASSPHRASE'])
-            self.logger.info('[{0}]: END BACKUP'.format(r))
+                for p in repo['path']:
+                    _cmd.append(p)
+                self.logger.debug('VARS: {0}'.format(vars()))
+                # We don't use self.cmdExec() here because we want to explicitly
+                # pass the env and format the log line differently.
+                self.logger.debug('[{0}]: Running command: {1}'.format(repo['name'],
+                                                                       ' '.join(_cmd)))
+                if not self.args['dryrun']:
+                    _out = subprocess.run(_cmd,
+                                          env = _loc_env,
+                                          stdout = subprocess.PIPE,
+                                          stderr = subprocess.PIPE)
+                    _stdout = _out.stdout.decode('utf-8').strip()
+                    _stderr = _out.stderr.decode('utf-8').strip()
+                    _returncode = _out.returncode
+                    self.logger.debug('[{0}]: (RESULT) {1}'.format(repo['name'], _stdout))
+                    self.logger.debug('[{0}]: STDERR: ({2})\n{1}'.format(repo['name'],
+                                                                         _stderr,
+                                                                         ' '.join(
+                                                                                 _cmd)))
+                    if _returncode != 0:
+                        self.logger.error(
+                                '[{0}]: FAILED: {1}'.format(repo['name'], ' '.join(_cmd)))
+                    if _stderr != '' and self.cron and _returncode != 0:
+                        self.logger.warning('Command {0} failed: {1}'.format(' '.join(_cmd),
+                                                                             _stderr))
+                    del (_loc_env['BORG_PASSPHRASE'])
+                self.logger.info('[{0}]: END BACKUP'.format(repo['name']))
         self.logger.info('END: backup')
         return()
 
@@ -257,164 +333,221 @@ class Backup(object):
         # TODO: support "--strip-components N"?
         # TODO: support add'l args?
         # https://borgbackup.readthedocs.io/en/stable/usage/extract.html
-        _env = os.environ.copy()
-        _env['BORG_RSH'] = self.cfg['config']['ctx']
+        orig_dir = os.getcwd()
         self.logger.info('START: restore')
-        for r in self.args['repo']:
-            self.logger.info('[{0}]: BEGIN RESTORE'.format(r))
-            _cmd = ['borg',
-                    'extract',
-                    '-v']
-            # if 'excludes' in self.cfg['repos'][r].keys():
-            #     for e in self.cfg['repos'][r]['excludes']:
-            #         _cmd.extend(['--exclude', e])
-            _cmd.append('{0}@{1}:{2}::{3}'.format(self.cfg['config']['user'],
-                                                  self.cfg['config']['host'],
-                                                  r,
+        self.args['target_dir'] = os.path.abspath(os.path.expanduser(self.args['target_dir']))
+        os.makedirs(self.args['target_dir'], exist_ok = True)
+        os.chmod(self.args['target_dir'], mode = 0o0700)
+        for server in self.repos:
+            _env = os.environ.copy()
+            if self.repos[server]['remote'].lower()[0] in ('1', 't'):
+                _env['BORG_RSH'] = self.repos[server].get('rsh', None)
+            _env['LANG'] = 'en_US.UTF-8'
+            _env['LC_CTYPE'] = 'en_US.UTF-8'
+            _user = self.repos[server].get('user', pwd.getpwuid(os.geteuid()).pw_name)
+            server_dir = os.path.join(self.args['target_dir'], server)
+            for repo in self.repos[server]['repos']:
+                _loc_env = _env.copy()
+                if 'password' not in repo:
+                    print('Password not supplied for {0}:{1}.'.format(server, repo['name']))
+                    _loc_env['BORG_PASSPHRASE'] = getpass.getpass('Password (will NOT echo back): ')
+                else:
+                    _loc_env['BORG_PASSPHRASE'] = repo['password']
+                if len(self.repos[server]) > 1:
+                    dest_dir = os.path.join(server_dir, repo['name'])
+                else:
+                    dest_dir = server_dir
+                os.makedirs(dest_dir, exist_ok = True)
+                os.chmod(dest_dir, mode = 0o0700)
+                os.chdir(dest_dir)
+                self.logger.info('[{0}]: BEGIN RESTORE'.format(repo['name']))
+                _cmd = [self.borgbin,
+                        '--log-json',
+                        '--{0}'.format(self.args['loglevel']),
+                        'extract']
+                if self.repos[server]['remote'].lower()[0] in ('1', 't'):
+                    repo_tgt = '{0}@{1}'.format(_user, server)
+                else:
+                    repo_tgt = os.path.abspath(os.path.expanduser(server))
+                _cmd.append('{0}:{1}::{2}'.format(repo_tgt,
+                                                  repo['name'],
                                                   self.args['archive']))
-            _cmd.append(os.path.abspath(self.args['target_dir']))
-            # TODO: support specific path inside archive?
-            # if so, append path(s) here.
-            _env['BORG_PASSPHRASE'] = self.cfg['repos'][r]['password']
-            self.logger.debug('VARS: {0}'.format(vars()))
-            # We don't use self.cmdExec() here because we want to explicitly
-            # pass the env and format the log line differently.
-            self.logger.debug(
-                    '[{0}]: Running command: {1}'.format(r, ' '.join(_cmd)))
-            if not self.args['dryrun']:
-                _out = subprocess.run(_cmd,
-                                      env = _env,
-                                      stdout = subprocess.PIPE,
-                                      stderr = subprocess.PIPE)
-                _stdout = _out.stdout.decode('utf-8').strip()
-                _stderr = _out.stderr.decode('utf-8').strip()
-                _returncode = _out.returncode
-                self.logger.debug('[{0}]: (RESULT) {1}'.format(r, _stdout))
-                self.logger.error('[{0}]: STDERR: ({2})\n{1}'.format(r,
-                                                                     _stderr,
-                                                                     ' '.join(
-                                                                             _cmd)))
-                if _returncode != 0:
-                    self.logger.error(
-                            '[{0}]: FAILED: {1}'.format(r, ' '.join(_cmd)))
-                if _stderr != '' and self.cron and _returncode != 0:
-                    self.logger.warning(
-                            'Command {0} failed: {1}'.format(' '.join(_cmd),
-                                                             _stderr))
-                del (_env['BORG_PASSPHRASE'])
-            self.logger.info('[{0}]: END RESTORE'.format(r))
+                if self.args['archive_path']:
+                    _cmd.append(self.args['archive_path'])
+                self.logger.debug('VARS: {0}'.format(vars(self)))
+                self.logger.debug('[{0}]: Running command: {1}'.format(repo['name'],
+                                                                       ' '.join(_cmd)))
+                if not self.args['dryrun']:
+                    _out = subprocess.run(_cmd,
+                                          env = _loc_env,
+                                          stdout = subprocess.PIPE,
+                                          stderr = subprocess.PIPE)
+                    _stdout = _out.stdout.decode('utf-8').strip()
+                    _stderr = _out.stderr.decode('utf-8').strip()
+                    _returncode = _out.returncode
+                    self.logger.debug('[{0}]: (RESULT) {1}'.format(repo['name'], _stdout))
+                    self.logger.debug('[{0}]: STDERR: ({2})\n{1}'.format(repo['name'],
+                                                                         _stderr,
+                                                                         ' '.join(_cmd)))
+                    if _returncode != 0:
+                        self.logger.error('[{0}]: FAILED: {1}'.format(repo['name'],
+                                                                      ' '.join(_cmd)))
+                    if _stderr != '' and self.cron and _returncode != 0:
+                        self.logger.warning('Command {0} failed: {1}'.format(' '.join(_cmd),
+                                                                             _stderr))
+                self.logger.info('[{0}]: END RESTORE'.format(repo['name']))
+                os.chdir(orig_dir)
         self.logger.info('END: restore')
         return()
 
     def listRepos(self):
+        def objPrinter(d, indent = 0):
+            for k, v in d.items():
+                if k == 'name':
+                    continue
+                if k.lower() in ('password', 'path', 'exclude', 'prep', 'plugins', 'params', 'compression'):
+                    keyname = k.title()
+                else:
+                    keyname = k
+                if isinstance(v, list):
+                    for i in v:
+                        print('\033[1m{0}{1}:\033[0m {2}'.format(('\t' * indent),
+                                                                 keyname,
+                                                                 i))
+                elif isinstance(v, dict):
+                    print('\033[1m{0}{1}:\033[0m'.format(('\t' * indent),
+                                                         keyname))
+                    objPrinter(v, indent = (indent + 1))
+                else:
+                    print('\033[1m{0}{1}:\033[0m {2}'.format(('\t' * indent),
+                                                             keyname,
+                                                             v))
+            return()
         print('\n\033[1mCurrently configured repositories are:\033[0m\n')
-        print('\t{0}\n'.format(', '.join(self.cfg['repos'].keys())))
-        if self.args['verbose']:
-            print('\033[1mDETAILS:\033[0m\n')
-            for r in self.args['repo']:
-                print('\t\033[1m{0}:\033[0m\n\t\t\033[1mPath(s):\033[0m\t'.format(
-                                r.upper()), end = '')
-                for p in self.cfg['repos'][r]['paths']:
-                    print(p, end = ' ')
-                if 'prep' in self.cfg['repos'][r].keys():
-                    print('\n\t\t\033[1mPrep:\033[0m\t\t', end = '')
-                    for p in self.cfg['repos'][r]['prep']:
-                        print(p, end = ' ')
-                if 'excludes' in self.cfg['repos'][r].keys():
-                    print('\n\t\t\033[1mExclude(s):\033[0m\t', end = '')
-                    for p in self.cfg['repos'][r]['excludes']:
-                        print(p, end = ' ')
-                print('\n')
+        for server in self.repos:
+            print('\033[1mTarget:\033[0m {0}'.format(server))
+            print('\033[1mRepositories:\033[0m')
+            for r in self.repos[server]['repos']:
+                if not self.args['verbose']:
+                    print('\t\t{0}'.format(r['name']))
+                else:
+                    print('\t\t\033[1mName:\033[0m {0}'.format(r['name']))
+                    print('\033[1m\t\tDetails:\033[0m')
+                    objPrinter(r, indent = 3)
+                    print()
         return()
 
     def printer(self):
         # TODO: better alignment. https://stackoverflow.com/a/5676884
         _results = self.lister()
-        if not self.args['archive']:  # It's a listing of archives
-            print('\033[1mREPO:\tSNAPSHOT:\t\tTIMESTAMP:\033[0m\n')
-            for r in _results.keys():
-                print(r, end = '')
-                for line in _results[r]:
-                    _snapshot = line.split()
-                    print('\t{0}\t\t{1}'.format(_snapshot[0],
-                                                ' '.join(_snapshot[1:])))
-                print()
-        else:  # It's a listing inside an archive
+        timefmt = '%Y-%m-%dT%H:%M:%S.%f'
+        if not self.args['archive']:
+            # It's a listing of archives
+            for server in _results:
+                print('\033[1mTarget:\033[0m {0}'.format(server))
+                print('\033[1mRepositories:\033[0m')
+                # Normally this is a list everywhere else. For results, however, it's a dict.
+                for repo in _results[server]:
+                    print('\t\033[1m{0}:\033[0m'.format(repo))
+                    print('\t\t\033[1mSnapshot\t\tTimestamp\033[0m')
+                    for archive in _results[server][repo]:
+                        print('\t\t{0}\t\t{1}'.format(archive['name'],
+                                                      datetime.datetime.strptime(archive['time'], timefmt)))
+            print()
+        else:
+            # It's a listing inside an archive
             if self.args['verbose']:
-                _fields = ['REPO:', 'PERMS:', 'OWNERSHIP:', 'SIZE:', 'TIMESTAMP:', 'PATH:']
-                for r in _results.keys():
-                    print('\033[1m{0}\t{1}\033[0m'.format(_fields[0], r))
-                    # https://docs.python.org/3/library/string.html#formatspec
-                    print('{0[1]:<15}\t{0[2]:<15}\t{0[3]:<15}\t{0[4]:<24}\t{0[5]:<15}'.format(_fields))
-                    for line in _results[r]:
-                        _fline = line.split()
-                        _perms = _fline[0]
-                        _ownership = '{0}:{1}'.format(_fline[1], _fline[2])
-                        _size = _fline[3]
-                        _time = ' '.join(_fline[4:7])
-                        _path = ' '.join(_fline[7:])
-                        print('{0:<15}\t{1:<15}\t{2:<15}\t{3:<24}\t{4:<15}'.format(_perms,
-                                                                                   _ownership,
-                                                                                   _size,
-                                                                                   _time,
-                                                                                   _path))
+                _archive_fields = ['Mode', 'Owner', 'Size', 'Timestamp', 'Path']
+                for server in _results:
+                    print('\033[1mTarget:\033[0m {0}'.format(server))
+                    print('\033[1mRepositories:\033[0m')
+                    for repo in _results[server]:
+                        print('\t\033[1m{0}:\033[0m'.format(repo))
+                        print(('\t\t\033[1m'
+                               '{0[0]:<10}\t'
+                               '{0[1]:<10}\t'
+                               '{0[2]:<10}\t'
+                               '{0[3]:<19}\t'
+                               '{0[4]}'
+                               '\033[0m').format(_archive_fields))
+                        for file in _results[server][repo]:
+                            file['mtime'] = datetime.datetime.strptime(file['mtime'], timefmt)
+                            print(('\t\t'
+                                   '{mode:<10}\t'
+                                   '{user:<10}\t'
+                                   '{size:<10}\t'
+                                   '{mtime}\t'
+                                   '{path}').format(**file))
             else:
-                print('\033[1mREPO:\tPATH:\033[0m\n')
-                for r in _results.keys():
-                    print(r, end = '')
-                    for line in _results[r]:
-                        _fline = line.split()
-                        print('\t{0}'.format(' '.join(_fline[7:])))
+                for server in _results:
+                    print('\033[1mTarget:\033[0m {0}'.format(server))
+                    print('\033[1mRepositories:\033[0m')
+                    for repo in _results[server]:
+                        print('\t\033[1m{0}:\033[0m'.format(repo))
+                        for file in _results[server][repo]:
+                            print(file['path'])
         return()
 
     def lister(self):
         output = {}
-        _env = os.environ.copy()
         self.logger.debug('START: lister')
-        _env['BORG_RSH'] = self.cfg['config']['ctx']
-        for r in self.args['repo']:
-            if self.args['archive']:
-                _cmd = ['borg',
+        for server in self.repos:
+            output[server] = {}
+            _env = os.environ.copy()
+            if self.repos[server]['remote'].lower()[0] in ('1', 't'):
+                _env['BORG_RSH'] = self.repos[server].get('rsh', None)
+            _env['LANG'] = 'en_US.UTF-8'
+            _env['LC_CTYPE'] = 'en_US.UTF-8'
+            _user = self.repos[server].get('user', pwd.getpwuid(os.geteuid()).pw_name)
+            for repo in self.repos[server]['repos']:
+                _loc_env = _env.copy()
+                if 'password' not in repo:
+                    print('Password not supplied for {0}:{1}.'.format(server, repo['name']))
+                    _loc_env['BORG_PASSPHRASE'] = getpass.getpass('Password (will NOT echo back): ')
+                else:
+                    _loc_env['BORG_PASSPHRASE'] = repo['password']
+                if self.repos[server]['remote'].lower()[0] in ('1', 't'):
+                    repo_tgt = '{0}@{1}'.format(_user, server)
+                else:
+                    repo_tgt = os.path.abspath(os.path.expanduser(server))
+                _cmd = [self.borgbin,
+                        '--log-json',
+                        '--{0}'.format(self.args['loglevel']),
                         'list',
-                        '{0}@{1}:{2}::{3}'.format(self.cfg['config']['user'],
-                                                  self.cfg['config']['host'],
-                                                  r,
-                                                  self.args['archive'])]
-            else:
-                _cmd = ['borg',
-                        'list',
-                        '{0}@{1}:{2}'.format(self.cfg['config']['user'],
-                                             self.cfg['config']['host'],
-                                             r)]
-            _env['BORG_PASSPHRASE'] = self.cfg['repos'][r]['password']
+                        ('--json-lines' if self.args['archive'] else '--json')]
+                _cmd.append('{0}:{1}{2}'.format(repo_tgt,
+                                                repo['name'],
+                                                ('::{0}'.format(self.args['archive']) if self.args['archive']
+                                                 else '')))
             if not self.args['dryrun']:
-
                 _out = subprocess.run(_cmd,
-                                      env = _env,
+                                      env = _loc_env,
                                       stdout = subprocess.PIPE,
                                       stderr = subprocess.PIPE)
                 _stdout = [i.strip() for i in _out.stdout.decode('utf-8').splitlines()]
                 _stderr = _out.stderr.decode('utf-8').strip()
                 _returncode = _out.returncode
-                output[r] = _stdout
-                self.logger.debug('[{0}]: (RESULT) {1}'.format(r,
+                if self.args['archive']:
+                    output[server][repo['name']] = [json.loads(i) for i in _stdout.splitlines()]
+                else:
+                    output[repo['name']] = json.loads(_stdout)['archives']
+                self.logger.debug('[{0}]: (RESULT) {1}'.format(repo['name'],
                                                                '\n'.join(_stdout)))
-                if _returncode != 0:
-                    self.logger.error('[{0}]: STDERR: ({2}) ({1})'.format(r,
-                                                                          _stderr,
-                                                                          ' '.join(_cmd)))
+                self.logger.debug('[{0}]: STDERR: ({2}) ({1})'.format(repo['name'],
+                                                                      _stderr,
+                                                                      ' '.join(_cmd)))
                 if _stderr != '' and self.cron and _returncode != 0:
-                    self.logger.warning(
-                            'Command {0} failed: {1}'.format(' '.join(cmd), _err))
-            del(_env['BORG_PASSPHRASE'])
+                    self.logger.warning('Command {0} failed: {1}'.format(' '.join(_cmd),
+                                                                         _stderr))
             if not self.args['archive']:
                 if self.args['numlimit'] > 0:
                     if self.args['old']:
-                        output[r] = output[r][:self.args['numlimit']]
+                        output[server][repo['name']] = output[server][repo['name']][:self.args['numlimit']]
                     else:
-                        output[r] = list(reversed(output[r]))[:self.args['numlimit']]
+                        output[server][repo['name']] = list(reversed(
+                                                                output[server][repo['name']]))[:self.args['numlimit']]
             if self.args['invert']:
-                output[r] = reversed(output[r])
+                output[server][repo['name']] = reversed(output[server][repo['name']])
         self.logger.debug('END: lister')
         return(output)
 
@@ -442,14 +575,6 @@ def parseArgs():
     ### DEFAULTS ###
     _date = datetime.datetime.now().strftime("%Y_%m_%d.%H_%M")
     _logfile = '/var/log/borg/{0}'.format(_date)
-    _mysqldir = os.path.abspath(
-            os.path.join(os.path.expanduser('~'),
-                         '.bak',
-                         'mysql'))
-    _stagedir = os.path.abspath(
-            os.path.join(os.path.expanduser('~'),
-                         '.bak',
-                         'misc'))
     _cfgfile = os.path.abspath(
             os.path.join(os.path.expanduser('~'),
                          '.config',
@@ -499,6 +624,12 @@ def parseArgs():
                             help = ('The repository to perform the operation for. '
                                     'The default is \033[1mall\033[0m, a special value that specifies all known '
                                     'repositories. Can also accept a comma-separated list.'))
+    commonargs.add_argument('-S', '--server',
+                            dest = 'server',
+                            default = 'all',
+                            help = ('The server to perform the operation for. '
+                                    'The default is \033[1mall\033[0m, a special value that specifies all known '
+                                    'servers. Can also accept a comma-separated list.'))
     fileargs = argparse.ArgumentParser(add_help = False)
     fileargs.add_argument('-a', '--archive',
                           default = _date,
@@ -537,16 +668,6 @@ def parseArgs():
                                      help = ('Convert the legacy JSON format to the new XML format and quit'))
     ### OPERATION-SPECIFIC OPTIONS ###
     # CREATE ("backup") #
-    backupargs.add_argument('-s', '--stagedir',
-                            default = _stagedir,
-                            dest = 'stagedir',
-                            help = ('The directory used for staging temporary files, if necessary. '
-                                    'Default: \033[1m{0}\033[0m').format(_stagedir))
-    backupargs.add_argument('-m', '--mysqldir',
-                            default = _mysqldir,
-                            dest = 'mysqldir',
-                            help = ('The path to where MySQL dumps should go. '
-                                    'Default: \033[1m{0}\033[0m').format(_mysqldir))
     # DISPLAY/OUTPUT ("list") #
     listargs.add_argument('-a', '--archive',
                           dest = 'archive',
@@ -579,22 +700,29 @@ def parseArgs():
                           help = ('Print extended information about how to '
                                   'manage the output of listing and exit.'))
     ## EXTRACT ("restore")
+    rstrargs.add_argument('-p', '--path',
+                          dest = 'archive_path',
+                          help = ('If specified, only restore this specific path (and any subpaths).'))
     rstrargs.add_argument('-t', '--target',
                           required = True,
                           dest = 'target_dir',
                           help = ('The path to the directory where the restore should be dumped to. It is '
-                                  'recommended to NOT restore to the same directory that the archive is taken from.'))
+                                  'recommended to not restore to the same directory that the archive is taken from. '
+                                  'A subdirectory will be created for each server.'
+                                  'If multiple repos (or "all") are provided, subdirectories will be created per '
+                                  'repo under their respective server(s).'))
     return (args)
 
 def convertConf(cfgfile):
+    oldcfgfile = re.sub('\.xml$', '.json', cfgfile)
     try:
-        with open(cfgfile, 'r') as f:
+        with open(oldcfgfile, 'r') as f:
             oldcfg = json.load(f)
     except json.decoder.JSONDecodeError:
         # It's not JSON. It's either already XML or invalid config.
         return(cfgfile)
     # Switched from JSON to XML, so we need to do some basic conversion.
-    newfname = re.sub('(\.json)?$', '.xml', os.path.basename(cfgfile))
+    newfname = re.sub('\.json$', '.xml', os.path.basename(cfgfile))
     newcfg = os.path.join(os.path.dirname(cfgfile),
                           newfname)
     if os.path.exists(newcfg):
@@ -609,61 +737,45 @@ def convertConf(cfgfile):
     # The old format only supported one server.
     server = etree.Element('server')
     server.attrib['target'] = oldcfg['config']['host']
+    server.attrib['remote'] = 'true'
     server.attrib['rsh'] = oldcfg['config']['ctx']
-    server.attrib['user'] = oldcfg['config']['user']
+    server.attrib['user'] = oldcfg['config'].get('user', pwd.getpwnam(os.geteuid()).pw_name)
     for r in oldcfg['repos']:
         repo = etree.Element('repo')
         repo.attrib['name'] = r
         repo.attrib['password'] = oldcfg['repos'][r]['password']
         for p in oldcfg['repos'][r]['paths']:
             path = etree.Element('path')
+            path.text = p
+            repo.append(path)
+        for e in oldcfg['repos'][r].get('excludes', []):
+            path = etree.Element('exclude')
+            path.text = e
+            repo.append(path)
         server.append(repo)
+    cfg.append(server)
     # Build the full XML spec.
-    namespaces = {'borg': 'http://git.square-r00t.net/OpTools/tree/storage/backups/borg/',
+    namespaces = {None: dflt_ns,
                   'xsi': 'http://www.w3.org/2001/XMLSchema-instance'}
     xsi = {('{http://www.w3.org/2001/'
             'XMLSchema-instance}schemaLocation'): ('http://git.square-r00t.net/OpTools/plain/'
                                                    'storage/backups/borg/config.xsd')}
-    if has_lxml:
-        genname = 'LXML (http://lxml.de/)'
-        root = etree.Element('borg', nsmap = namespaces, attrib = xsi)
-    else:
-        genname = 'Python stdlib "xml" module'
-        for ns in namespaces.keys():
-            etree.register_namespace(ns, namespaces[ns])
-        root = etree.Element('borg')
-    fromstr = cfgfile
-    root.append(etree.Comment(
-            ('Generated by {0} on {1} from {2} via {3}').format(sys.argv[0],
-                                                                datetime.datetime.now(),
-                                                                fromstr,
-                                                                genname)))
+    genname = 'LXML (http://lxml.de/)'
+    root = etree.Element('borg', nsmap = namespaces, attrib = xsi)
+    root.append(etree.Comment(('Generated by {0} on {1} from {2} via {3}').format(sys.argv[0],
+                                                                                  datetime.datetime.now(),
+                                                                                  oldcfgfile,
+                                                                                  genname)))
     root.append(etree.Comment('THIS FILE CONTAINS SENSITIVE INFORMATION. SHARE/SCRUB WISELY.'))
     for x in cfg:
         root.append(x)
     # Write out the file to disk.
-    if has_lxml:
-        xml = etree.ElementTree(root)
-        with open(newcfg, 'wb') as f:
-            xml.write(f,
-                      xml_declaration = True,
-                      encoding = 'utf-8',
-                      pretty_print = True)
-    else:
-        import xml.dom.minidom
-        xmlstr = etree.tostring(root, encoding = 'utf-8')
-        # holy cats, the xml module sucks.
-        nsstr = ''
-        for ns in namespaces.keys():
-            nsstr += ' xmlns:{0}="{1}"'.format(ns, namespaces[ns])
-        for x in xsi.keys():
-            xsiname = x.split('}')[1]
-            nsstr += ' xsi:{0}="{1}"'.format(xsiname, xsi[x])
-        outstr = xml.dom.minidom.parseString(xmlstr).toprettyxml(indent = '  ').splitlines()
-        outstr[0] = '<?xml version=\'1.0\' encoding=\'utf-8\'?>'
-        outstr[1] = '<borg{0}>'.format(nsstr)
-        with open(newcfg, 'w') as f:
-            f.write('\n'.join(outstr))
+    xml = etree.ElementTree(root)
+    with open(newcfg, 'wb') as f:
+        xml.write(f,
+                  xml_declaration = True,
+                  encoding = 'utf-8',
+                  pretty_print = True)
     # Return the new config's path.
     return(newcfg)
 
@@ -682,13 +794,18 @@ def main():
         convertConf(args['cfgfile'])
         return()
     else:
-        try:
-            with open(args['cfgfile'], 'r') as f:
-                json.load(f)
-                args['cfgfile'] = convertConf(args['cfgfile'])
-        except json.decoder.JSONDecodeError:
-            # It's not JSON. It's either already XML or invalid config.
-            pass
+        if not os.path.isfile(args['cfgfile']):
+            oldfile = re.sub('\.xml$', '.json', args['cfgfile'])
+            if os.path.isfile(oldfile):
+                try:
+                    with open(oldfile, 'r') as f:
+                        json.load(f)
+                        args['cfgfile'] = convertConf(args['cfgfile'])
+                except json.decoder.JSONDecodeError:
+                    # It's not JSON. It's either already XML or invalid config.
+                    pass
+    if not os.path.isfile(args['cfgfile']):
+        raise OSError('{0} does not exist'.format(args['cfgfile']))
     # The "Do stuff" part
     bak = Backup(args)
     if args['oper'] == 'list':

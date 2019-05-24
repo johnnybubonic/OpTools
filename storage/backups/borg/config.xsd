@@ -92,6 +92,7 @@
                                     <!-- Optional. If not specified, the password will
                                          be interactively (and securely) prompted for. -->
                                     <xs:attribute name="password" type="xs:string" use="optional"/>
+                                    <xs:attribute name="compression" type="xs:token" use="optional"/>
                                 </xs:complexType>
                                 <xs:unique name="uniquePath">
                                     <xs:selector xpath="borg:path"/>
@@ -103,6 +104,8 @@
                         <!-- "target" should be either a local filesystem path or the remote hostname. -->
                         <!-- This should *not* contain a path if it's remote. If it does, you set up Borg wrong. -->
                         <xs:attribute name="target" type="xs:anyURI" use="required"/>
+                        <!-- "remote" is used to determine what type "target" is. -->
+                        <xs:attribute name="remote" type="xs:boolean" use="required"/>
                         <!-- Only used if "target" is a remote host. -->
                         <!-- See "BORG_RSH" at https://borgbackup.readthedocs.io/en/stable/usage/general.html -->
                         <xs:attribute name="rsh" type="xs:string" use="optional"/>

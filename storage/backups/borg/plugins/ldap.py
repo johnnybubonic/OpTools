@@ -26,6 +26,7 @@ class Backup(object):
         self.binddn = binddn
         self.outdir = os.path.abspath(os.path.expanduser(outdir))
         os.makedirs(self.outdir, exist_ok = True)
+        os.chmod(self.outdir, mode = 0o0700)
         self.splitldifs = splitldifs
         self.starttls = starttls
         if password_file and not password:
