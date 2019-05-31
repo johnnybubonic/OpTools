@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import argparse
+import argparse  # yum install python-argparse on CentOS/RHEL 6.x
 import os
 import re
 import subprocess
@@ -10,7 +10,7 @@ import warnings
 # The yum API is *suuuper* cantankerous and kind of broken, even.
 # Patches welcome, but for now we just use subprocess.
 import yum
-from lxml import etree
+from lxml import etree  # yum install python-lxml
 
 
 # Detect RH version.
@@ -92,14 +92,21 @@ class Reinstaller(object):
                             if self.latest:
                                 pkgs['upgrade'].append(pkgobj.name)
                             else:
-                                pkgs['upgrade'].append(pkgobj.nevra)
+                                if distver[0] >= 7:
+                                    pkgs['upgrade'].append(pkgobj.nevra)
+                                else:
+                                    pkgs['upgrade'].append(pkgobj._ui_nevra())
                             pkg_found = True
                             is_installed = False
                             break
                 if pkglist.installed and not pkg_found:
                     for pkgobj in reversed(pkglist.installed):
                         if pkgobj.repo.name == reponm:
-                            warn = ('{0} from {1} is already installed; skipping').format(pkgobj.nevra,
+                            if distver[0] >= 7:
+                                nevra = pkgobj.nevra
+                            else:
+                                nevra = pkgobj._ui_nevra()
+                            warn = ('{0} from {1} is already installed; skipping').format(nevra,
                                                                                           repo.attrib['name'])
                             warnings.warn(warn)
                             pkg_found = True
@@ -116,7 +123,10 @@ class Reinstaller(object):
                                 if self.latest:
                                     pkgs['new'].append(pkgobj.name)
                                 else:
-                                    pkgs['new'].append(pkgobj.nevra)
+                                    if distver[0] >= 7:
+                                        pkgs['new'].append(pkgobj.nevra)
+                                    else:
+                                        pkgs['new'].append(pkgobj._ui_nevra())
                                 is_installed = False
                                 pkg_found = True
                                 break
@@ -129,7 +139,10 @@ class Reinstaller(object):
                                     # self.yb.resolveDeps()
                                     # self.yb.buildTransaction()
                                     # self.yb.processTransaction()
-                                    pkgs['downgrade'].append(pkgobj.nevra)
+                                    if distver[0] >= 7:
+                                        pkgs['downgrade'].append(pkgobj.nevra)
+                                    else:
+                                        pkgs['downgrade'].append(pkgobj._ui_nevra())
                                     pkg_found = True
                                     break
             # # This... seems to always fail. Patches welcome.

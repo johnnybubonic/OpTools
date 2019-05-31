@@ -6,6 +6,8 @@ import sys
 from lxml import etree
 import yum
 
+# See <optools>:/storage/backups/borg/tools/restore_yum_pkgs.py to use the XML file this generates.
+
 
 # Detect RH version.
 ver_re =re.compile('^(centos.*|red\s?hat.*) ([0-9\.]+) .*$', re.IGNORECASE)
