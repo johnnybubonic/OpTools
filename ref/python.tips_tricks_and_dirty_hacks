@@ -170,3 +170,33 @@ os.setegid(my_gid)
 os.setgroups(my_grps)
 os.umask(old_umask)
 subprocess.run(['touch', '/tmp/parenttest'])
+
+###############################################################################
+
+
+Getting remote sshd version
+
+stdlib:
+----
+import socket
+
+try:
+    sock = socket.socket()
+    sock.settimeout(10)
+    sock.connect(('cylon', 22))
+    version = sock.recv(64).decode('utf-8').strip()
+    # version is a string like "SSH-2.0-OpenSSH_7.9"
+    sock.close()
+except Exception as e:
+    # Obviously you can specify multiple exceptions to catch.
+    raise RuntimeError(e)
+----
+
+paramiko (does not require auth):
+----
+import paramiko
+
+t = paramiko.Transport(('cylon', 22))
+t.connect()
+t.remote_version
+----

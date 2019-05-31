@@ -83,7 +83,10 @@ class Backup(object):
         if self.args['verbose']:
             handlers.append(logging.StreamHandler())
         if has_systemd:
-            h = journal.JournalHandler()
+            try:
+                h = journal.JournalHandler()
+            except AttributeError:
+                h = journal.JournaldLogHandler()
             h.setFormatter(_journalfmt)
             h.setLevel(loglvls[self.args['loglevel']])
             self.logger.addHandler(h)

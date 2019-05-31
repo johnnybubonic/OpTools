@@ -42,12 +42,12 @@ class log(object):
         except Exception as e:
             # Make this non-fatal since we also log to journal for systemd?
             raise e
-        self.systemd()
+        self.chkSystemd()
         self.journald()
         self.Logger.setLevel(self.loglvls[self.loglvl])
         self.log_handlers()
 
-    def systemd(self):
+    def chkSystemd(self):
         # Add journald support if we're on systemd.
         # We probably are since we're most likely on Arch, but we don't want to
         # make assumptions.
