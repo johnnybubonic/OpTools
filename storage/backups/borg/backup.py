@@ -527,7 +527,7 @@ class Backup(object):
                                       env = _loc_env,
                                       stdout = subprocess.PIPE,
                                       stderr = subprocess.PIPE)
-                _stdout = [i.strip() for i in _out.stdout.decode('utf-8').splitlines()]
+                _stdout = '\n'.join([i.strip() for i in _out.stdout.decode('utf-8').splitlines()])
                 _stderr = _out.stderr.decode('utf-8').strip()
                 _returncode = _out.returncode
                 if self.args['archive']:
