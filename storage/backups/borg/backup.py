@@ -274,7 +274,7 @@ class Backup(object):
                     _orig_path = sys.path
                     for plugin in repo['plugins']:
                         if repo['plugins'][plugin]['path']:
-                            sys.path.insert(1, repo['plugins'][plugin]['path'] + sys.path)
+                            sys.path.insert(1, os.path.abspath(os.path.expanduser(repo['plugins'][plugin]['path'])))
                         optools_tmpmod = importlib.import_module(plugin, package = None)
                         if not repo['plugins'][plugin]['params']:
                             optools_tmpmod.Backup()
@@ -335,6 +335,7 @@ class Backup(object):
     def restore(self):
         # TODO: support "--strip-components N"?
         # TODO: support add'l args?
+        # TODO: Restore() class in plugins?
         # https://borgbackup.readthedocs.io/en/stable/usage/extract.html
         orig_dir = os.getcwd()
         self.logger.info('START: restore')
