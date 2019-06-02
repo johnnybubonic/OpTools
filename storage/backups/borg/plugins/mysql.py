@@ -7,6 +7,8 @@ import warnings
 _mysql_ssl_re = re.compile('^ssl-(.*)$')
 
 # TODO: is it possible to do a pure-python dump via PyMySQL?
+# TODO: add compression support? Not *that* necessary since borg has its own.
+#       in fact, it's better to not do it on the dumps directly so borg can diff/delta better.
 
 class Backup(object):
     def __init__(self, dbs = None,
@@ -17,7 +19,7 @@ class Backup(object):
                        mysqlbin = 'mysql',
                        mysqldumpbin = 'mysqldump',
                        outdir = '~/.cache/backup/mysql'):
-        # If dbs is None, we dump ALL databases.
+        # If dbs is None, we dump ALL databases (that the user has access to).
         self.dbs = dbs
         self.cfgsuffix = cfgsuffix
         self.splitdumps = splitdumps
@@ -54,20 +56,41 @@ class Backup(object):
         return()
 
     def dump(self):
-        for db in self.dbs:
+        if self.splitdumps:
+            for db in self.dbs:
+                args = copy.deepcopy(self.dumpopts)
+                outfile = os.path.join(self.outdir, '{0}.sql'.format(db))
+                if db in ('information_schema', 'performance_schema'):
+                    args.append('--skip-lock-tables')
+                elif db == 'mysql':
+                    args.append('--flush-privileges')
+                cmd = [self.mysqldumpbin,
+                       '--result-file={0}'.format(outfile)]
+                cmd.extend(args)
+                cmd.append(db)
+                out = subprocess.run(cmd,
+                                     stdout = subprocess.PIPE,
+                                     stderr = subprocess.PIPE)
+                if out.returncode != 0:
+                    warn = ('Error dumping {0}: {1}').format(db, out.stderr.decode('utf-8').strip())
+                    warnings.warn(warn)
+        else:
+            outfile = os.path.join(self.outdir, 'all.databases.sql')
             args = copy.deepcopy(self.dumpopts)
-            outfile = os.path.join(self.outdir, '{0}.sql'.format(db))
-            if db in ('information_schema', 'performance_schema'):
+            args.append('--result-file={0}'.format(outfile))
+            if 'information_schema' in self.dbs:
                 args.append('--skip-lock-tables')
-            elif db == 'mysql':
+            if 'mysql' in self.dbs:
                 args.append('--flush-privileges')
-            out = subprocess.run([self.mysqldumpbin,
-                                  '--result-file={0}'.format(outfile),
-                                  args,
-                                  db],
+            args.append(['--databases'])
+            cmd = [self.mysqldumpbin]
+            cmd.extend(args)
+            cmd.extend(self.dbs)
+            out = subprocess.run(cmd,
                                  stdout = subprocess.PIPE,
                                  stderr = subprocess.PIPE)
             if out.returncode != 0:
-                warn = ('Error dumping {0}: {1}').format(db, out.stderr.decode('utf-8').strip())
+                warn = ('Error dumping {0}: {1}').format(','.join(self.dbs),
+                                                         out.stderr.decode('utf-8').strip())
                 warnings.warn(warn)
         return()
