@@ -522,39 +522,39 @@ class Backup(object):
                                                 repo['name'],
                                                 ('::{0}'.format(self.args['archive']) if self.args['archive']
                                                  else '')))
-            if not self.args['dryrun']:
-                _out = subprocess.run(_cmd,
-                                      env = _loc_env,
-                                      stdout = subprocess.PIPE,
-                                      stderr = subprocess.PIPE)
-                _stdout = '\n'.join([i.strip() for i in _out.stdout.decode('utf-8').splitlines()])
-                _stderr = _out.stderr.decode('utf-8').strip()
-                _returncode = _out.returncode
-                if self.args['archive']:
-                    output[server][repo['name']] = [json.loads(i) for i in _stdout.splitlines()]
-                else:
-                    output[repo['name']] = json.loads(_stdout)['archives']
-                self.logger.debug('[{0}]: (RESULT) {1}'.format(repo['name'],
-                                                               '\n'.join(_stdout)))
-                self.logger.debug('[{0}]: STDERR: ({2}) ({1})'.format(repo['name'],
-                                                                      _stderr,
-                                                                      ' '.join(_cmd)))
-                if _stderr != '' and self.cron and _returncode != 0:
-                    self.logger.warning('Command {0} failed: {1}'.format(' '.join(_cmd),
-                                                                         _stderr))
-            if not self.args['archive']:
-                if self.args['numlimit'] > 0:
+                if not self.args['dryrun']:
+                    _out = subprocess.run(_cmd,
+                                          env = _loc_env,
+                                          stdout = subprocess.PIPE,
+                                          stderr = subprocess.PIPE)
+                    _stdout = '\n'.join([i.strip() for i in _out.stdout.decode('utf-8').splitlines()])
+                    _stderr = _out.stderr.decode('utf-8').strip()
+                    _returncode = _out.returncode
                     try:
+                        if self.args['archive']:
+                            output[server][repo['name']] = [json.loads(i) for i in _stdout.splitlines()]
+                        else:
+                            output[server][repo['name']] = json.loads(_stdout)['archives']
+                    except json.decoder.JSONDecodeError:
+                        output[server][repo['name']] = []
+                    self.logger.debug('[{0}]: (RESULT) {1}'.format(repo['name'],
+                                                                   '\n'.join(_stdout)))
+                    self.logger.debug('[{0}]: STDERR: ({2}) ({1})'.format(repo['name'],
+                                                                          _stderr,
+                                                                          ' '.join(_cmd)))
+                    if _stderr != '' and self.cron and _returncode != 0:
+                        self.logger.warning('Command {0} failed: {1}'.format(' '.join(_cmd),
+                                                                             _stderr))
+                if not self.args['archive']:
+                    if self.args['numlimit'] > 0:
                         if self.args['old']:
                             output[server][repo['name']] = output[server][repo['name']][:self.args['numlimit']]
                         else:
                             output[server][repo['name']] = list(
                                                             reversed(
                                                                 output[server][repo['name']]))[:self.args['numlimit']]
-                    except KeyError:
-                        print('(No archives/snapshots found)')
-            if self.args['invert']:
-                output[server][repo['name']] = reversed(output[server][repo['name']])
+                if self.args['invert']:
+                    output[server][repo['name']] = reversed(output[server][repo['name']])
         self.logger.debug('END: lister')
         return(output)
 
