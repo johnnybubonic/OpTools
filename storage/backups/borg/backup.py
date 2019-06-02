@@ -194,38 +194,38 @@ class Backup(object):
                     _loc_env['BORG_PASSPHRASE'] = getpass.getpass('Password (will NOT echo back): ')
                 else:
                     _loc_env['BORG_PASSPHRASE'] = repo['password']
-            _cmd = [self.borgbin,
-                    '--log-json',
-                    '--{0}'.format(self.args['loglevel']),
-                    'init',
-                    '-e', 'repokey']
-            if self.repos[server]['remote'].lower()[0] in ('1', 't'):
-                repo_tgt = '{0}@{1}'.format(_user, server)
-            else:
-                repo_tgt = os.path.abspath(os.path.expanduser(server))
-            _cmd.append('{0}:{1}'.format(repo_tgt,
-                                         repo['name']))
-            self.logger.debug('VARS: {0}'.format(vars(self)))
-            if not self.args['dryrun']:
-                _out = subprocess.run(_cmd,
-                                      env = _loc_env,
-                                      stdout = subprocess.PIPE,
-                                      stderr = subprocess.PIPE)
-                _stdout = _out.stdout.decode('utf-8').strip()
-                _stderr = _out.stderr.decode('utf-8').strip()
-                _returncode = _out.returncode
-                self.logger.debug('[{0}]: (RESULT) {1}'.format(repo['name'], _stdout))
-                # sigh. borg uses stderr for verbose output.
-                self.logger.debug('[{0}]: STDERR: ({2})\n{1}'.format(repo['name'],
-                                                                     _stderr,
-                                                                     ' '.join(_cmd)))
-                if _returncode != 0:
-                    self.logger.error(
-                            '[{0}]: FAILED: {1}'.format(repo['name'], ' '.join(_cmd)))
-                if _stderr != '' and self.cron and _returncode != 0:
-                    self.logger.warning('Command {0} failed: {1}'.format(' '.join(_cmd),
-                                                                         _stderr))
-            self.logger.info('[{0}]: END INITIALIZATION'.format(repo['name']))
+                _cmd = [self.borgbin,
+                        '--log-json',
+                        '--{0}'.format(self.args['loglevel']),
+                        'init',
+                        '-e', 'repokey']
+                if self.repos[server]['remote'].lower()[0] in ('1', 't'):
+                    repo_tgt = '{0}@{1}'.format(_user, server)
+                else:
+                    repo_tgt = os.path.abspath(os.path.expanduser(server))
+                _cmd.append('{0}:{1}'.format(repo_tgt,
+                                             repo['name']))
+                self.logger.debug('VARS: {0}'.format(vars(self)))
+                if not self.args['dryrun']:
+                    _out = subprocess.run(_cmd,
+                                          env = _loc_env,
+                                          stdout = subprocess.PIPE,
+                                          stderr = subprocess.PIPE)
+                    _stdout = _out.stdout.decode('utf-8').strip()
+                    _stderr = _out.stderr.decode('utf-8').strip()
+                    _returncode = _out.returncode
+                    self.logger.debug('[{0}]: (RESULT) {1}'.format(repo['name'], _stdout))
+                    # sigh. borg uses stderr for verbose output.
+                    self.logger.debug('[{0}]: STDERR: ({2})\n{1}'.format(repo['name'],
+                                                                         _stderr,
+                                                                         ' '.join(_cmd)))
+                    if _returncode != 0:
+                        self.logger.error(
+                                '[{0}]: FAILED: {1}'.format(repo['name'], ' '.join(_cmd)))
+                    if _stderr != '' and self.cron and _returncode != 0:
+                        self.logger.warning('Command {0} failed: {1}'.format(' '.join(_cmd),
+                                                                             _stderr))
+                self.logger.info('[{0}]: END INITIALIZATION'.format(repo['name']))
         return()
 
     def create(self):
