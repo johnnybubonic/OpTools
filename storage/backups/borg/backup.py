@@ -273,7 +273,7 @@ class Backup(object):
                     import importlib
                     _orig_path = sys.path
                     for plugin in repo['plugins']:
-                        logging.debug('Initializing plugin: {0}'.format(plugin))
+                        self.logging.debug('Initializing plugin: {0}'.format(plugin))
                         if repo['plugins'][plugin]['path']:
                             sys.path.insert(1, os.path.abspath(os.path.expanduser(repo['plugins'][plugin]['path'])))
                         optools_tmpmod = importlib.import_module(plugin, package = None)
@@ -284,7 +284,7 @@ class Backup(object):
                         del(sys.modules[plugin])
                         del(optools_tmpmod)
                         sys.path = _orig_path
-                        logging.debug('Finished plugin: {0}'.format(plugin))
+                        self.logging.debug('Finished plugin: {0}'.format(plugin))
                 # This is where we actually do the thing.
                 _cmd = [self.borgbin,
                         '--log-json',
