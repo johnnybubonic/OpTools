@@ -264,9 +264,9 @@ class Backup(object):
                         if prep_out.returncode != 0:
                             err = ('Prep job {0} ({1}) for server {2} (repo {3}) '
                                    'returned non-zero').format(idx, exec_tmp, server, repo)
-                            logging.warning(err)
-                            logging.debug('STDOUT: {0}'.format(prep_out.stdout.decode('utf-8')))
-                            logging.debug('STDERR: {0}'.format(prep_out.stderr.decode('utf-8')))
+                            self.logger.warning(err)
+                            self.logger.debug('STDOUT: {0}'.format(prep_out.stdout.decode('utf-8')))
+                            self.logger.debug('STDERR: {0}'.format(prep_out.stderr.decode('utf-8')))
                         else:
                             os.remove(exec_tmp)
                 if 'plugins' in repo:
