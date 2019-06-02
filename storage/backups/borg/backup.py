@@ -544,11 +544,15 @@ class Backup(object):
                                                                          _stderr))
             if not self.args['archive']:
                 if self.args['numlimit'] > 0:
-                    if self.args['old']:
-                        output[server][repo['name']] = output[server][repo['name']][:self.args['numlimit']]
-                    else:
-                        output[server][repo['name']] = list(reversed(
+                    try:
+                        if self.args['old']:
+                            output[server][repo['name']] = output[server][repo['name']][:self.args['numlimit']]
+                        else:
+                            output[server][repo['name']] = list(
+                                                            reversed(
                                                                 output[server][repo['name']]))[:self.args['numlimit']]
+                    except KeyError:
+                        print('(No archives/snapshots found)')
             if self.args['invert']:
                 output[server][repo['name']] = reversed(output[server][repo['name']])
         self.logger.debug('END: lister')
