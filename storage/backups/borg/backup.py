@@ -718,7 +718,7 @@ def parseArgs():
                           dest = 'target_dir',
                           help = ('The path to the directory where the restore should be dumped to. It is '
                                   'recommended to not restore to the same directory that the archive is taken from. '
-                                  'A subdirectory will be created for each server.'
+                                  'A subdirectory will be created for each server. '
                                   'If multiple repos (or "all") are provided, subdirectories will be created per '
                                   'repo under their respective server(s).'))
     return (args)

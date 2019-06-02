@@ -39,7 +39,7 @@ py3 = 0x30000f0  # TODO: check the version incompats
 class Backup(object):
     def __init__(self, explicit_only = True,
                        include_deps = False,
-                       output = '~/.cache/backup/installed_pkgs.xml'):
+                       output = '~/.cache/backup/misc/installed_pkgs.xml'):
         self.explicit_only = explicit_only
         self.include_deps = include_deps
         self.reasons = []
