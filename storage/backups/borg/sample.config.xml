@@ -41,8 +41,8 @@
             <prep inline="0">/usr/local/bin/someprep.sh</prep>
             <!-- Plugins are direct Python modules, and are alternatives to prep items.
                  They must:
-                 - be in the Python's path environment (or a path must be provided, either absolute or relative to
-                   execution)
+                 - be in the Python's path environment (or a path must be provided) either absolute or relative to
+                   *execution*, not the script's placement in the filesystem)
                  - contain a class called <module>.Backup() (which will execute all tasks on initialization)
                  See plugins/ directory for examples and below for example of invocation. -->
             <plugins>
