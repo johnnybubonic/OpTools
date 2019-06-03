@@ -102,7 +102,9 @@ class Backup(object):
             exit(1)
         try:
             with open(self.args['cfgfile'], 'rb') as f:
-                self.cfg = etree.fromstring(f.read())
+                self.xml = etree.parse(f)
+            self.xml.xinclude()
+            self.cfg = self.xml.getroot()
         except etree.XMLSyntaxError:
             self.logger.error('{0} is invalid XML'.format(self.args['cfgfile']))
             raise ValueError(('{0} does not seem to be valid XML. '
