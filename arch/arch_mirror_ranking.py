@@ -39,7 +39,10 @@ class MirrorIdx(object):
         return()
 
     def buildServers(self):
-        _filters = (self.country, self.proto, self.ipv4, self.ipv6, self.isos, self.name_re)
+        _limiters = (self.proto, self.ipv4, self.ipv6, self.isos)
+        _filters = list(_limiters)
+        _filters.extend([self.name_re, self.country])
+        _filters = tuple(_filters)
         if self.statuses:
             sys.stderr.write('Applying filters (if any)...\n')
         for s in self.servers_json['urls']:
@@ -56,17 +59,21 @@ class MirrorIdx(object):
             if self.name_re:
                 if not self.name_re.search(s['url']):
                     continue
+            if self.country:
+                if self.country != s['country_code']:
+                    continue
             # These are regular True/False switches
-            skip = False
-            while not skip:
-                for value, limiter in (('country_code', self.country), ('protocol', self.proto),
-                                       ('ipv4', self.ipv4), ('ipv6', self.ipv6), ('isos', self.isos)):
-                    if limiter:
-                        if s[value] != limiter:
-                            skip = True
-            if skip:
-                continue
-            self.servers.append(s.copy())
+            match = False
+            # We want to be *very* explicit about the ordering and inclusion/exclusion of these.
+            # They MUST match the order of _limiters.
+            values = []
+            for k in ('protocol', 'ipv4', 'ipv6', 'isos'):
+                values.append(s[k])
+            valid = all([v for k, v in zip(_limiters, values) if k])
+            if valid:
+                self.servers.append(s)
+                if s['score']:
+                    self.servers_with_scores.append(s)
         return()
 
     def rankServers(self):
@@ -94,9 +101,7 @@ class MirrorIdx(object):
 
 
 def parseArgs():
-    args = argparse.ArgumentParser(description = 'Fetch and rank Arch Linux mirrors',
-                                   epilog = ('NOTE: Applying any filters will vastly increase the amount '
-                                             'of processing time!'))
+    args = argparse.ArgumentParser(description = 'Fetch and rank Arch Linux mirrors')
     args.add_argument('-c', '--country',
                       dest = 'country',
                       help = ('If specified, limit results to this country (in ISO-3166-1 ALPHA-2 format)'))
