@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- This example assumes Grub2 and UEFI. It should be flexible enough to tweak for other use cases
+     if you know what the hell you're doing. -->
+<!--
+SEE prep.txt FOR WHAT MUST BE DONE BEFORE RUNNING BOOTSYNC.
+-->
+<bootsync xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="http://git.square-r00t.net/OpTools/tree/sys/BootSync/"
+          xsi:schemaLocation="http://git.square-r00t.net/OpTools/plain/sys/BootSync/bootsync.xsd">
+    <!-- The actual EFI System Partitions (ESP). At least two are required. -->
+    <!-- Each drive should be prepared ahead of time with efibootmgr and grub-install (see prep.txt). -->
+    <partitions>
+        <!-- These should all be unique values.
+             Don't do something dumb like mount the same partition on the same mountpoint. -->
+        <!-- Future versions of this script may support things like UUIDs or labels as an alternative to path=,
+             but in the meanwhile it relies on device paths explicitly. -->
+        <part path="/dev/sdb1" mount="/mnt/boot1"/>
+        <part path="/dev/sdd1" mount="/mnt/boot2"/>
+    </partitions>
+    <!-- If specified, the files in this container are checksummed to determine if a sync is required.
+         If fileChecks isn't provided, we will always sync no matter what.
+         These files will be evaluated to and synced to the ESP partitions with the same relative path.
+         i.e. (part[@mount])/(file)
+
+         "isKernel" is by default false, but if true it is treated specially to get a kernel version.
+         This is to notify you if a reboot is required. If no <file> item is isKernel="true", no reboot requirement
+         detection will be done.
+         Only *the last* <file> with isKernel="true" listed is used as the kernel identifier. -->
+    <fileChecks>
+        <!-- RELATIVE paths to /boot -->
+        <file>initramfs-linux.img</file>
+        <file>intel-ucode.img</file>
+        <file>memtest86+/memtest.bin</file>
+        <file isKernel="true">vmlinuz-linux</file>
+    </fileChecks>
+    <!-- These are system paths to sync to the ESPs. They are synced recursively.
+            "source" should be absolute.
+            "target" should be relative (to the ESP mount).
+            "pattern" is a regex to match to restrict *filenames* to sync. Use ".*" for all files. -->
+    <syncPaths>
+        <!-- For example, these are grub theme files. -->
+        <path source="/usr/share/grub/themes" target="grub/themes" pattern=".*"/>
+        <!-- These are grub modules - specifically, UEFI. -->
+        <path source="/usr/lib/grub/x86_64-efi" target="grub/x86_64-efi" pattern="^.*\.(mod|lst|sh)$"/>
+        <!-- And these are ISO files, in case you're like me and do loop mounting in Grub for rescue situations.
+             (e.g. https://wiki.archlinux.org/index.php/Multiboot_USB_drive#Using_GRUB_and_loopback_devices) -->
+        <path source="/boot/iso" target="iso" pattern="^.*\.(iso|img)$"/>
+    </syncPaths>
+</bootsync>

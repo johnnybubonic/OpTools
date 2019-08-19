@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://git.square-r00t.net/OpTools/tree/sys/BootSync/"
+           xmlns="http://git.square-r00t.net/OpTools/tree/sys/BootSync/"
+           xmlns:bootsync="http://git.square-r00t.net/OpTools/tree/sys/BootSync/"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+    <xs:simpleType name="diskdev">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="/dev/([A-Za-z0-9+_-]+/)?[A-Za-z0-9+_-]+[0-9]?"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="path">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="/([A-Za-z0-9+_.-]+/)*[A-Za-z0-9+_.-]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="relpath">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="([A-Za-z0-9+_.-]+/)*[A-Za-z0-9+_.-]+"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:element name="bootsync">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="partitions" maxOccurs="1" minOccurs="1">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="part" minOccurs="2" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:attribute name="path" type="diskdev" use="required"/>
+                                    <xs:attribute name="mount" type="path" use="required"/>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                    <xs:unique name="partition_unique_mount">
+                        <xs:selector xpath="bootsync:part"/>
+                        <xs:field xpath="@mount"/>
+                    </xs:unique>
+                    <xs:unique name="partition_unique_path">
+                        <xs:selector xpath="bootsync:part"/>
+                        <xs:field xpath="@path"/>
+                    </xs:unique>
+                </xs:element>
+                <xs:element name="fileChecks" maxOccurs="1" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="file" maxOccurs="unbounded" minOccurs="1">
+                                <xs:complexType>
+                                    <xs:simpleContent>
+                                        <xs:extension base="relpath">
+                                            <xs:attribute name="isKernel" type="xs:boolean"
+                                                          use="optional" default="false"/>
+                                        </xs:extension>
+                                    </xs:simpleContent>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                    <xs:unique name="filechk_unique">
+                        <xs:selector xpath="bootsync:file"/>
+                        <xs:field xpath="."/>
+                    </xs:unique>
+                </xs:element>
+                <xs:element name="syncPaths" maxOccurs="1" minOccurs="1">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="path" maxOccurs="unbounded" minOccurs="1">
+                                <xs:complexType>
+                                    <xs:attribute name="source" type="path" use="required"/>
+                                    <xs:attribute name="target" type="relpath" use="required"/>
+                                    <!-- TODO: make this optional? -->
+                                    <xs:attribute name="pattern" type="xs:string" use="required"/>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                    <xs:unique name="syncpath_unique_source">
+                        <xs:selector xpath="bootsync:path"/>
+                        <xs:field xpath="@source"/>
+                    </xs:unique>
+                    <xs:unique name="syncpath_unique_target">
+                        <xs:selector xpath="bootsync:path"/>
+                        <xs:field xpath="@target"/>
+                    </xs:unique>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

@@ -1,0 +1,56 @@
+PREPARATION:
+0.) Comment out all /boot mounts in /etc/fstab and umount /boot if mounted as a separate mountpoint.
+    You want to use *the /boot on your / mount*.
+
+1.) Prepare each target partition (partitions/part below) as an ESP
+    (https://wiki.archlinux.org/index.php/EFI_system_partition#Format_the_partition).
+
+2.) Install GRUB2 to *each ESP*. See sample.config.xml for context for the below examples.
+
+        grub-install \
+            --boot-directory=/mnt/boot1 \
+            --bootloader-id=Arch \
+            --efi-directory=/mnt/boot1/ \
+            --target=x86_64-efi \
+            --no-nvram  \
+            --recheck
+
+        grub-install \
+            --boot-directory=/mnt/boot1 \
+            --bootloader-id="Arch (Fallback)" \
+            --efi-directory=/mnt/boot1/ \
+            --target=x86_64-efi \
+            --no-nvram  \
+            --recheck
+
+        grub-install \
+            --boot-directory=/mnt/boot2 \
+            --bootloader-id=Arch \
+            --efi-directory=/mnt/boot2/ \
+            --target=x86_64-efi \
+            --no-nvram  \
+            --recheck
+
+        grub-install \
+            --boot-directory=/mnt/boot2 \
+            --bootloader-id="Arch (Fallback)" \
+            --efi-directory=/mnt/boot2/ \
+            --target=x86_64-efi \
+            --no-nvram  \
+            --recheck
+
+3.) Prepare the ESPs. See sample.config.xml for context for the below examples.
+
+        efibootmgr \
+            --create \
+            --disk /dev/sdd \
+            --part 1 \
+            --loader /EFI/Arch/grubx64.efi \
+            --label "Arch (Fallback)"
+
+        efibootmgr \
+            --create \
+            --disk /dev/sdb \
+            --part 1 \
+            --loader /EFI/Arch/grubx64.efi \
+            --label "Arch"
