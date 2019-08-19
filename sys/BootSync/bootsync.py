@@ -245,8 +245,11 @@ class BootSync(object):
             return (None)
         if not os.path.isfile(fpathname):
             return(None)
+        if hashtype not in hashlib.algorithms_available:
+            raise ValueError('Hashtype {0} is not supported on this system'.format(hashtype))
+        hasher = getattr(hashlib, hashtype)
         fpathname = os.path.abspath(os.path.expanduser(fpathname))
-        _hash = hashlib.sha512()
+        _hash = hasher()
         with open(fpathname, 'rb') as fh:
             _hash.update(fh.read())
         return (_hash.hexdigest())

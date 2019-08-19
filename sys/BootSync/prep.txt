@@ -17,7 +17,7 @@ PREPARATION:
 
   grub-install \
       --boot-directory=/mnt/boot2 \
-      --bootloader-id=Arch \
+      --bootloader-id="Arch (Fallback)" \
       --efi-directory=/mnt/boot2/ \
       --target=x86_64-efi \
       --no-nvram  \
@@ -34,7 +34,7 @@ PREPARATION:
 # 
 #   grub-install \
 #       --boot-directory=/mnt/boot2 \
-#       --bootloader-id="Arch (Fallback)" \
+#       --bootloader-id="Arch" \
 #       --efi-directory=/mnt/boot2/ \
 #       --target=x86_64-efi \
 #       --no-nvram  \
@@ -46,7 +46,7 @@ PREPARATION:
       --create \
       --disk /dev/sdd \
       --part 1 \
-      --loader /EFI/Arch/grubx64.efi \
+      --loader /EFI/Arch (Fallback)/grubx64.efi \
       --label "Arch (Fallback)"
 
   efibootmgr \
