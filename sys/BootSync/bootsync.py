@@ -15,7 +15,7 @@ from lxml import etree
 
 
 class BootSync(object):
-    def __init__(self, cfg = None, validate = True, *args, **kwargs):
+    def __init__(self, cfg = None, validate = True, dryrun = False, *args, **kwargs):
         if not cfg:
             self.cfgfile = '/etc/bootsync.xml'
         else:
@@ -35,9 +35,9 @@ class BootSync(object):
         self.syncs = {}
         ##
         self.getCfg(validate = validate)
-        self.chkMounts()
+        self.chkMounts(dryrun = dryrun)
         self.chkReboot()
-        self.getHashes()
+        self.getChecks()
         self.getBlkids()
 
     def getCfg(self, validate = True):
@@ -67,22 +67,26 @@ class BootSync(object):
             self.schema.assertValid(self.xml)
         return()
 
-    def chkMounts(self):
+    def chkMounts(self, dryrun = False):
+        if not dryrun:
+            if os.geteuid() != 0:
+                raise PermissionError('You must be root to write to the appropriate destinations')
         _mounts = {m.device: m.mountpoint for m in psutil.disk_partitions(all = True)}
         for esp in self.cfg.findall('{0}partitions/{0}part'.format(self.ns)):
             disk = esp.attrib['path']
             mount = os.path.abspath(os.path.expanduser(esp.attrib['mount']))
-            if not os.path.isdir(mount):
-                os.makedirs(mount, exist_ok = True)
-            if disk not in _mounts:
-                with open(os.devnull, 'w') as devnull:
-                    c = subprocess.run(['/usr/bin/mount', mount],
-                                       stderr = devnull)
-                    if c.returncode == 1:  # Not specified in fstab
-                        subprocess.run(['/usr/bin/mount', disk, mount],
-                                       stderr = devnull)
-                    elif c.returncode == 32:  # Already mounted
-                        pass
+            if not dryrun:
+                if not os.path.isdir(mount):
+                    os.makedirs(mount, exist_ok = True)
+                if disk not in _mounts:
+                    with open(os.devnull, 'w') as devnull:
+                        c = subprocess.run(['/usr/bin/mount', mount],
+                                           stderr = devnull)
+                        if c.returncode == 1:  # Not specified in fstab
+                            subprocess.run(['/usr/bin/mount', disk, mount],
+                                           stderr = devnull)
+                        elif c.returncode == 32:  # Already mounted
+                            pass
         return()
 
     def chkReboot(self):
@@ -99,8 +103,14 @@ class BootSync(object):
         return()
 
     def getBlkids(self):
-        c = subprocess.run(['/usr/bin/blkid',
-                            '-o', 'export'],
+        cmd = ['/usr/bin/blkid',
+               '-o', 'export']
+        if os.geteuid() != 0:
+            # TODO: logger?
+            print(('sudo is required to get device information. '
+                   'You may be prompted to enter your sudo password.'))
+            cmd.insert(0, 'sudo')
+        c = subprocess.run(cmd,
                            stdout = subprocess.PIPE)
         if c.returncode != 0:
             raise RuntimeError('Could not fetch block ID information')
@@ -116,32 +126,32 @@ class BootSync(object):
                     self.blkids[d['DEVNAME']] = d['UUID']
                 except KeyError:
                     continue
-        c = subprocess.run(['/usr/bin/findmnt',
-                            '--json',
-                            '-T', '/boot'],
+        cmd = ['/usr/bin/findmnt',
+               '--json',
+               '-T', '/boot']
+        # if os.geteuid() != 0:
+        #     cmd.insert(0, 'sudo')
+        c = subprocess.run(cmd,
                            stdout = subprocess.PIPE)
-        # I write ridiculous one-liners.
         self.dummy_uuid = self.blkids[json.loads(c.stdout.decode('utf-8'))['filesystems'][0]['source']]
         return()
 
-    def getHashes(self):
-        def _get_hash(fpathname):
-            fpathname = os.path.abspath(os.path.expanduser(fpathname))
-            _hash = hashlib.sha512()
-            with open(fpathname, 'rb') as fh:
-                _hash.update(fh.read())
-            return(_hash.hexdigest())
-        for f in self.cfg.findall('{0}fileChecks/{0}file'):
+    def getChecks(self):
+        # Get the default hashtype (if one exists)
+        fc = self.cfg.find('{0}fileChecks'.format(self.ns))
+        default_hashtype = fc.attrib.get('hashtype', 'md5').lower()
+        for f in fc.findall('{0}file'.format(self.ns)):
             # We do /boot files manually in case it isn't specified as a
             # separate mount.
+            file_hashtype = f.attrib.get('hashtype', default_hashtype).lower()
             rel_fpath = f.text
             fpath = os.path.join('/boot', rel_fpath)
-            canon_hash = _get_hash(fpath)
+            canon_hash = self._get_hash(fpath, file_hashtype)
             for esp in self.cfg.findall('{0}partitions/{0}part'.format(self.ns)):
                 mount = os.path.abspath(os.path.expanduser(esp.attrib['mount']))
-                new_fpath = os.path.join(mount, f)
-                file_hash = _get_hash(new_fpath)
-                if file_hash != canon_hash:
+                new_fpath = os.path.join(mount, rel_fpath)
+                file_hash = self._get_hash(new_fpath, file_hashtype)
+                if not file_hashtype or file_hash != canon_hash or not file_hash:
                     if rel_fpath not in self.syncs:
                         self.syncs[rel_fpath] = []
                     self.syncs[rel_fpath].append(mount)
@@ -151,24 +161,30 @@ class BootSync(object):
         if not dryrun:
             if os.geteuid() != 0:
                 raise PermissionError('You must be root to write to the appropriate destinations')
-        for f in self.syncs:
-            for m in self.syncs[f]:
-                orig = os.path.join('/boot', f)
-                dest = os.path.join(m, f)
+        # fileChecks are a *lot* easier.
+        for rel_fpath, mounts in self.syncs.items():
+            for bootdir in mounts:
+                source = os.path.join('/boot', rel_fpath)
+                target = os.path.join(bootdir, rel_fpath)
+                destdir = os.path.dirname(target)
                 if not dryrun:
-                    shutil.copy2(orig, dest)
+                    os.makedirs(destdir, exist_ok = True)
+                    shutil.copy2(source, target)
         bootmounts = [e.attrib['mount'] for e in self.cfg.findall('{0}partitions/{0}part'.format(self.ns))]
         # syncPaths
-        for syncpath in self.cfg.findall('{0}syncPaths/{0}path'.format(self.ns)):
+        syncpaths = self.cfg.find('{0}syncPaths'.format(self.ns))
+        default_hashtype = syncpaths.attrib.get('hashtype', 'md5').lower()
+        for syncpath in syncpaths.findall('{0}path'.format(self.ns)):
             source = os.path.abspath(os.path.expanduser(syncpath.attrib['source']))
             target = syncpath.attrib['target']
             pattern = syncpath.attrib['pattern']
+            file_hashtype = syncpath.attrib.get('hashtype', default_hashtype)
             # We don't use filecmp for this because:
             # - dircmp doesn't recurse
             # - the reports/lists don't retain relative paths
             # - we can't regex out files
             for root, dirs, files in os.walk(source):
-                prefix = re.sub('\/?{0}\/?'.format(source), '', root)
+                prefix = re.sub(r'/?{0}/?'.format(source), '', root)
                 ptrn = re.compile(pattern)
                 for f in files:
                     fname_path = os.path.join(prefix, f)
@@ -176,8 +192,7 @@ class BootSync(object):
                     boottarget = os.path.join(target, fname_path)
                     if ptrn.search(f):
                         # Compare the contents.
-                        with open(bootsource, 'rb') as fh:
-                            orig_hash = hashlib.sha512(fh.read()).hexdigest()
+                        orig_hash = self._get_hash(bootsource, file_hashtype)
                         for bootdir in bootmounts:
                             bootfile = os.path.join(bootdir, boottarget)
                             if not dryrun:
@@ -186,27 +201,9 @@ class BootSync(object):
                                                 exist_ok = True)
                                     shutil.copy2(bootsource, bootfile)
                                 else:
-                                    with open(bootfile, 'rb') as fh:
-                                        dest_hash = hashlib.sha512(fh.read()).hexdigest()
-                                    if orig_hash != dest_hash:
+                                    dest_hash = self._get_hash(bootfile, file_hashtype)
+                                    if not file_hashtype or orig_hash != dest_hash:
                                         shutil.copy2(bootsource, bootfile)
-        # fileChecks are a *lot* easier.
-        for f in self.cfg.findall('{0}fileChecks/{0}file'.format(self.ns)):
-            source = os.path.join('/boot', f.text)
-            with open(source, 'rb') as fh:
-                orig_hash = hashlib.sha512(fh.read()).hexdigest()
-            for bootdir in bootmounts:
-                bootfile = os.path.join(bootdir, f.text)
-                if not dryrun:
-                    if not os.path.isfile(bootfile):
-                        os.makedirs(os.path.dirname(bootfile),
-                                    exist_ok = True)
-                        shutil.copy2(source, bootfile)
-                    else:
-                        with open(bootfile, 'rb') as fh:
-                            dest_hash = hashlib.sha512(fh.read()).hexdigest()
-                        if orig_hash != dest_hash:
-                            shutil.copy2(source, bootfile)
         return()
 
 
@@ -242,6 +239,17 @@ class BootSync(object):
                     line = re.sub('/boot', '', line)
                     f.write('{0}\n'.format(line))
         return()
+
+    def _get_hash(self, fpathname, hashtype):
+        if hashtype.lower() == 'false':
+            return (None)
+        if not os.path.isfile(fpathname):
+            return(None)
+        fpathname = os.path.abspath(os.path.expanduser(fpathname))
+        _hash = hashlib.sha512()
+        with open(fpathname, 'rb') as fh:
+            _hash.update(fh.read())
+        return (_hash.hexdigest())
 
     def _getRunningKernel(self):
         _vers = []

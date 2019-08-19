@@ -16,14 +16,6 @@ PREPARATION:
       --recheck
 
   grub-install \
-      --boot-directory=/mnt/boot1 \
-      --bootloader-id="Arch (Fallback)" \
-      --efi-directory=/mnt/boot1/ \
-      --target=x86_64-efi \
-      --no-nvram  \
-      --recheck
-
-  grub-install \
       --boot-directory=/mnt/boot2 \
       --bootloader-id=Arch \
       --efi-directory=/mnt/boot2/ \
@@ -31,13 +23,22 @@ PREPARATION:
       --no-nvram  \
       --recheck
 
-  grub-install \
-      --boot-directory=/mnt/boot2 \
-      --bootloader-id="Arch (Fallback)" \
-      --efi-directory=/mnt/boot2/ \
-      --target=x86_64-efi \
-      --no-nvram  \
-      --recheck
+# These are not strictly necessary, as the same path is used in efibootmgr for the primary and the fallback.
+#   grub-install \
+#       --boot-directory=/mnt/boot1 \
+#       --bootloader-id="Arch (Fallback)" \
+#       --efi-directory=/mnt/boot1/ \
+#       --target=x86_64-efi \
+#       --no-nvram  \
+#       --recheck
+# 
+#   grub-install \
+#       --boot-directory=/mnt/boot2 \
+#       --bootloader-id="Arch (Fallback)" \
+#       --efi-directory=/mnt/boot2/ \
+#       --target=x86_64-efi \
+#       --no-nvram  \
+#       --recheck
 
 3.) Prepare the ESPs. See sample.config.xml for context for the below examples.
 
