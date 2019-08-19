@@ -1,0 +1,14 @@
+# The following would be placed in /etc/pacman.d/hooks/ directory (you may need to create it if it doesn't exist) as bootsync.hook
+# It assumes you have:
+#   * a properly configured /etc/bootsync.xml
+#   * /usr/local/bin/bootsync symlinked to <OpTools>/sys/BootSync/bootsync.py
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = File
+Target = boot/*
+
+[Action]
+When = PostTransaction
+Exec = /usr/local/bin/bootsync
