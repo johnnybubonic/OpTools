@@ -17,33 +17,72 @@ SEE prep.txt FOR WHAT MUST BE DONE BEFORE RUNNING BOOTSYNC.
         <part path="/dev/sdb1" mount="/mnt/boot1"/>
         <part path="/dev/sdd1" mount="/mnt/boot2"/>
     </partitions>
-    <!-- If specified, the files in this container are checksummed to determine if a sync is required.
-         If fileChecks isn't provided, we will always sync no matter what.
+    <!--
+         If fileChecks isn't provided, we will still sync syncPaths (which IS required).
          These files will be evaluated to and synced to the ESP partitions with the same relative path.
          i.e. (part[@mount])/(file)
+
+         fileChecks[@hashtype] attribute is used to checksum all <file> children,
+         unless they specify their own hashtype attribute (the default is hashtype="md5" for speed optimizations).
+
+         Guaranteed valid hashtype values are:
+
+            sha1
+            sha224
+            sha256
+            sha384
+            sha512
+            blake2b
+            blake2s
+
+         If you have a non-FIPS-compliant Python (you very most likely do), the following hashtype is also available:
+
+            md5
+
+         If you have a recent enough OpenSSL (and python3), you have the additional hashtype values available:
+
+            sha3_224
+            sha3_256
+            sha3_384
+            sha3_512
+            shake_128
+            shake_256
+
+         Additionally, the value "false" is always available to disable hashing for a specific <file> object or to set
+         the default. No checksumming will be done in this case and the file will always be overwritten on every run.
+
+         This is *highly not recommended* for solid-state disks or if you have large files you plan on syncing to
+         the alternate ESPs (e.g. loop-mounted ISO/IMG files).
 
          "isKernel" is by default false, but if true it is treated specially to get a kernel version.
          This is to notify you if a reboot is required. If no <file> item is isKernel="true", no reboot requirement
          detection will be done.
-         Only *the last* <file> with isKernel="true" listed is used as the kernel identifier. -->
-    <fileChecks>
-        <!-- RELATIVE paths to /boot -->
+         Only *the last* <file> with isKernel="true" listed is used as the kernel identifier.
+    -->
+    <fileChecks hashtype="sha1">
+        <!-- RELATIVE paths to /boot on your / mount. -->
         <file>initramfs-linux.img</file>
         <file>intel-ucode.img</file>
         <file>memtest86+/memtest.bin</file>
-        <file isKernel="true">vmlinuz-linux</file>
+        <file isKernel="true" hashtype="sha512">vmlinuz-linux</file>
     </fileChecks>
-    <!-- These are system paths to sync to the ESPs. They are synced recursively.
+    <!--
+        These are system paths to sync to the ESPs. They are synced recursively.
+
+            "hashtype" is also supported for syncPaths and path objects just as the same with fileChecks
+            and file objects (see above).
+
             "source" should be absolute.
             "target" should be relative (to the ESP mount).
-            "pattern" is a regex to match to restrict *filenames* to sync. Use ".*" for all files. -->
-    <syncPaths>
+            "pattern" is a regex to match to restrict *filenames* to sync. Use ".*" for all files.
+    -->
+    <syncPaths hashtype="sha1">
         <!-- For example, these are grub theme files. -->
         <path source="/usr/share/grub/themes" target="grub/themes" pattern=".*"/>
         <!-- These are grub modules - specifically, UEFI. -->
         <path source="/usr/lib/grub/x86_64-efi" target="grub/x86_64-efi" pattern="^.*\.(mod|lst|sh)$"/>
         <!-- And these are ISO files, in case you're like me and do loop mounting in Grub for rescue situations.
              (e.g. https://wiki.archlinux.org/index.php/Multiboot_USB_drive#Using_GRUB_and_loopback_devices) -->
-        <path source="/boot/iso" target="iso" pattern="^.*\.(iso|img)$"/>
+        <path hashtype="false" source="/boot/iso" target="iso" pattern="^.*\.(iso|img)$"/>
     </syncPaths>
 </bootsync>

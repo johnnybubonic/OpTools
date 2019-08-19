@@ -15,14 +15,15 @@ from lxml import etree
 
 
 class BootSync(object):
-    def __init__(self, cfg = None, *args, **kwargs):
+    def __init__(self, cfg = None, validate = True, *args, **kwargs):
         if not cfg:
             self.cfgfile = '/etc/bootsync.xml'
         else:
             self.cfgfile = os.path.abspath(os.path.expanduser(cfg))
-        self.ns = '{http://git.square-r00t.net/OpTools/tree/sys/BootSync/}'
+        self.ns = None
         self.cfg = None
         self.xml = None
+        self.schema = None
         # This is the current live kernel.
         self.currentKernVer = self._getRunningKernel()
         # This is the installed kernel from the package manager.
@@ -33,15 +34,13 @@ class BootSync(object):
         self.dummy_uuid = None
         self.syncs = {}
         ##
-        self.getCfg()
+        self.getCfg(validate = validate)
         self.chkMounts()
         self.chkReboot()
         self.getHashes()
         self.getBlkids()
-        # self.sync()
-        # self.writeConfs()
 
-    def getCfg(self):
+    def getCfg(self, validate = True):
         if not os.path.isfile(self.cfgfile):
             raise FileNotFoundError('Configuration file {0} does not exist!'.format(self.cfgfile))
         try:
@@ -53,6 +52,19 @@ class BootSync(object):
             # self.logger.error('{0} is invalid XML'.format(self.cfgfile))
             raise ValueError(('{0} does not seem to be valid XML. '
                               'See sample.config.xml for an example configuration.').format(self.cfgfile))
+        self.ns = self.cfg.nsmap.get(None, 'http://git.square-r00t.net/OpTools/tree/sys/BootSync/')
+        self.ns = '{{{0}}}'.format(self.ns)
+        if validate:
+            if not self.schema:
+                from urllib.request import urlopen
+                xsi = self.cfg.nsmap.get('xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+                schemaLocation = '{{{0}}}schemaLocation'.format(xsi)
+                schemaURL = self.cfg.attrib.get(schemaLocation,
+                                                ('http://git.square-r00t.net/OpTools/plain/sys/BootSync/bootsync.xsd'))
+                with urlopen(schemaURL) as url:
+                    self.schema = url.read()
+            self.schema = etree.XMLSchema(etree.XML(self.schema))
+            self.schema.assertValid(self.xml)
         return()
 
     def chkMounts(self):
@@ -278,6 +290,11 @@ class BootSync(object):
 
 def parseArgs():
     args = argparse.ArgumentParser(description = ('Sync files to assist using mdadm RAID arrays with UEFI'))
+    args.add_argument('-V', '--no-validate',
+                      dest = 'validate',
+                      action = 'store_false',
+                      help = ('If specified, do not attempt to validate the configuration file (-c/--cfg) against'
+                              'its schema (otherwise it is fetched dynamically and requires network connection)'))
     args.add_argument('-c', '--cfg',
                       dest = 'cfg',
                       default = '/etc/bootsync.xml',

@@ -24,6 +24,28 @@
         </xs:restriction>
     </xs:simpleType>
 
+    <xs:simpleType name="hashtype_choice">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="false"/>
+            <!-- https://docs.python.org/3/library/hashlib.html#hash-algorithms -->
+            <xs:enumeration value="md5"/><!-- Not available on FIPS-compliant Python -->
+            <xs:enumeration value="sha1"/>
+            <xs:enumeration value="sha224"/>
+            <xs:enumeration value="sha256"/>
+            <xs:enumeration value="sha384"/>
+            <xs:enumeration value="sha512"/>
+            <xs:enumeration value="blake2b"/>
+            <xs:enumeration value="blake2s"/>
+            <!-- The below are only available for more recent versions of system's OpenSSL. -->
+            <xs:enumeration value="sha3_224"/>
+            <xs:enumeration value="sha3_256"/>
+            <xs:enumeration value="sha3_384"/>
+            <xs:enumeration value="sha3_512"/>
+            <xs:enumeration value="shake_128"/>
+            <xs:enumeration value="shake_256"/>
+        </xs:restriction>
+    </xs:simpleType>
+
     <xs:element name="bootsync">
         <xs:complexType>
             <xs:sequence>
@@ -56,11 +78,14 @@
                                         <xs:extension base="relpath">
                                             <xs:attribute name="isKernel" type="xs:boolean"
                                                           use="optional" default="false"/>
+                                            <xs:attribute name="hashtype" type="hashtype_choice"
+                                                          use="optional" default="md5"/>
                                         </xs:extension>
                                     </xs:simpleContent>
                                 </xs:complexType>
                             </xs:element>
                         </xs:sequence>
+                        <xs:attribute name="hashtype" type="hashtype_choice" use="optional" default="md5"/>
                     </xs:complexType>
                     <xs:unique name="filechk_unique">
                         <xs:selector xpath="bootsync:file"/>
@@ -76,9 +101,12 @@
                                     <xs:attribute name="target" type="relpath" use="required"/>
                                     <!-- TODO: make this optional? -->
                                     <xs:attribute name="pattern" type="xs:string" use="required"/>
+                                    <xs:attribute name="hashtype" type="hashtype_choice"
+                                                  use="optional" default="md5"/>
                                 </xs:complexType>
                             </xs:element>
                         </xs:sequence>
+                        <xs:attribute name="hashtype" type="hashtype_choice" use="optional" default="md5"/>
                     </xs:complexType>
                     <xs:unique name="syncpath_unique_source">
                         <xs:selector xpath="bootsync:path"/>
