@@ -14,26 +14,6 @@ import psutil
 from lxml import etree
 
 
-    # def get_file_kernel_ver(self, kpath):
-    #     # Gets the version of a kernel file.
-    #     kpath = os.path.abspath(os.path.expanduser(kpath))
-    #     _kinfo = {}
-    #     with open(kpath, 'rb') as f:
-    #         _m = magic.detect_from_content(f.read())
-    #     for i in _m.name.split(','):
-    #         l = i.strip().split()
-    #         # Note: this only grabs the version number.
-    #         # If we want to get e.g. the build user/machine, date, etc.,
-    #         # then we need to join l[1:].
-    #         # We technically don't even need a dict, either. We can just iterate.
-    #         # TODO.
-    #         _kinfo[l[0].lower()] = (l[1] if len(l) > 1 else None)
-    #     if 'version' not in _kinfo:
-    #         raise RuntimeError('Cannot deterimine the version of {0}'.format(
-    #                 kpath))
-    #     else:
-    #         return (_kinfo['version'])
-
 class BootSync(object):
     def __init__(self, cfg = None, *args, **kwargs):
         if not cfg:
@@ -117,7 +97,13 @@ class BootSync(object):
             d = dict(map(lambda i: i.split('='), line))
             if d.get('TYPE') == 'squashfs':
                 continue
-            self.blkids[d['DEVNAME']] = d.get('PARTUUID', d['UUID'])
+            try:
+                self.blkids[d['DEVNAME']] = d.get('UUID', d['PARTUUID'])
+            except KeyError:
+                try:
+                    self.blkids[d['DEVNAME']] = d['UUID']
+                except KeyError:
+                    continue
         c = subprocess.run(['/usr/bin/findmnt',
                             '--json',
                             '-T', '/boot'],
@@ -233,14 +219,16 @@ class BootSync(object):
             disk = os.path.abspath(os.path.expanduser(esp.attrib['path']))
             with open(os.path.join(mount, 'grub/grub.cfg'), 'w') as f:
                 for line in _grubcfg.splitlines():
-                    # if re.search(r'^\s*search\s+(.*)\s(-u|--fs-uuid)', line):
-                    #     pass
-                    i = re.sub(r'(?<!\=UUID\=){0}'.format(self.dummy_uuid),
-                               self.blkids[disk],
-                               line)
                     # If the array is in a degraded state, this will still let us at LEAST boot.
-                    i = re.sub(r'\s+--hint=[\'"]?mduuid/[a-f0-9]{32}[\'"]?', '', i)
-                    f.write('{0}\n'.format(i))
+                    line = re.sub(r'\s+--hint=[\'"]?mduuid/[a-f0-9]{32}[\'"]?', '', line)
+                    line = re.sub(r'^(\s*set\s+root=){0}$'.format(self.dummy_uuid),
+                                  self.blkids[disk],
+                                  line)
+                    line = re.sub(r'(?<!\=UUID\=){0}'.format(self.dummy_uuid),
+                                  self.blkids[disk],
+                                  line)
+                    line = re.sub('/boot', '', line)
+                    f.write('{0}\n'.format(line))
         return()
 
     def _getRunningKernel(self):
