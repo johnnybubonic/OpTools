@@ -11,7 +11,8 @@ SEE prep.txt FOR WHAT MUST BE DONE BEFORE RUNNING BOOTSYNC.
     <!-- Each drive should be prepared ahead of time with efibootmgr and grub-install (see prep.txt). -->
     <partitions>
         <!-- These should all be unique values.
-             Don't do something dumb like mount the same partition on the same mountpoint. -->
+             Don't do something dumb like mount different partitions on the same mountpoint or the
+             the same partition on multiple mountpoints. -->
         <!-- Future versions of this script may support things like UUIDs or labels as an alternative to path=,
              but in the meanwhile it relies on device paths explicitly. -->
         <part path="/dev/sdb1" mount="/mnt/boot1"/>
