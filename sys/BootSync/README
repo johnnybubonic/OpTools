@@ -1,0 +1,5 @@
+This mini-project allows you to maintain segregated ESP failover in a multi-disk setup.
+
+If you have just one disk in your system, this project is useless to you. I promise.
+
+The examples assume use of UEFI and GRUB2, but it can easily be tweaked to use other bootloaders with a little research and modification to the configuration (and commenting out/modifying the writeConfs() function; I'll maybe make that a little smarter in the future).
