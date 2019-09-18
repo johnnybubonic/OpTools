@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://git.square-r00t.net/OpTools/tree/arch/autorepo/"
+           xmlns="http://git.square-r00t.net/OpTools/tree/arch/autorepo/tree/"
+           xmlns:archrepo="http://git.square-r00t.net/OpTools/tree/arch/autorepo/"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+    <xs:simpleType name="t_posixUserGroup">
+        <xs:restriction base="xs:token">
+            <xs:pattern value="[a-z_]([a-z0-9_-]{0,31}|[a-z0-9_-]{0,30}$)"/>
+            <xs:pattern value="%same"/>
+            <xs:whiteSpace value="collapse"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="t_posixMode">
+        <xs:restriction base="xs:positiveInteger">
+            <xs:pattern value="[0-7]?[0-7]{3}"/>
+            <xs:whiteSpace value="collapse"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="t_path">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="(/|~/)?([A-Za-z0-9+_.-]+/)*[A-Za-z0-9+_.-]+"/>
+            <xs:whiteSpace value="collapse"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="t_port">
+        <xs:restriction base="xs:positiveInteger">
+            <!-- MAN I wish XSD let you validate based on numerical range. -->
+            <!-- https://stackoverflow.com/a/40213676/733214 -->
+            <xs:pattern value="([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="t_localMirror">
+        <xs:simpleContent>
+            <xs:extension base="xs:anyURI">
+                <xs:attribute name="user" type="archrepo:t_posixUserGroup" use="optional" default="%same"/>
+                <xs:attribute name="group" type="archrepo:t_posixUserGroup" use="optional" default="%same"/>
+                <xs:attribute name="fileMode" type="archrepo:t_posixMode" use="optional" default="0600"/>
+                <xs:attribute name="dirMode" type="archrepo:t_posixMode" use="optional" default="0700"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="t_remoteMirror">
+        <xs:simpleContent>
+            <xs:extension base="xs:anyURI">
+                <xs:attribute name="user" type="archrepo:t_posixUserGroup"
+                              default="%same" use="optional"/>
+                <xs:attribute name="server" type="xs:NMTOKEN" use="required"/>
+                <xs:attribute name="fileMode" type="archrepo:t_posixMode"
+                              use="optional" default="0600"/>
+                <xs:attribute name="dirMode" type="archrepo:t_posixMode"
+                              use="optional" default="0700"/>
+                <xs:attribute name="port" type="archrepo:t_port"
+                              default="22" use="optional"/>
+                <xs:attribute name="key" type="archrepo:t_path"
+                              default="~/.ssh/id_rsa" use="optional"/>
+                <xs:attribute name="remoteUser" type="archrepo:t_posixUserGroup"
+                              default="%same" use="optional"/>
+                <xs:attribute name="remoteGroup" type="archrepo:t_posixUserGroup"
+                              default="%same" use="optional"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:simpleType name="t_gpgKeyID">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="(0[Xx])?[0-9A-Fa-f]{40}"/>
+            <xs:pattern value="(0[Xx])?[0-9A-Fa-f]{8}"/>
+            <xs:pattern value="(0[Xx])?([0-9A-Fa-f]{4} ?){5} *([0-9A-Fa-f]{4}){5}"/>
+            <xs:whiteSpace value="collapse"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:element name="archrepo">
+        <xs:complexType>
+            <xs:choice>
+                <xs:element name="repo" minOccurs="1" maxOccurs="unbounded">
+                    <xs:complexType>
+                        <xs:all minOccurs="1">
+                            <xs:element name="mirrors" minOccurs="1" maxOccurs="1">
+                                <xs:complexType>
+                                    <xs:choice minOccurs="1" maxOccurs="unbounded">
+                                        <xs:element name="localMirror"
+                                                    maxOccurs="unbounded"
+                                                    type="archrepo:t_localMirror"/>
+                                        <xs:element name="remoteMirror"
+                                                    maxOccurs="unbounded"
+                                                    type="archrepo:t_remoteMirror"/>
+                                    </xs:choice>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="packages" minOccurs="1">
+                                <xs:complexType>
+                                    <xs:choice minOccurs="1" maxOccurs="unbounded">
+                                        <xs:element name="aur"
+                                                    maxOccurs="unbounded">
+                                            <xs:complexType>
+                                                <xs:simpleContent>
+                                                    <xs:extension base="xs:string">
+                                                        <xs:attribute name="alwaysBuild" default="true"
+                                                                      type="xs:boolean" use="optional"/>
+                                                    </xs:extension>
+                                                </xs:simpleContent>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="pkgbuild"
+                                                    maxOccurs="unbounded">
+                                            <xs:complexType>
+                                                <xs:simpleContent>
+                                                    <xs:extension base="xs:token">
+                                                        <xs:attribute name="path" type="archrepo:t_path"
+                                                                      default="." use="optional"/>
+                                                        <xs:attribute name="alwaysBuild" default="true"
+                                                                      type="xs:boolean" use="optional"/>
+                                                    </xs:extension>
+                                                </xs:simpleContent>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:choice>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:all>
+                        <xs:attribute name="name" type="xs:token" use="required"/>
+                        <xs:attribute name="staging" type="archrepo:t_path" use="optional" default="."/>
+                        <xs:attribute name="signPkgs" type="xs:boolean" use="optional" default="true"/>
+                        <xs:attribute name="signDB" type="xs:boolean" use="optional" default="true"/>
+                        <xs:attribute name="gnupgHome" type="archrepo:t_path" use="optional" default="~/.gnupg"/>
+                        <xs:attribute name="gpgKeyID" type="archrepo:t_gpgKeyID" use="optional"/>
+                    </xs:complexType>
+                </xs:element>
+            </xs:choice>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

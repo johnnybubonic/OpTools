@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    The parsing supports XInclude (https://www.w3.org/TR/xinclude/).
+    You can use external XML snippets if that's easier/cleaner (it usually is).
+-->
+<archrepo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="http://git.square-r00t.net/OpTools/tree/arch/autorepo/"
+          xsi:schemaLocation="http://git.square-r00t.net/OpTools/plain/arch/autorepo/autorepo.xsd">
+    <!--
+    The repo element contains information for each repository we should build for.
+        Attributes:
+            name: The name of the repository. This is used for the db name and to generate pacman.conf snippets.
+            staging: The path to the staging directory. This is where we will build packages and sync to mirrors from.
+            signPkgs: Either "1"/"true" or "0"/"false". Whether or not we should sign packages. See signDB, gnupgHome,
+                      and gpgKeyID.
+            signDB: Either "1"/"true" or "0"/"false". Whether or not we should sign the database files. See signPkgs,
+                    gnupgHome, and gpgKeyID.
+            gnupgHome: The path to use for the GnuPG home (GNUPGHOME environment variable).
+                       The order of preference follows:
+                            1.) gnupgHome attribute (if set)
+                            2.) $GNUPGHOME env var (if set)
+                            3.) ~/.gnupg
+                       See signPkgs, signDB, and gpgKeyID.
+            gpgKeyID: The key ID to use. It *must* have the signing ("S") capability. If it is a subkey fingerprint,
+                      that subkey will be used. If a subkey fpr is specified but lacks the signing capability, the
+                      (parent) key will be used (if it has signing capability). If no key ID/fingerprint/etc. is
+                      specified, we will use the first key with signing capability found (this should be fine if you
+                      only have one key with signing capabilities in your gnupgHome). If no suitable key is found but
+                      signing is enabled, an error will be thrown. See signPkgs, signDB, and gnupgHome.
+    -->
+    <repo
+            name="testrepo"
+            staging="/var/tmp/arch/autorepo"
+            signPkgs="true"
+            signDB="true"
+            gnupgHome="~/.gnupg"
+            gpgKeyID="0x748231EBCBD808A14F5E85D28C004C2F93481F6B">
+        <!--
+        The mirrors element contains either localMirror elements or remoteMirror elements (see below).
+        There must be at least 1 of either type.
+        -->
+        <mirrors>
+            <!-- localMirror elements contain the path to a local mirror (exists on the same system as you're building
+                 from). Most users will probably want this if their build box and mirror are the same machine, or if
+                 you only want a local repository.
+                    Attributes:
+                        user: The user to chown the files/directories to (must be running as root user). If not
+                              specified, the default is the current user (or the user calling sudo, if done via sudo).
+                        group: The group to chown the files/directories to (must be running as root user). If not
+                               specified, the default is the primary group for the current user (or the user calling
+                               sudo, if done via sudo).
+                        fileMode: The octal permissions to chmod the files to.
+                        dirMode: The octal permissions to chmod the directories to.
+            -->
+            <localMirror
+                    user="foo"
+                    group="bar"
+                    fileMode="0600"
+                    dirMode="0700">/path/to/path</localMirror>
+            <localMirror>a/relative/path</localMirror>
+            <!--
+            The remoteMirror element is for rsyncing packages to a remote mirror/repo server. Rsync must be installed
+            locally (it should; it's part of base-devel) *and* the remote server. Obviously, SSH pubkey auth must also
+            be set up as well for the user. They must have a valid shell on the server for chmodding/chowning.
+                Attributes:
+                    user: The (remote) user to sync as (e.g. for "ssh foo@bar", user would be "foo").
+                    server: The server to sync to. Can be an IP address, hostname (if resolvable), or FQDN.
+                    port: The remote SSH port.
+                    key: The pubkey to use to connect.
+                    remoteUser: The (remote) user to chown the files/directories to (must be connecting as root user).
+                                If not specified, the default is the connecting user ("user" attribute).
+                    remoteGroup: The (remote) group to chown the files/directories to (must be connecting as root user).
+                                 If not specified, the default is the connecting user's ("user" attribute) primary
+                                 group.
+                    fileMode: The octal permissions to chmod the remote files to.
+                    dirMode: The octal permissions to chmod the remote directories to.
+            -->
+            <remoteMirror
+                    user="foo"
+                    server="bar.domain.tld"
+                    port="22"
+                    key="~/.ssh/id_rsa"
+                    remoteUser="foo"
+                    remoteGroup="bar"
+                    fileMode="0600"
+                    dirMode="0700">/path/to/remote/path
+            </remoteMirror>
+        </mirrors>
+        <!--
+        The packages element contains actual packages to build into the repository.
+        -->
+        <packages>
+            <!--
+            The aur element specifies packages that should be fetched and built from the AUR.
+            They contain the name of the package.
+                Attributes:
+                    alwaysBuild: Accepts "1"/"true" or "0"/"false". If true, always build the package even if the same
+                                 version exists already. This only works if you don't delete/empty your staging
+                                 directory, otherwise it will be built.
+            -->
+            <aur alwaysBuild="true">somepkg</aur>
+            <!--
+            The pkgbuild element specifies packages that are locally developed/designed.
+            They contain the name of the package.
+                Attributes:
+                    path: The path to the package to build.
+            -->
+            <pkgbuild path="/path/to/pkgnm.snapshot.tar.gz" alwaysBuild="true">pkgnm</pkgbuild>
+            <pkgbuild path="/path/to/PKGBUILD" alwaysBuild="false">pkgnm2</pkgbuild>
+        </packages>
+    </repo>
+</archrepo>

@@ -3,6 +3,7 @@
 # TODO: make as flexible as the <rpms>:/bin/build.py (flesh out args), logging, etc.
 
 import argparse
+import datetime
 import copy
 import io
 import os
@@ -16,19 +17,18 @@ import warnings
 ##
 import gpg
 import requests
+from lxml import etree
 
 
-# TODO: move pkgs to some kind of list/config file/whatever.
 # TODO: track which versions are built so we don't need to consistently rebuild ALL packages
-# You will probably want to change these.
-_dflts = {'pkgs': ['dumpet'],
-          'reponame': 'MY_REPO',
-          'destdir': '~/pkgs/built',
-          'aurbase': 'https://aur.archlinux.org'}
+# TODO: should this be a configuration option?
+aurbase = 'https://aur.archlinux.org'
+
+_dflts = {'cfgfile': '~/.config/optools/arch/autorepo.xml'}
 
 
 class Packager(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, cfgfile = _dflts['cfgfile'], *args, **kwargs):
         user_params = kwargs
         self.args = copy.deepcopy(_dflts)
         self.args.update(user_params)
@@ -173,28 +173,10 @@ class Packager(object):
 
 def parseArgs():
     args = argparse.ArgumentParser(description = 'Build Pacman packages and update a local repository')
-    args.add_argument('-p', '--package',
-                      dest = 'pkgs',
-                      action = 'append',
-                      help = ('If specified, only build for this package name. Can be specified multiple times. '
-                              '(Default is hardcoded: {0})').format(', '.join(_dflts['pkgs'])))
-    args.add_argument('-r', '--repo-name',
-                      dest = 'reponame',
-                      default = _dflts['reponame'],
-                      help = ('The name of the repo. Default: {0}').format(_dflts['reponame']))
-    args.add_argument('-d', '--dest-dir',
-                      dest = 'destdir',
-                      default = _dflts['destdir'],
-                      help = ('Where the built packages should go. Default: {0}').format(_dflts['destdir']))
-    args.add_argument('-a', '--aur-base',
-                      dest = 'aurbase',
-                      default = _dflts['aurbase'],
-                      help = ('The base URL for AUR. You probably don\'t want to change this. '
-                              'Default: {0}').format(_dflts['aurbase']))
-    args.add_argument('-A', '--aur-only',
-                      dest = 'auronly',
-                      action = 'store_true',
-                      help = ('If specified, ignore local PKGBUILDs and only build from AUR'))
+    args.add_argument('-c', '--config',
+                      dest = 'cfgfile',
+                      default = _dflts['cfgfile'],
+                      help = ('The path to the configuration file. Default: {0}').format(_dflts['cfgfile']))
     return(args)
 
 def main():
