@@ -90,7 +90,7 @@ class LV(object):
                              ('isPersistent', 'persistent'),
                              ('isUpdated', 'updated')),
                     'int': (('ID', 'id'),
-                            ('maxMemory', 'max_memory_bytes'),
+                            ('maxMemory', 'max_memory_KiB'),
                             ('maxVcpus', 'max_vCPUs'))}
         for t in targets:
             if not verbose:
