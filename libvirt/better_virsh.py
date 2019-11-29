@@ -121,14 +121,14 @@ class LV(object):
         return(results)
 
     def restart(self, target, *args, **kwargs):
-        self.stop(target, **kwargs)
-        self.start(target, **kwargs)
+        self.stop(target, state = 'active', **kwargs)
+        self.start(target, state = 'inactive', **kwargs)
         return()
 
     def start(self, target, **kwargs):
         if not self.conn:
             self.startConn()
-        targets = self._getTargets(target, **kwargs)
+        targets = self._getTargets(target, state = 'inactive', **kwargs)
         for t in targets:
             t.create()
         return()
@@ -136,7 +136,7 @@ class LV(object):
     def stop(self, target, force = False, *args, **kwargs):
         if not self.conn:
             self.startConn()
-        targets = self._getTargets(target, **kwargs)
+        targets = self._getTargets(target, state = 'active', **kwargs)
         for t in targets:
             if not force:
                 t.shutdown()
@@ -217,6 +217,7 @@ def main():
         else:
             print('\n'.join(f))
     return()
+
 
 if __name__ == '__main__':
     main()
