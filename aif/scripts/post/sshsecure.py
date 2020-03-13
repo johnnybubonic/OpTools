@@ -119,9 +119,14 @@ ssh_ver = float(re.sub('^(Open|Sun_)SSH_([0-9\.]+)(p[0-9]+)?,.*$', '\g<2>', ssh_
 if ssh_ver >= magic_ver:
     has_ed25519 = True
     supported_keys = ('ed25519', 'rsa')
+    new_moduli = False
 else:
     has_ed25519 = False
     supported_keys = ('rsa', )
+    new_moduli = False
+# https://github.com/openssh/openssh-portable/commit/3e60d18fba1b502c21d64fc7e81d80bcd08a2092
+if ssh_ver >= 8.1:
+    new_moduli = True
 
 
 conf_options = {}
@@ -175,14 +180,26 @@ def hostKeys(buildmoduli):
                 subprocess.run(['haveged'], stdout = devnull)
     #Warning: The moduli stuff takes a LONG time to run. Hours.
     if buildmoduli:
-        subprocess.run(['ssh-keygen',
-                        '-G', '/etc/ssh/moduli.all',
-                        '-b', '4096',
-                        '-q'])
-        subprocess.run(['ssh-keygen',
-                        '-T', '/etc/ssh/moduli.safe',
-                        '-f', '/etc/ssh/moduli.all',
-                        '-q'])
+        if not new_moduli:
+            subprocess.run(['ssh-keygen',
+                            '-G', '/etc/ssh/moduli.all',
+                            '-b', '4096',
+                            '-q'])
+            subprocess.run(['ssh-keygen',
+                            '-T', '/etc/ssh/moduli.safe',
+                            '-f', '/etc/ssh/moduli.all',
+                            '-q'])
+        else:
+            subprocess.run(['ssh-keygen',
+                            '-q',
+                            '-M', 'generate',
+                            '-O', 'bits=4096',
+                            '/etc/ssh/moduli.all'])
+            subprocess.run(['ssh-keygen',
+                            '-q',
+                            '-M', 'screen',
+                            '-f', '/etc/ssh/moduli.all',
+                            '/etc/ssh/moduli.safe'])
         if os.path.lexists('/etc/ssh/moduli'):
             os.rename('/etc/ssh/moduli', '/etc/ssh/moduli.old')
         os.rename('/etc/ssh/moduli.safe', '/etc/ssh/moduli')
