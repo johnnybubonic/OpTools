@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- You very much most likely will want to leave "base" ALONE. Make sure you change "token" to your Linode API token,
+     though. -->
+<api base="https://api.linode.com/v4/"
+     token="YOUR_TOKEN_HERE">
+  <!-- Domains MUST be created first in the Linode Domains manager! -->
+  <domain name="domain1.com">
+    <!-- This would be for the A/AAAA record "foo.domain1.com". -->
+    <sub>foo</sub>
+    <!-- And obviously, this for "bar.domain1.com". -->
+    <sub>bar</sub>
+  </domain>
+  <domain name="domain2.net">
+    <!-- baz.domain2.net -->
+    <sub>baz</sub>
+    <!-- quux.domain2.net -->
+    <sub>quux</sub>
+  </domain>
+</api>

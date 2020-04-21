@@ -1,0 +1,57 @@
+This script requires a configuration file (by default, ~/.config/ddns.xml). Please refer to example.ddns.xml for an example.
+
+The path to the configuration file can be changed with the -c/--config argument.
+
+!!! NOTE !!!
+This script as a precautionary measure does NOT create new domain names! It may create or remove A/AAAA records depending
+on whether your client has a IPv4 and/or IPv6 WAN route respectively, however.
+
+Because network DNS settings are unpredictable and we need to ensure we don't get split-brain or bogus DNS responses,
+this script uses Verisign's public DNS resolvers hardcoded in. These resolvers are recommended for privacy, speed, and
+RFC compliance. The exact resolvers used are:
+
+* 64.6.64.6
+* 64.6.65.6
+
+If you do not consent to this, do not use this script.
+!!!!!!!!!!!!
+
+!!! NOTE !!!
+This script, by *necessity*, connects to (tries to connect to) the following URLs:
+
+* https://ipv4.clientinfo.square-r00t.net/?raw=1
+* https://ipv6.clientinfo.square-r00t.net/?raw=1
+
+This is a necessity because otherwise we do not have a method of fetching the WAN IP if the client is e.g. behind NAT
+(or is using ULA addresses with a routed gateway/RFC 6296 in IPv6 networks, etc.).
+
+This is a service that the author himself has written (https://git.square-r00t.net/OpTools/tree/net/addr) and deployed.
+No personal information is sold, etc. and it only returns the headers and connection information the client sends in a
+standard HTTP(S) request.
+
+If you do not consent to this, either change the URL in Updater._getMyIP() (it is compatible with https://ipinfo.io/,
+but this service does not return split IPv4 and IPv6 records so further modifications would be required) or do not use
+this script.
+!!!!!!!!!!!!
+
+SETUP:
+
+1.)a.) Create the domain(s) you wish to use in the Linode Domains manager (https://cloud.linode.com/domains).
+   b.) Create the API token (https://cloud.linode.com/profile/tokens).
+       * It MUST have "Read/Write" access to the "Domains" scope. All other scopes can be "None".
+       * It is *HIGHLY recommended* that you generate a *unique* token for each and every client machine rather than
+         sharing a token across them.
+1.) Create a configuration file. Refer to the accompanying "example.ddns.xml" file.
+2.) Make sure the script is executable and you have all required python modules installed:
+      https://pypi.org/project/dnspython/
+      https://pypi.org/project/requests/
+      https://pypi.org/project/lxml/
+      https://pypi.org/project/systemd/ (optional; for logging to the journal)
+3.) You're ready to go! It is recommended that you either:
+   a.) Set up a cronjob (https://crontab.guru/), or
+   b.) Create a systemd timer (https://wiki.archlinux.org/index.php/Systemd/Timers) (if you're on a system with systemd).
+
+LOGGING:
+Logging is done to ~/.cache/ddns.log. Messages will also be logged to the systemd journal (if available and the systemd module is installed).
+
+Suggestions for improvement are welcome (r00t [at] square-r00t.net).
