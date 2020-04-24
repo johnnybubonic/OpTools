@@ -1,3 +1,8 @@
+-sshsecure, need to switch to all-native with virtual env and package installation etc.
+
+-vault, schema dumper (dump mounts, paths (otional w/switch or toggle), and meta information)
+--ability to recreate from xml dump
+
 -git
 
 -net/addr needs DNS/PTR/allocation stuff etc.
