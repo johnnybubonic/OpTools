@@ -135,7 +135,8 @@ class Updater(object):
                 logger.error('Record {0} ({1}) is too long: {2}'.format(record, t, e))
                 continue
             except dns.resolver.NoAnswer as e:
-                logger.error('Record {0} ({1}) exists but has no content: {2}'.format(record, t, e))
+                # This is a debug instead of an error because that record type may not exist.
+                logger.debug('Record {0} ({1}) exists but has no content: {2}'.format(record, t, e))
                 continue
             except dns.resolver.NoNameservers as e:
                 logger.error(('Could not failover to a non-broken resolver when resolving {0} ({1}): '
@@ -238,7 +239,7 @@ class Updater(object):
                         r_exists = False
                     if r_exists:
                         # Do nothing.
-                        e = 'Skipping adding {0} for {1}; already exists in API'.format(ip, fqdn)
+                        e = 'Skipping adding {0} for {1}; already exists in API and is correct'.format(ip, fqdn)
                         logger.info(e)
                         if is_tty:
                             print(e)
@@ -263,19 +264,19 @@ class Updater(object):
                     else:
                         # Create the record.
                         logger.debug('Record {0} ({1}) does not exist; creating'.format(fqdn, ip))
-                    record = {'name': s,
-                              'type': t,
-                              'target': ip,
-                              'ttl_sec': 300}
-                    create_url = '{0}/domains/{1}/records'.format(self.api_base, d_id)
-                    create_r = self.session.put(create_url,
-                                                json = record)
-                    if not create_r.ok:
-                        e = 'Could not create record {0} ({1}); skipping'.format(fqdn, t)
-                        if is_tty:
-                            warnings.warn(e)
-                        logger.warning(e)
-                        continue
+                        record = {'name': s,
+                                  'type': t,
+                                  'target': ip,
+                                  'ttl_sec': 300}
+                        create_url = '{0}/domains/{1}/records'.format(self.api_base, d_id)
+                        create_r = self.session.post(create_url,
+                                                     json = record)
+                        if not create_r.ok:
+                            e = 'Could not create record {0} ({1}); skipping'.format(fqdn, t)
+                            if is_tty:
+                                warnings.warn(e)
+                            logger.warning(e)
+                            continue
         return()
 
 
