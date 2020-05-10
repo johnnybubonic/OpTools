@@ -252,9 +252,9 @@ class Updater(object):
                         # update.
                         logger.debug('Record {0} ({1}) exists but does not contain {2}; replacing'.format(fqdn, t, ip))
                         for r_id in r_ids:
-                            del_url = '{0}/domains/{1}/records/{1}'.format(self.api_base, d_id, r_id)
+                            del_url = '{0}/{1}'.format(records_url, r_id)
                             logger.debug(('Deleting record ID {0} for {1} ({2})').format(r_id, fqdn, t))
-                            del_r = self.session.delete(records_url)
+                            del_r = self.session.delete(del_url)
                             if not del_r.ok:
                                 e = 'Could not delete record ID {0} for {1} ({2}); skipping'.format(r_id, fqdn, t)
                                 if is_tty:
@@ -264,19 +264,18 @@ class Updater(object):
                     else:
                         # Create the record.
                         logger.debug('Record {0} ({1}) does not exist; creating'.format(fqdn, ip))
-                        record = {'name': s,
-                                  'type': t,
-                                  'target': ip,
-                                  'ttl_sec': 300}
-                        create_url = '{0}/domains/{1}/records'.format(self.api_base, d_id)
-                        create_r = self.session.post(create_url,
-                                                     json = record)
-                        if not create_r.ok:
-                            e = 'Could not create record {0} ({1}); skipping'.format(fqdn, t)
-                            if is_tty:
-                                warnings.warn(e)
-                            logger.warning(e)
-                            continue
+                    record = {'name': s,
+                              'type': t,
+                              'target': ip,
+                              'ttl_sec': 300}
+                    create_r = self.session.post(records_url,
+                                                 json = record)
+                    if not create_r.ok:
+                        e = 'Could not create record {0} ({1}); skipping'.format(fqdn, t)
+                        if is_tty:
+                            warnings.warn(e)
+                        logger.warning(e)
+                        continue
         return()
 
 
