@@ -194,9 +194,9 @@ class Updater(object):
                     rrset = records.get(t)
                     if not ip:
                         e = 'IPv{0} disabled; skipping'.format(v)
-                        warnings.warn(e)
                         if is_tty:
-                            logger.warning(e)
+                            warnings.warn(e)
+                        logger.warning(e)
                         continue
                     if rrset and ip in rrset:
                         e = 'Skipping adding {0} for {1}; already exists in DNS'.format(ip, fqdn)
