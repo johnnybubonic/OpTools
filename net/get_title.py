@@ -49,17 +49,21 @@ class InfoScraper(object):
 def parseArgs():
     args = argparse.ArgumentParser(description = 'Get quick information from a URL at a glance')
     args.add_argument('-e', '--elem',
-                      dest = 'strip',
+                      dest = 'elem',
                       default = def_elem,
                       help = ('The element(s) you want to scrape from the page. This is likely just going to be "{0}" (the default)').format(def_elem))
     args.add_argument('-s', '--strip',
                       dest = 'strip',
                       action = 'store_true',
-                      help = ('Whether to strip whitespace at the beginning/end of each element text'))
+                      help = ('If specified, strip whitespace at the beginning/end of each element text'))
     args.add_argument('-d', '--delineate',
                       dest = 'delin',
                       action = 'store_true',
-                      help = ('Whether to delineate each element instance'))
+                      help = ('If specified, delineate each element instance'))
+    args.add_argument('-c', '--count',
+                      dest = 'count',
+                      action = 'store_true',
+                      help = ('If specified, provide a count of how many times -e/--elem was found'))
     args.add_argument('url',
                       metavar = 'URL',
                       help = ('The URL to parse. It may need to be quoted or escaped depending on the URL and what shell you\'re using'))
@@ -70,6 +74,8 @@ def main():
     args = parseArgs().parse_args()
     i = InfoScraper(**vars(args))
     rslts = i.find()
+    if args.count:
+        print('Element {0} was found {1} time(s) at {2}. Results follow:'.format(args.elem, len(rslts), args.url))
     for i in rslts:
         t = i.text
         if args.strip:
