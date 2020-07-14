@@ -67,9 +67,9 @@ def main():
     rslts = i.find()
     if isinstance(rslts, list):
         for i in rslts:
-            print(i.text)
+            print(i.text.strip())
     else:
-        print(rslts.text)
+        print(rslts.text.strip())
     return(None)
 
 
