@@ -67,9 +67,13 @@ def main():
     rslts = i.find()
     if isinstance(rslts, list):
         for i in rslts:
+            print('== {0}: =='.format(args.elem))
             print(i.text.strip())
+            print('==\n')
     else:
+        print('== {0}: =='.format(args.elem))
         print(rslts.text.strip())
+        print('==')
     return(None)
 
 
