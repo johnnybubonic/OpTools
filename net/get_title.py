@@ -42,10 +42,6 @@ class InfoScraper(object):
 
     def find(self):
         rtrn = [e for e in self.soup.find_all(self.elem)]
-        if len(rtrn) == 1:
-            rtrn = rtrn[0]
-        elif len(rtrn) == 0:
-            rtrn = None
         return(rtrn)
         
 
@@ -53,8 +49,17 @@ class InfoScraper(object):
 def parseArgs():
     args = argparse.ArgumentParser(description = 'Get quick information from a URL at a glance')
     args.add_argument('-e', '--elem',
+                      dest = 'strip',
                       default = def_elem,
                       help = ('The element(s) you want to scrape from the page. This is likely just going to be "{0}" (the default)').format(def_elem))
+    args.add_argument('-s', '--strip',
+                      dest = 'strip',
+                      action = 'store_true',
+                      help = ('Whether to strip whitespace at the beginning/end of each element text'))
+    args.add_argument('-d', '--delineate',
+                      dest = 'delin',
+                      action = 'store_true',
+                      help = ('Whether to delineate each element instance'))
     args.add_argument('url',
                       metavar = 'URL',
                       help = ('The URL to parse. It may need to be quoted or escaped depending on the URL and what shell you\'re using'))
@@ -65,15 +70,15 @@ def main():
     args = parseArgs().parse_args()
     i = InfoScraper(**vars(args))
     rslts = i.find()
-    if isinstance(rslts, list):
-        for i in rslts:
+    for i in rslts:
+        t = i.text
+        if args.strip:
+            t = t.strip()
+        if args.delin:
             print('== {0}: =='.format(args.elem))
-            print(i.text.strip())
+        print(t)
+        if args.delin:
             print('==\n')
-    else:
-        print('== {0}: =='.format(args.elem))
-        print(rslts.text.strip())
-        print('==')
     return(None)
 
 
