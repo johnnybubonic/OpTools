@@ -405,9 +405,8 @@ def main():
         else:
             # It's a stale PID file.
             os.remove(self_pidfile)
-    else:
-        with open(self_pidfile, 'w') as f:
-            f.write(str(os.getpid()) + '\n')
+    with open(self_pidfile, 'w') as f:
+        f.write(str(os.getpid()) + '\n')
     _chkfile = '/etc/ssh/.aif-generated'
     if not os.path.isfile(_chkfile):
         # Warning: The moduli stuff can take a LONG time to run. Hours.
