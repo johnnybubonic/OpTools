@@ -7,6 +7,9 @@ import html.entities
 unused = (129, 141, 143, 144, 157)
 # These are whitespace and delete (control characters unnecessary to put here).
 noprint = (32, 127, 160, 173)
+# These need to be escaped in the generated AsciiDoc format.
+# escapechars = ('|', '\\')
+escapechars = ('|', )
 
 tpl = '| {d}\n| {o}\n| {h}\n| {b}\n| {ht}\n| {e}\n| {l}\n| {desc}\n'
 
@@ -52,7 +55,7 @@ for f, r in charsets.items():
                     c.encode('ascii')
                 except UnicodeEncodeError as e:
                     c = '&#{0:0>3};'.format(n)
-                if c in ('|', '\\'):
+                if c in escapechars:
                     c = '\\{0}'.format(c)
                 vals['l'] = c
     
