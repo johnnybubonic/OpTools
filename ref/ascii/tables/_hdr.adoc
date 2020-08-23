@@ -1,0 +1,4 @@
+[%header,cols="8*^"]
+|===
+| DEC | OCT | HEX | BIN | HTML | ESCAPE | LIT | DESC
+

@@ -1,0 +1,802 @@
+{
+  "0": {
+    "sym": "NUL",
+    "desc": "Null byte/character"
+  },
+  "1": {
+    "sym": "SOH",
+    "desc": "Start of heading"
+  },
+  "2": {
+    "sym": "STX",
+    "desc": "Start of text"
+  },
+  "3": {
+    "sym": "ETX",
+    "desc": "End text"
+  },
+  "4": {
+    "sym": "EOT",
+    "desc": "End of transmission"
+  },
+  "5": {
+    "sym": "ENQ",
+    "desc": "Enquiry"
+  },
+  "6": {
+    "sym": "ACK",
+    "desc": "Acknowledgement"
+  },
+  "7": {
+    "sym": "BEL",
+    "desc": "Terminal bell"
+  },
+  "8": {
+    "sym": "BS",
+    "desc": "Backspace"
+  },
+  "9": {
+    "sym": "HT",
+    "desc": "Horizontal tab (`\\t`)"
+  },
+  "10": {
+    "sym": "LF",
+    "desc": "Line feed (`\\n`)"
+  },
+  "11": {
+    "sym": "VT",
+    "desc": "Vertical tab"
+  },
+  "12": {
+    "sym": "FF",
+    "desc": "Form feed"
+  },
+  "13": {
+    "sym": "CR",
+    "desc": "Carriage return (`\\r`)"
+  },
+  "14": {
+    "sym": "SO",
+    "desc": "Shift out (`X-ON`)"
+  },
+  "15": {
+    "sym": "SI",
+    "desc": "Shift in (`X-OFF`)"
+  },
+  "16": {
+    "sym": "DLE",
+    "desc": "Data line escape"
+  },
+  "17": {
+    "sym": "DC1",
+    "desc": "Device control 1 (`XON`)"
+  },
+  "18": {
+    "sym": "DC2",
+    "desc": "Device control 2"
+  },
+  "19": {
+    "sym": "DC3",
+    "desc": "Device control 3 (`XOFF`)"
+  },
+  "20": {
+    "sym": "DC4",
+    "desc": "Device control 4"
+  },
+  "21": {
+    "sym": "NAK",
+    "desc": "Negative acknowledgement"
+  },
+  "22": {
+    "sym": "SYN",
+    "desc": "Synchronous idle"
+  },
+  "23": {
+    "sym": "ETB",
+    "desc": "End transmit block"
+  },
+  "24": {
+    "sym": "CAN",
+    "desc": "Cancel"
+  },
+  "25": {
+    "sym": "EM",
+    "desc": "End medium"
+  },
+  "26": {
+    "sym": "SUB",
+    "desc": "Substitute"
+  },
+  "27": {
+    "sym": "ESC",
+    "desc": "Escape"
+  },
+  "28": {
+    "sym": "FS",
+    "desc": "File separator"
+  },
+  "29": {
+    "sym": "GS",
+    "desc": "Group separator"
+  },
+  "30": {
+    "sym": "RS",
+    "desc": "Record Separator"
+  },
+  "31": {
+    "sym": "US",
+    "desc": "Unit Separator"
+  },
+  "32": {
+    "desc": "Space (non-printable)"
+  },
+  "33": {
+    "desc": "Exclamation point"
+  },
+  "34": {
+    "desc": "Double quote"
+  },
+  "35": {
+    "desc": "https://en.wiktionary.org/wiki/octothorpe[Octothorpe^] (Number symbol)"
+  },
+  "36": {
+    "desc": "Dollar(USD) symbol"
+  },
+  "37": {
+    "desc": "Percent sign"
+  },
+  "38": {
+    "desc": "Ampersand"
+  },
+  "39": {
+    "desc": "Single quote"
+  },
+  "40": {
+    "desc": "Open parenthesis"
+  },
+  "41": {
+    "desc": "Close parenthesis"
+  },
+  "42": {
+    "desc": "Asterisk"
+  },
+  "43": {
+    "desc": "Plus sign"
+  },
+  "44": {
+    "desc": "Comma"
+  },
+  "45": {
+    "desc": "Hyphen"
+  },
+  "46": {
+    "desc": "Period"
+  },
+  "47": {
+    "desc": "Slash"
+  },
+  "48": {
+    "desc": "The number zero"
+  },
+  "49": {
+    "desc": "The number one"
+  },
+  "50": {
+    "desc": "The number two"
+  },
+  "51": {
+    "desc": "The number three"
+  },
+  "52": {
+    "desc": "The number four"
+  },
+  "53": {
+    "desc": "The number five"
+  },
+  "54": {
+    "desc": "The number six"
+  },
+  "55": {
+    "desc": "The number seven"
+  },
+  "56": {
+    "desc": "The number eight"
+  },
+  "57": {
+    "desc": "The number nine"
+  },
+  "58": {
+    "desc": "Colon"
+  },
+  "59": {
+    "desc": "Semicolon"
+  },
+  "60": {
+    "desc": "Open angled bracket ('Less than' sign)"
+  },
+  "61": {
+    "desc": "Equals sign"
+  },
+  "62": {
+    "desc": "Closed angled bracket ('Greater than' sign)"
+  },
+  "63": {
+    "desc": "Question mark"
+  },
+  "64": {
+    "desc": "'At' symbol"
+  },
+  "65": {
+    "desc": "The letter A (uppercase)"
+  },
+  "66": {
+    "desc": "The letter B (uppercase)"
+  },
+  "67": {
+    "desc": "The letter C (uppercase)"
+  },
+  "68": {
+    "desc": "The letter D (uppercase)"
+  },
+  "69": {
+    "desc": "The letter E (uppercase)"
+  },
+  "70": {
+    "desc": "The letter F (uppercase)"
+  },
+  "71": {
+    "desc": "The letter G (uppercase)"
+  },
+  "72": {
+    "desc": "The letter H (uppercase)"
+  },
+  "73": {
+    "desc": "The letter I (uppercase)"
+  },
+  "74": {
+    "desc": "The letter J (uppercase)"
+  },
+  "75": {
+    "desc": "The letter K (uppercase)"
+  },
+  "76": {
+    "desc": "The letter L (uppercase)"
+  },
+  "77": {
+    "desc": "The letter M (uppercase)"
+  },
+  "78": {
+    "desc": "The letter N (uppercase)"
+  },
+  "79": {
+    "desc": "The letter O (uppercase)"
+  },
+  "80": {
+    "desc": "The letter P (uppercase)"
+  },
+  "81": {
+    "desc": "The letter Q (uppercase)"
+  },
+  "82": {
+    "desc": "The letter R (uppercase)"
+  },
+  "83": {
+    "desc": "The letter S (uppercase)"
+  },
+  "84": {
+    "desc": "The letter T (uppercase)"
+  },
+  "85": {
+    "desc": "The letter U (uppercase)"
+  },
+  "86": {
+    "desc": "The letter V (uppercase)"
+  },
+  "87": {
+    "desc": "The letter W (uppercase)"
+  },
+  "88": {
+    "desc": "The letter X (uppercase)"
+  },
+  "89": {
+    "desc": "The letter Y (uppercase)"
+  },
+  "90": {
+    "desc": "The letter Z (uppercase)"
+  },
+  "91": {
+    "desc": "Open square bracket"
+  },
+  "92": {
+    "desc": "Backslash"
+  },
+  "93": {
+    "desc": "Closed square bracket"
+  },
+  "94": {
+    "desc": "Caret (Exponent sign)"
+  },
+  "95": {
+    "desc": "Underscore"
+  },
+  "96": {
+    "desc": "Grave accent (Backtick)"
+  },
+  "97": {
+    "desc": "The letter A (lowercase)"
+  },
+  "98": {
+    "desc": "The letter B (lowercase)"
+  },
+  "99": {
+    "desc": "The letter C (lowercase)"
+  },
+  "100": {
+    "desc": "The letter D (lowercase)"
+  },
+  "101": {
+    "desc": "The letter E (lowercase)"
+  },
+  "102": {
+    "desc": "The letter F (lowercase)"
+  },
+  "103": {
+    "desc": "The letter G (lowercase)"
+  },
+  "104": {
+    "desc": "The letter H (lowercase)"
+  },
+  "105": {
+    "desc": "The letter I (lowercase)"
+  },
+  "106": {
+    "desc": "The letter J (lowercase)"
+  },
+  "107": {
+    "desc": "The letter K (lowercase)"
+  },
+  "108": {
+    "desc": "The letter L (lowercase)"
+  },
+  "109": {
+    "desc": "The letter M (lowercase)"
+  },
+  "110": {
+    "desc": "The letter N (lowercase)"
+  },
+  "111": {
+    "desc": "The letter O (lowercase)"
+  },
+  "112": {
+    "desc": "The letter P (lowercase)"
+  },
+  "113": {
+    "desc": "The letter Q (lowercase)"
+  },
+  "114": {
+    "desc": "The letter R (lowercase)"
+  },
+  "115": {
+    "desc": "The letter S (lowercase)"
+  },
+  "116": {
+    "desc": "The letter T (lowercase)"
+  },
+  "117": {
+    "desc": "The letter U (lowercase)"
+  },
+  "118": {
+    "desc": "The letter V (lowercase)"
+  },
+  "119": {
+    "desc": "The letter W (lowercase)"
+  },
+  "120": {
+    "desc": "The letter X (lowercase)"
+  },
+  "121": {
+    "desc": "The letter Y (lowercase)"
+  },
+  "122": {
+    "desc": "The letter Z (lowercase)"
+  },
+  "123": {
+    "desc": "Open curly bracket (Open brace)"
+  },
+  "124": {
+    "desc": "Vertical bar (Pipe)"
+  },
+  "125": {
+    "desc": "Closed curly bracket (Closed brace)"
+  },
+  "126": {
+    "desc": "Tilde (Equivalency sign)"
+  },
+  "127": {
+    "desc": "Delete"
+  },
+  "128": {
+    "desc": "Euro symbol"
+  },
+  "129": {
+    "desc": "N/A (Undefined)"
+  },
+  "130": {
+    "desc": "Single low-9 quote"
+  },
+  "131": {
+    "desc": "https://en.wikipedia.org/wiki/Florin_sign[Florin^] (Hooked F, lowercase)"
+  },
+  "132": {
+    "desc": "Double low-9 quote"
+  },
+  "133": {
+    "desc": "Horizontal ellipsis"
+  },
+  "134": {
+    "desc": "https://en.wikipedia.org/wiki/Dagger_(typography)[Dagger^]"
+  },
+  "135": {
+    "desc": "https://en.wikipedia.org/wiki/Dagger_(typography)[Double dagger^]"
+  },
+  "136": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^]"
+  },
+  "137": {
+    "desc": "https://en.wikipedia.org/wiki/Per_mille[Per mille^] sign"
+  },
+  "138": {
+    "desc": "https://en.wikipedia.org/wiki/%C5%A0[S with caron^] (uppercase)"
+  },
+  "139": {
+    "desc": "Open single https://en.wikipedia.org/wiki/Guillemet[guillemet^]"
+  },
+  "140": {
+    "desc": "Latin https://en.wikipedia.org/wiki/%C5%92[OE ligature^] (uppercase)"
+  },
+  "141": {
+    "desc": "N/A (Undefined)"
+  },
+  "142": {
+    "desc": "https://en.wikipedia.org/wiki/%C5%BD[Z with caron^] (uppercase)"
+  },
+  "143": {
+    "desc": "N/A (Undefined)"
+  },
+  "144": {
+    "desc": "N/A (Undefined)"
+  },
+  "145": {
+    "desc": "Open single quote mark"
+  },
+  "146": {
+    "desc": "Closed single quote mark"
+  },
+  "147": {
+    "desc": "Open double quote mark"
+  },
+  "148": {
+    "desc": "Closed double quote mark"
+  },
+  "149": {
+    "desc": "Bullet"
+  },
+  "150": {
+    "desc": "En dash"
+  },
+  "151": {
+    "desc": "Em dash"
+  },
+  "152": {
+    "desc": "Small tilde"
+  },
+  "153": {
+    "desc": "Trademark symbol"
+  },
+  "154": {
+    "desc": "https://en.wikipedia.org/wiki/%C5%A0[S with caron^] (lowercase)"
+  },
+  "155": {
+    "desc": "Closed single https://en.wikipedia.org/wiki/Guillemet[guillemet^]"
+  },
+  "156": {
+    "desc": "Latin https://en.wikipedia.org/wiki/%C5%92[OE ligature^] (lowercase)"
+  },
+  "157": {
+    "desc": "N/A (Undefined)"
+  },
+  "158": {
+    "desc": "https://en.wikipedia.org/wiki/%C5%BD[Z with caron^] (lowercase)"
+  },
+  "159": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] Y (uppercase)"
+  },
+  "160": {
+    "desc": "Non-breaking space"
+  },
+  "161": {
+    "desc": "Inverted exclamation point"
+  },
+  "162": {
+    "desc": "Cent(USD) symbol"
+  },
+  "163": {
+    "desc": "Pound sterling(GBP) symbol"
+  },
+  "164": {
+    "desc": "https://en.wikipedia.org/wiki/Currency_sign_(typography)[Generic/unspecified currency^] symbol"
+  },
+  "165": {
+    "desc": "Yen(JPY)/Yuan(CNY) symbol"
+  },
+  "166": {
+    "desc": "https://en.wikipedia.org/wiki/Vertical_bar#Solid_vertical_bar_vs_broken_bar[Broken^] Vertical bar (Pipe)"
+  },
+  "167": {
+    "desc": "Section symbol"
+  },
+  "168": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)#Umlaut[Umlaut^]"
+  },
+  "169": {
+    "desc": "Copyright symbol"
+  },
+  "170": {
+    "desc": "https://en.wikipedia.org/wiki/Ordinal_indicator[Ordinal indicator^] (feminine)"
+  },
+  "171": {
+    "desc": "Open double https://en.wikipedia.org/wiki/Guillemet[guillemet^]"
+  },
+  "172": {
+    "desc": "https://en.wikipedia.org/wiki/Negation['Not' sign^]"
+  },
+  "173": {
+    "desc": "https://en.wikipedia.org/wiki/Soft_hyphen[Soft hyphen^]"
+  },
+  "174": {
+    "desc": "Registered trademark symbol"
+  },
+  "175": {
+    "desc": "https://en.wikipedia.org/wiki/Macron_(diacritic)[Macron^] (overline)"
+  },
+  "176": {
+    "desc": "Degree symbol"
+  },
+  "177": {
+    "desc": "https://en.wikipedia.org/wiki/Plus%E2%80%93minus_sign[Plus-minus^] sign"
+  },
+  "178": {
+    "desc": "Superscript two (Squared)"
+  },
+  "179": {
+    "desc": "Superscript three (Cubed)"
+  },
+  "180": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] accent"
+  },
+  "181": {
+    "desc": "https://en.wikipedia.org/wiki/Mu_(letter)[Mu^] (Micro symbol)"
+  },
+  "182": {
+    "desc": "https://en.wikipedia.org/wiki/Pilcrow[Pilcrow^] (Paragraph symbol)"
+  },
+  "183": {
+    "desc": "https://en.wikipedia.org/wiki/Interpunct[Interpunct^]"
+  },
+  "184": {
+    "desc": "https://en.wikipedia.org/wiki/Cedilla[Cedilla^]"
+  },
+  "185": {
+    "desc": "Superscript one"
+  },
+  "186": {
+    "desc": "https://en.wikipedia.org/wiki/Ordinal_indicator[Ordinal indicator^] (masculine)"
+  },
+  "187": {
+    "desc": "Closed double https://en.wikipedia.org/wiki/Guillemet[guillemet^]"
+  },
+  "188": {
+    "desc": "Fraction (One-quarter)"
+  },
+  "189": {
+    "desc": "Fraction (One-half)"
+  },
+  "190": {
+    "desc": "Fraction (Three-quarters)"
+  },
+  "191": {
+    "desc": "Inverted question mark"
+  },
+  "192": {
+    "desc": "https://en.wikipedia.org/wiki/Grave_accent[Grave^] A (uppercase)"
+  },
+  "193": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] A (uppercase)"
+  },
+  "194": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^] A (uppercase)"
+  },
+  "195": {
+    "desc": "A with tilde (uppercase)"
+  },
+  "196": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] A (uppercase)"
+  },
+  "197": {
+    "desc": "https://en.wikipedia.org/wiki/Ring_(diacritic)[Ringed^] A (uppercase)"
+  },
+  "198": {
+    "desc": "https://en.wikipedia.org/wiki/%C3%86[AE ligature^] (uppercase)"
+  },
+  "199": {
+    "desc": "https://en.wikipedia.org/wiki/Cedilla[Cedillic^] C (uppercase)"
+  },
+  "200": {
+    "desc": "https://en.wikipedia.org/wiki/Grave_accent[Grave^] E (uppercase)"
+  },
+  "201": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] E (uppercase)"
+  },
+  "202": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^] E (uppercase)"
+  },
+  "203": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] E (uppercase)"
+  },
+  "204": {
+    "desc": "https://en.wikipedia.org/wiki/Grave_accent[Grave^] I (uppercase)"
+  },
+  "205": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] I (uppercase)"
+  },
+  "206": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^] I (uppercase)"
+  },
+  "207": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] I (uppercase)"
+  },
+  "208": {
+    "desc": "https://en.wikipedia.org/wiki/Eth[Eth^] (uppercase)"
+  },
+  "209": {
+    "desc": "N with tilde (uppercase)"
+  },
+  "210": {
+    "desc": "https://en.wikipedia.org/wiki/Grave_accent[Grave^] O (uppercase)"
+  },
+  "211": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] O (uppercase)"
+  },
+  "212": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^] O (uppercase)"
+  },
+  "213": {
+    "desc": "O with tilde (uppercase)"
+  },
+  "214": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] O (uppercase)"
+  },
+  "215": {
+    "desc": "Multiplication sign"
+  },
+  "216": {
+    "desc": "Slashed O (uppercase)"
+  },
+  "217": {
+    "desc": "https://en.wikipedia.org/wiki/Grave_accent[Grave^] U (uppercase)"
+  },
+  "218": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] U (uppercase)"
+  },
+  "219": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^] U (uppercase)"
+  },
+  "220": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] U (uppercase)"
+  },
+  "221": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] Y (uppercase)"
+  },
+  "222": {
+    "desc": "https://en.wikipedia.org/wiki/Thorn_(letter)[Thorn^] (uppercase)"
+  },
+  "223": {
+    "desc": "https://en.wikipedia.org/wiki/%C3%9F[Eszett^] (uppercase)"
+  },
+  "224": {
+    "desc": "https://en.wikipedia.org/wiki/Grave_accent[Grave^] A (lowercase)"
+  },
+  "225": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] A (lowercase)"
+  },
+  "226": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^] A (lowercase)"
+  },
+  "227": {
+    "desc": "A with tilde (lowercase)"
+  },
+  "228": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] A (lowercase)"
+  },
+  "229": {
+    "desc": "https://en.wikipedia.org/wiki/Ring_(diacritic)[Ringed^] A (lowercase)"
+  },
+  "230": {
+    "desc": "https://en.wikipedia.org/wiki/%C3%86[AE ligature^] (lowercase)"
+  },
+  "231": {
+    "desc": "https://en.wikipedia.org/wiki/Cedilla[Cedillic^] C (lowercase)"
+  },
+  "232": {
+    "desc": "https://en.wikipedia.org/wiki/Grave_accent[Grave^] E (lowercase)"
+  },
+  "233": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] E (lowercase)"
+  },
+  "234": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^] E (lowercase)"
+  },
+  "235": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] E (lowercase)"
+  },
+  "236": {
+    "desc": "https://en.wikipedia.org/wiki/Grave_accent[Grave^] I (lowercase)"
+  },
+  "237": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] I (lowercase)"
+  },
+  "238": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^] I (lowercase)"
+  },
+  "239": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] I (lowercase)"
+  },
+  "240": {
+    "desc": "https://en.wikipedia.org/wiki/Eth[Eth^] (lowercase)"
+  },
+  "241": {
+    "desc": "N with tilde (lowercase)"
+  },
+  "242": {
+    "desc": "https://en.wikipedia.org/wiki/Grave_accent[Grave^] O (lowercase)"
+  },
+  "243": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] O (lowercase)"
+  },
+  "244": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^] O (lowercase)"
+  },
+  "245": {
+    "desc": "O with tilde (lowercase)"
+  },
+  "246": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] O (lowercase)"
+  },
+  "247": {
+    "desc": "Division sign"
+  },
+  "248": {
+    "desc": "Slashed 0 (lowercase)"
+  },
+  "249": {
+    "desc": "https://en.wikipedia.org/wiki/Grave_accent[Grave^] U (lowercase)"
+  },
+  "250": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] U (lowercase)"
+  },
+  "251": {
+    "desc": "https://en.wikipedia.org/wiki/Circumflex[Circumflex^] U (lowercase)"
+  },
+  "252": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] U (lowercase)"
+  },
+  "253": {
+    "desc": "https://en.wikipedia.org/wiki/Acute_accent[Acute^] Y (lowercase)"
+  },
+  "254": {
+    "desc": "https://en.wikipedia.org/wiki/Thorn_(letter)[Thorn^] (lowercase)"
+  },
+  "255": {
+    "desc": "https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] Y (lowercase)"
+  }
+}

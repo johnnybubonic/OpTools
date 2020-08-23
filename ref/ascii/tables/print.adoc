@@ -1,0 +1,863 @@
+| 32
+| 040
+| 20
+| 00100000
+| &amp;#032;
+| N/A
+| N/A
+| Space (non-printable)
+
+| 33
+| 041
+| 21
+| 00100001
+| &amp;#033;
+| N/A
+| !
+| Exclamation point
+
+| 34
+| 042
+| 22
+| 00100010
+| &amp;#034;
+| &amp;quot;
+| "
+| Double quote
+
+| 35
+| 043
+| 23
+| 00100011
+| &amp;#035;
+| N/A
+| #
+| https://en.wiktionary.org/wiki/octothorpe[Octothorpe^] (Number symbol)
+
+| 36
+| 044
+| 24
+| 00100100
+| &amp;#036;
+| N/A
+| $
+| Dollar(USD) symbol
+
+| 37
+| 045
+| 25
+| 00100101
+| &amp;#037;
+| N/A
+| %
+| Percent sign
+
+| 38
+| 046
+| 26
+| 00100110
+| &amp;#038;
+| &amp;amp;
+| &
+| Ampersand
+
+| 39
+| 047
+| 27
+| 00100111
+| &amp;#039;
+| N/A
+| '
+| Single quote
+
+| 40
+| 050
+| 28
+| 00101000
+| &amp;#040;
+| N/A
+| (
+| Open parenthesis
+
+| 41
+| 051
+| 29
+| 00101001
+| &amp;#041;
+| N/A
+| )
+| Close parenthesis
+
+| 42
+| 052
+| 2a
+| 00101010
+| &amp;#042;
+| N/A
+| *
+| Asterisk
+
+| 43
+| 053
+| 2b
+| 00101011
+| &amp;#043;
+| N/A
+| +
+| Plus sign
+
+| 44
+| 054
+| 2c
+| 00101100
+| &amp;#044;
+| N/A
+| ,
+| Comma
+
+| 45
+| 055
+| 2d
+| 00101101
+| &amp;#045;
+| N/A
+| -
+| Hyphen
+
+| 46
+| 056
+| 2e
+| 00101110
+| &amp;#046;
+| N/A
+| .
+| Period
+
+| 47
+| 057
+| 2f
+| 00101111
+| &amp;#047;
+| N/A
+| /
+| Slash
+
+| 48
+| 060
+| 30
+| 00110000
+| &amp;#048;
+| N/A
+| 0
+| The number zero
+
+| 49
+| 061
+| 31
+| 00110001
+| &amp;#049;
+| N/A
+| 1
+| The number one
+
+| 50
+| 062
+| 32
+| 00110010
+| &amp;#050;
+| N/A
+| 2
+| The number two
+
+| 51
+| 063
+| 33
+| 00110011
+| &amp;#051;
+| N/A
+| 3
+| The number three
+
+| 52
+| 064
+| 34
+| 00110100
+| &amp;#052;
+| N/A
+| 4
+| The number four
+
+| 53
+| 065
+| 35
+| 00110101
+| &amp;#053;
+| N/A
+| 5
+| The number five
+
+| 54
+| 066
+| 36
+| 00110110
+| &amp;#054;
+| N/A
+| 6
+| The number six
+
+| 55
+| 067
+| 37
+| 00110111
+| &amp;#055;
+| N/A
+| 7
+| The number seven
+
+| 56
+| 070
+| 38
+| 00111000
+| &amp;#056;
+| N/A
+| 8
+| The number eight
+
+| 57
+| 071
+| 39
+| 00111001
+| &amp;#057;
+| N/A
+| 9
+| The number nine
+
+| 58
+| 072
+| 3a
+| 00111010
+| &amp;#058;
+| N/A
+| :
+| Colon
+
+| 59
+| 073
+| 3b
+| 00111011
+| &amp;#059;
+| N/A
+| ;
+| Semicolon
+
+| 60
+| 074
+| 3c
+| 00111100
+| &amp;#060;
+| &amp;lt;
+| <
+| Open angled bracket ('Less than' sign)
+
+| 61
+| 075
+| 3d
+| 00111101
+| &amp;#061;
+| N/A
+| =
+| Equals sign
+
+| 62
+| 076
+| 3e
+| 00111110
+| &amp;#062;
+| &amp;gt;
+| >
+| Closed angled bracket ('Greater than' sign)
+
+| 63
+| 077
+| 3f
+| 00111111
+| &amp;#063;
+| N/A
+| ?
+| Question mark
+
+| 64
+| 100
+| 40
+| 01000000
+| &amp;#064;
+| N/A
+| @
+| 'At' symbol
+
+| 65
+| 101
+| 41
+| 01000001
+| &amp;#065;
+| N/A
+| A
+| The letter A (uppercase)
+
+| 66
+| 102
+| 42
+| 01000010
+| &amp;#066;
+| N/A
+| B
+| The letter B (uppercase)
+
+| 67
+| 103
+| 43
+| 01000011
+| &amp;#067;
+| N/A
+| C
+| The letter C (uppercase)
+
+| 68
+| 104
+| 44
+| 01000100
+| &amp;#068;
+| N/A
+| D
+| The letter D (uppercase)
+
+| 69
+| 105
+| 45
+| 01000101
+| &amp;#069;
+| N/A
+| E
+| The letter E (uppercase)
+
+| 70
+| 106
+| 46
+| 01000110
+| &amp;#070;
+| N/A
+| F
+| The letter F (uppercase)
+
+| 71
+| 107
+| 47
+| 01000111
+| &amp;#071;
+| N/A
+| G
+| The letter G (uppercase)
+
+| 72
+| 110
+| 48
+| 01001000
+| &amp;#072;
+| N/A
+| H
+| The letter H (uppercase)
+
+| 73
+| 111
+| 49
+| 01001001
+| &amp;#073;
+| N/A
+| I
+| The letter I (uppercase)
+
+| 74
+| 112
+| 4a
+| 01001010
+| &amp;#074;
+| N/A
+| J
+| The letter J (uppercase)
+
+| 75
+| 113
+| 4b
+| 01001011
+| &amp;#075;
+| N/A
+| K
+| The letter K (uppercase)
+
+| 76
+| 114
+| 4c
+| 01001100
+| &amp;#076;
+| N/A
+| L
+| The letter L (uppercase)
+
+| 77
+| 115
+| 4d
+| 01001101
+| &amp;#077;
+| N/A
+| M
+| The letter M (uppercase)
+
+| 78
+| 116
+| 4e
+| 01001110
+| &amp;#078;
+| N/A
+| N
+| The letter N (uppercase)
+
+| 79
+| 117
+| 4f
+| 01001111
+| &amp;#079;
+| N/A
+| O
+| The letter O (uppercase)
+
+| 80
+| 120
+| 50
+| 01010000
+| &amp;#080;
+| N/A
+| P
+| The letter P (uppercase)
+
+| 81
+| 121
+| 51
+| 01010001
+| &amp;#081;
+| N/A
+| Q
+| The letter Q (uppercase)
+
+| 82
+| 122
+| 52
+| 01010010
+| &amp;#082;
+| N/A
+| R
+| The letter R (uppercase)
+
+| 83
+| 123
+| 53
+| 01010011
+| &amp;#083;
+| N/A
+| S
+| The letter S (uppercase)
+
+| 84
+| 124
+| 54
+| 01010100
+| &amp;#084;
+| N/A
+| T
+| The letter T (uppercase)
+
+| 85
+| 125
+| 55
+| 01010101
+| &amp;#085;
+| N/A
+| U
+| The letter U (uppercase)
+
+| 86
+| 126
+| 56
+| 01010110
+| &amp;#086;
+| N/A
+| V
+| The letter V (uppercase)
+
+| 87
+| 127
+| 57
+| 01010111
+| &amp;#087;
+| N/A
+| W
+| The letter W (uppercase)
+
+| 88
+| 130
+| 58
+| 01011000
+| &amp;#088;
+| N/A
+| X
+| The letter X (uppercase)
+
+| 89
+| 131
+| 59
+| 01011001
+| &amp;#089;
+| N/A
+| Y
+| The letter Y (uppercase)
+
+| 90
+| 132
+| 5a
+| 01011010
+| &amp;#090;
+| N/A
+| Z
+| The letter Z (uppercase)
+
+| 91
+| 133
+| 5b
+| 01011011
+| &amp;#091;
+| N/A
+| [
+| Open square bracket
+
+| 92
+| 134
+| 5c
+| 01011100
+| &amp;#092;
+| N/A
+| \\
+| Backslash
+
+| 93
+| 135
+| 5d
+| 01011101
+| &amp;#093;
+| N/A
+| ]
+| Closed square bracket
+
+| 94
+| 136
+| 5e
+| 01011110
+| &amp;#094;
+| N/A
+| ^
+| Caret (Exponent sign)
+
+| 95
+| 137
+| 5f
+| 01011111
+| &amp;#095;
+| N/A
+| _
+| Underscore
+
+| 96
+| 140
+| 60
+| 01100000
+| &amp;#096;
+| N/A
+| `
+| Grave accent (Backtick)
+
+| 97
+| 141
+| 61
+| 01100001
+| &amp;#097;
+| N/A
+| a
+| The letter A (lowercase)
+
+| 98
+| 142
+| 62
+| 01100010
+| &amp;#098;
+| N/A
+| b
+| The letter B (lowercase)
+
+| 99
+| 143
+| 63
+| 01100011
+| &amp;#099;
+| N/A
+| c
+| The letter C (lowercase)
+
+| 100
+| 144
+| 64
+| 01100100
+| &amp;#100;
+| N/A
+| d
+| The letter D (lowercase)
+
+| 101
+| 145
+| 65
+| 01100101
+| &amp;#101;
+| N/A
+| e
+| The letter E (lowercase)
+
+| 102
+| 146
+| 66
+| 01100110
+| &amp;#102;
+| N/A
+| f
+| The letter F (lowercase)
+
+| 103
+| 147
+| 67
+| 01100111
+| &amp;#103;
+| N/A
+| g
+| The letter G (lowercase)
+
+| 104
+| 150
+| 68
+| 01101000
+| &amp;#104;
+| N/A
+| h
+| The letter H (lowercase)
+
+| 105
+| 151
+| 69
+| 01101001
+| &amp;#105;
+| N/A
+| i
+| The letter I (lowercase)
+
+| 106
+| 152
+| 6a
+| 01101010
+| &amp;#106;
+| N/A
+| j
+| The letter J (lowercase)
+
+| 107
+| 153
+| 6b
+| 01101011
+| &amp;#107;
+| N/A
+| k
+| The letter K (lowercase)
+
+| 108
+| 154
+| 6c
+| 01101100
+| &amp;#108;
+| N/A
+| l
+| The letter L (lowercase)
+
+| 109
+| 155
+| 6d
+| 01101101
+| &amp;#109;
+| N/A
+| m
+| The letter M (lowercase)
+
+| 110
+| 156
+| 6e
+| 01101110
+| &amp;#110;
+| N/A
+| n
+| The letter N (lowercase)
+
+| 111
+| 157
+| 6f
+| 01101111
+| &amp;#111;
+| N/A
+| o
+| The letter O (lowercase)
+
+| 112
+| 160
+| 70
+| 01110000
+| &amp;#112;
+| N/A
+| p
+| The letter P (lowercase)
+
+| 113
+| 161
+| 71
+| 01110001
+| &amp;#113;
+| N/A
+| q
+| The letter Q (lowercase)
+
+| 114
+| 162
+| 72
+| 01110010
+| &amp;#114;
+| N/A
+| r
+| The letter R (lowercase)
+
+| 115
+| 163
+| 73
+| 01110011
+| &amp;#115;
+| N/A
+| s
+| The letter S (lowercase)
+
+| 116
+| 164
+| 74
+| 01110100
+| &amp;#116;
+| N/A
+| t
+| The letter T (lowercase)
+
+| 117
+| 165
+| 75
+| 01110101
+| &amp;#117;
+| N/A
+| u
+| The letter U (lowercase)
+
+| 118
+| 166
+| 76
+| 01110110
+| &amp;#118;
+| N/A
+| v
+| The letter V (lowercase)
+
+| 119
+| 167
+| 77
+| 01110111
+| &amp;#119;
+| N/A
+| w
+| The letter W (lowercase)
+
+| 120
+| 170
+| 78
+| 01111000
+| &amp;#120;
+| N/A
+| x
+| The letter X (lowercase)
+
+| 121
+| 171
+| 79
+| 01111001
+| &amp;#121;
+| N/A
+| y
+| The letter Y (lowercase)
+
+| 122
+| 172
+| 7a
+| 01111010
+| &amp;#122;
+| N/A
+| z
+| The letter Z (lowercase)
+
+| 123
+| 173
+| 7b
+| 01111011
+| &amp;#123;
+| N/A
+| {
+| Open curly bracket (Open brace)
+
+| 124
+| 174
+| 7c
+| 01111100
+| &amp;#124;
+| N/A
+| \|
+| Vertical bar (Pipe)
+
+| 125
+| 175
+| 7d
+| 01111101
+| &amp;#125;
+| N/A
+| }
+| Closed curly bracket (Closed brace)
+
+| 126
+| 176
+| 7e
+| 01111110
+| &amp;#126;
+| N/A
+| ~
+| Tilde (Equivalency sign)
+
+| 127
+| 177
+| 7f
+| 01111111
+| &amp;#127;
+| N/A
+| N/A
+| Delete

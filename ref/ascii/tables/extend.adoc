@@ -1,0 +1,1151 @@
+| 128
+| 200
+| 80
+| 10000000
+| &amp;#128;
+| N/A
+| &#128;
+| Euro symbol
+
+| 129
+| 201
+| 81
+| 10000001
+| &amp;#129;
+| N/A
+| N/A
+| N/A (Undefined)
+
+| 130
+| 202
+| 82
+| 10000010
+| &amp;#130;
+| N/A
+| &#130;
+| Single low-9 quote
+
+| 131
+| 203
+| 83
+| 10000011
+| &amp;#131;
+| N/A
+| &#131;
+| https://en.wikipedia.org/wiki/Florin_sign[Florin^] (Hooked F, lowercase)
+
+| 132
+| 204
+| 84
+| 10000100
+| &amp;#132;
+| N/A
+| &#132;
+| Double low-9 quote
+
+| 133
+| 205
+| 85
+| 10000101
+| &amp;#133;
+| N/A
+| &#133;
+| Horizontal ellipsis
+
+| 134
+| 206
+| 86
+| 10000110
+| &amp;#134;
+| N/A
+| &#134;
+| https://en.wikipedia.org/wiki/Dagger_(typography)[Dagger^]
+
+| 135
+| 207
+| 87
+| 10000111
+| &amp;#135;
+| N/A
+| &#135;
+| https://en.wikipedia.org/wiki/Dagger_(typography)[Double dagger^]
+
+| 136
+| 210
+| 88
+| 10001000
+| &amp;#136;
+| N/A
+| &#136;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^]
+
+| 137
+| 211
+| 89
+| 10001001
+| &amp;#137;
+| N/A
+| &#137;
+| https://en.wikipedia.org/wiki/Per_mille[Per mille^] sign
+
+| 138
+| 212
+| 8a
+| 10001010
+| &amp;#138;
+| N/A
+| &#138;
+| https://en.wikipedia.org/wiki/%C5%A0[S with caron^] (uppercase)
+
+| 139
+| 213
+| 8b
+| 10001011
+| &amp;#139;
+| N/A
+| &#139;
+| Open single https://en.wikipedia.org/wiki/Guillemet[guillemet^]
+
+| 140
+| 214
+| 8c
+| 10001100
+| &amp;#140;
+| N/A
+| &#140;
+| Latin https://en.wikipedia.org/wiki/%C5%92[OE ligature^] (uppercase)
+
+| 141
+| 215
+| 8d
+| 10001101
+| &amp;#141;
+| N/A
+| N/A
+| N/A (Undefined)
+
+| 142
+| 216
+| 8e
+| 10001110
+| &amp;#142;
+| N/A
+| &#142;
+| https://en.wikipedia.org/wiki/%C5%BD[Z with caron^] (uppercase)
+
+| 143
+| 217
+| 8f
+| 10001111
+| &amp;#143;
+| N/A
+| N/A
+| N/A (Undefined)
+
+| 144
+| 220
+| 90
+| 10010000
+| &amp;#144;
+| N/A
+| N/A
+| N/A (Undefined)
+
+| 145
+| 221
+| 91
+| 10010001
+| &amp;#145;
+| N/A
+| &#145;
+| Open single quote mark
+
+| 146
+| 222
+| 92
+| 10010010
+| &amp;#146;
+| N/A
+| &#146;
+| Closed single quote mark
+
+| 147
+| 223
+| 93
+| 10010011
+| &amp;#147;
+| N/A
+| &#147;
+| Open double quote mark
+
+| 148
+| 224
+| 94
+| 10010100
+| &amp;#148;
+| N/A
+| &#148;
+| Closed double quote mark
+
+| 149
+| 225
+| 95
+| 10010101
+| &amp;#149;
+| N/A
+| &#149;
+| Bullet
+
+| 150
+| 226
+| 96
+| 10010110
+| &amp;#150;
+| N/A
+| &#150;
+| En dash
+
+| 151
+| 227
+| 97
+| 10010111
+| &amp;#151;
+| N/A
+| &#151;
+| Em dash
+
+| 152
+| 230
+| 98
+| 10011000
+| &amp;#152;
+| N/A
+| &#152;
+| Small tilde
+
+| 153
+| 231
+| 99
+| 10011001
+| &amp;#153;
+| N/A
+| &#153;
+| Trademark symbol
+
+| 154
+| 232
+| 9a
+| 10011010
+| &amp;#154;
+| N/A
+| &#154;
+| https://en.wikipedia.org/wiki/%C5%A0[S with caron^] (lowercase)
+
+| 155
+| 233
+| 9b
+| 10011011
+| &amp;#155;
+| N/A
+| &#155;
+| Closed single https://en.wikipedia.org/wiki/Guillemet[guillemet^]
+
+| 156
+| 234
+| 9c
+| 10011100
+| &amp;#156;
+| N/A
+| &#156;
+| Latin https://en.wikipedia.org/wiki/%C5%92[OE ligature^] (lowercase)
+
+| 157
+| 235
+| 9d
+| 10011101
+| &amp;#157;
+| N/A
+| N/A
+| N/A (Undefined)
+
+| 158
+| 236
+| 9e
+| 10011110
+| &amp;#158;
+| N/A
+| &#158;
+| https://en.wikipedia.org/wiki/%C5%BD[Z with caron^] (lowercase)
+
+| 159
+| 237
+| 9f
+| 10011111
+| &amp;#159;
+| N/A
+| &#159;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] Y (uppercase)
+
+| 160
+| 240
+| a0
+| 10100000
+| &amp;#160;
+| &amp;nbsp;
+| N/A
+| Non-breaking space
+
+| 161
+| 241
+| a1
+| 10100001
+| &amp;#161;
+| &amp;iexcl;
+| &#161;
+| Inverted exclamation point
+
+| 162
+| 242
+| a2
+| 10100010
+| &amp;#162;
+| &amp;cent;
+| &#162;
+| Cent(USD) symbol
+
+| 163
+| 243
+| a3
+| 10100011
+| &amp;#163;
+| &amp;pound;
+| &#163;
+| Pound sterling(GBP) symbol
+
+| 164
+| 244
+| a4
+| 10100100
+| &amp;#164;
+| &amp;curren;
+| &#164;
+| https://en.wikipedia.org/wiki/Currency_sign_(typography)[Generic/unspecified currency^] symbol
+
+| 165
+| 245
+| a5
+| 10100101
+| &amp;#165;
+| &amp;yen;
+| &#165;
+| Yen(JPY)/Yuan(CNY) symbol
+
+| 166
+| 246
+| a6
+| 10100110
+| &amp;#166;
+| &amp;brvbar;
+| &#166;
+| https://en.wikipedia.org/wiki/Vertical_bar#Solid_vertical_bar_vs_broken_bar[Broken^] Vertical bar (Pipe)
+
+| 167
+| 247
+| a7
+| 10100111
+| &amp;#167;
+| &amp;sect;
+| &#167;
+| Section symbol
+
+| 168
+| 250
+| a8
+| 10101000
+| &amp;#168;
+| &amp;uml;
+| &#168;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)#Umlaut[Umlaut^]
+
+| 169
+| 251
+| a9
+| 10101001
+| &amp;#169;
+| &amp;copy;
+| &#169;
+| Copyright symbol
+
+| 170
+| 252
+| aa
+| 10101010
+| &amp;#170;
+| &amp;ordf;
+| &#170;
+| https://en.wikipedia.org/wiki/Ordinal_indicator[Ordinal indicator^] (feminine)
+
+| 171
+| 253
+| ab
+| 10101011
+| &amp;#171;
+| &amp;laquo;
+| &#171;
+| Open double https://en.wikipedia.org/wiki/Guillemet[guillemet^]
+
+| 172
+| 254
+| ac
+| 10101100
+| &amp;#172;
+| &amp;not;
+| &#172;
+| https://en.wikipedia.org/wiki/Negation['Not' sign^]
+
+| 173
+| 255
+| ad
+| 10101101
+| &amp;#173;
+| &amp;shy;
+| N/A
+| https://en.wikipedia.org/wiki/Soft_hyphen[Soft hyphen^]
+
+| 174
+| 256
+| ae
+| 10101110
+| &amp;#174;
+| &amp;reg;
+| &#174;
+| Registered trademark symbol
+
+| 175
+| 257
+| af
+| 10101111
+| &amp;#175;
+| &amp;macr;
+| &#175;
+| https://en.wikipedia.org/wiki/Macron_(diacritic)[Macron^] (overline)
+
+| 176
+| 260
+| b0
+| 10110000
+| &amp;#176;
+| &amp;deg;
+| &#176;
+| Degree symbol
+
+| 177
+| 261
+| b1
+| 10110001
+| &amp;#177;
+| &amp;plusmn;
+| &#177;
+| https://en.wikipedia.org/wiki/Plus%E2%80%93minus_sign[Plus-minus^] sign
+
+| 178
+| 262
+| b2
+| 10110010
+| &amp;#178;
+| &amp;sup2;
+| &#178;
+| Superscript two (Squared)
+
+| 179
+| 263
+| b3
+| 10110011
+| &amp;#179;
+| &amp;sup3;
+| &#179;
+| Superscript three (Cubed)
+
+| 180
+| 264
+| b4
+| 10110100
+| &amp;#180;
+| &amp;acute;
+| &#180;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] accent
+
+| 181
+| 265
+| b5
+| 10110101
+| &amp;#181;
+| &amp;micro;
+| &#181;
+| https://en.wikipedia.org/wiki/Mu_(letter)[Mu^] (Micro symbol)
+
+| 182
+| 266
+| b6
+| 10110110
+| &amp;#182;
+| &amp;para;
+| &#182;
+| https://en.wikipedia.org/wiki/Pilcrow[Pilcrow^] (Paragraph symbol)
+
+| 183
+| 267
+| b7
+| 10110111
+| &amp;#183;
+| &amp;middot;
+| &#183;
+| https://en.wikipedia.org/wiki/Interpunct[Interpunct^]
+
+| 184
+| 270
+| b8
+| 10111000
+| &amp;#184;
+| &amp;cedil;
+| &#184;
+| https://en.wikipedia.org/wiki/Cedilla[Cedilla^]
+
+| 185
+| 271
+| b9
+| 10111001
+| &amp;#185;
+| &amp;sup1;
+| &#185;
+| Superscript one
+
+| 186
+| 272
+| ba
+| 10111010
+| &amp;#186;
+| &amp;ordm;
+| &#186;
+| https://en.wikipedia.org/wiki/Ordinal_indicator[Ordinal indicator^] (masculine)
+
+| 187
+| 273
+| bb
+| 10111011
+| &amp;#187;
+| &amp;raquo;
+| &#187;
+| Closed double https://en.wikipedia.org/wiki/Guillemet[guillemet^]
+
+| 188
+| 274
+| bc
+| 10111100
+| &amp;#188;
+| &amp;frac14;
+| &#188;
+| Fraction (One-quarter)
+
+| 189
+| 275
+| bd
+| 10111101
+| &amp;#189;
+| &amp;frac12;
+| &#189;
+| Fraction (One-half)
+
+| 190
+| 276
+| be
+| 10111110
+| &amp;#190;
+| &amp;frac34;
+| &#190;
+| Fraction (Three-quarters)
+
+| 191
+| 277
+| bf
+| 10111111
+| &amp;#191;
+| &amp;iquest;
+| &#191;
+| Inverted question mark
+
+| 192
+| 300
+| c0
+| 11000000
+| &amp;#192;
+| &amp;Agrave;
+| &#192;
+| https://en.wikipedia.org/wiki/Grave_accent[Grave^] A (uppercase)
+
+| 193
+| 301
+| c1
+| 11000001
+| &amp;#193;
+| &amp;Aacute;
+| &#193;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] A (uppercase)
+
+| 194
+| 302
+| c2
+| 11000010
+| &amp;#194;
+| &amp;Acirc;
+| &#194;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^] A (uppercase)
+
+| 195
+| 303
+| c3
+| 11000011
+| &amp;#195;
+| &amp;Atilde;
+| &#195;
+| A with tilde (uppercase)
+
+| 196
+| 304
+| c4
+| 11000100
+| &amp;#196;
+| &amp;Auml;
+| &#196;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] A (uppercase)
+
+| 197
+| 305
+| c5
+| 11000101
+| &amp;#197;
+| &amp;Aring;
+| &#197;
+| https://en.wikipedia.org/wiki/Ring_(diacritic)[Ringed^] A (uppercase)
+
+| 198
+| 306
+| c6
+| 11000110
+| &amp;#198;
+| &amp;AElig;
+| &#198;
+| https://en.wikipedia.org/wiki/%C3%86[AE ligature^] (uppercase)
+
+| 199
+| 307
+| c7
+| 11000111
+| &amp;#199;
+| &amp;Ccedil;
+| &#199;
+| https://en.wikipedia.org/wiki/Cedilla[Cedillic^] C (uppercase)
+
+| 200
+| 310
+| c8
+| 11001000
+| &amp;#200;
+| &amp;Egrave;
+| &#200;
+| https://en.wikipedia.org/wiki/Grave_accent[Grave^] E (uppercase)
+
+| 201
+| 311
+| c9
+| 11001001
+| &amp;#201;
+| &amp;Eacute;
+| &#201;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] E (uppercase)
+
+| 202
+| 312
+| ca
+| 11001010
+| &amp;#202;
+| &amp;Ecirc;
+| &#202;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^] E (uppercase)
+
+| 203
+| 313
+| cb
+| 11001011
+| &amp;#203;
+| &amp;Euml;
+| &#203;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] E (uppercase)
+
+| 204
+| 314
+| cc
+| 11001100
+| &amp;#204;
+| &amp;Igrave;
+| &#204;
+| https://en.wikipedia.org/wiki/Grave_accent[Grave^] I (uppercase)
+
+| 205
+| 315
+| cd
+| 11001101
+| &amp;#205;
+| &amp;Iacute;
+| &#205;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] I (uppercase)
+
+| 206
+| 316
+| ce
+| 11001110
+| &amp;#206;
+| &amp;Icirc;
+| &#206;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^] I (uppercase)
+
+| 207
+| 317
+| cf
+| 11001111
+| &amp;#207;
+| &amp;Iuml;
+| &#207;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] I (uppercase)
+
+| 208
+| 320
+| d0
+| 11010000
+| &amp;#208;
+| &amp;ETH;
+| &#208;
+| https://en.wikipedia.org/wiki/Eth[Eth^] (uppercase)
+
+| 209
+| 321
+| d1
+| 11010001
+| &amp;#209;
+| &amp;Ntilde;
+| &#209;
+| N with tilde (uppercase)
+
+| 210
+| 322
+| d2
+| 11010010
+| &amp;#210;
+| &amp;Ograve;
+| &#210;
+| https://en.wikipedia.org/wiki/Grave_accent[Grave^] O (uppercase)
+
+| 211
+| 323
+| d3
+| 11010011
+| &amp;#211;
+| &amp;Oacute;
+| &#211;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] O (uppercase)
+
+| 212
+| 324
+| d4
+| 11010100
+| &amp;#212;
+| &amp;Ocirc;
+| &#212;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^] O (uppercase)
+
+| 213
+| 325
+| d5
+| 11010101
+| &amp;#213;
+| &amp;Otilde;
+| &#213;
+| O with tilde (uppercase)
+
+| 214
+| 326
+| d6
+| 11010110
+| &amp;#214;
+| &amp;Ouml;
+| &#214;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] O (uppercase)
+
+| 215
+| 327
+| d7
+| 11010111
+| &amp;#215;
+| &amp;times;
+| &#215;
+| Multiplication sign
+
+| 216
+| 330
+| d8
+| 11011000
+| &amp;#216;
+| &amp;Oslash;
+| &#216;
+| Slashed O (uppercase)
+
+| 217
+| 331
+| d9
+| 11011001
+| &amp;#217;
+| &amp;Ugrave;
+| &#217;
+| https://en.wikipedia.org/wiki/Grave_accent[Grave^] U (uppercase)
+
+| 218
+| 332
+| da
+| 11011010
+| &amp;#218;
+| &amp;Uacute;
+| &#218;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] U (uppercase)
+
+| 219
+| 333
+| db
+| 11011011
+| &amp;#219;
+| &amp;Ucirc;
+| &#219;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^] U (uppercase)
+
+| 220
+| 334
+| dc
+| 11011100
+| &amp;#220;
+| &amp;Uuml;
+| &#220;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] U (uppercase)
+
+| 221
+| 335
+| dd
+| 11011101
+| &amp;#221;
+| &amp;Yacute;
+| &#221;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] Y (uppercase)
+
+| 222
+| 336
+| de
+| 11011110
+| &amp;#222;
+| &amp;THORN;
+| &#222;
+| https://en.wikipedia.org/wiki/Thorn_(letter)[Thorn^] (uppercase)
+
+| 223
+| 337
+| df
+| 11011111
+| &amp;#223;
+| &amp;szlig;
+| &#223;
+| https://en.wikipedia.org/wiki/%C3%9F[Eszett^] (uppercase)
+
+| 224
+| 340
+| e0
+| 11100000
+| &amp;#224;
+| &amp;agrave;
+| &#224;
+| https://en.wikipedia.org/wiki/Grave_accent[Grave^] A (lowercase)
+
+| 225
+| 341
+| e1
+| 11100001
+| &amp;#225;
+| &amp;aacute;
+| &#225;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] A (lowercase)
+
+| 226
+| 342
+| e2
+| 11100010
+| &amp;#226;
+| &amp;acirc;
+| &#226;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^] A (lowercase)
+
+| 227
+| 343
+| e3
+| 11100011
+| &amp;#227;
+| &amp;atilde;
+| &#227;
+| A with tilde (lowercase)
+
+| 228
+| 344
+| e4
+| 11100100
+| &amp;#228;
+| &amp;auml;
+| &#228;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] A (lowercase)
+
+| 229
+| 345
+| e5
+| 11100101
+| &amp;#229;
+| &amp;aring;
+| &#229;
+| https://en.wikipedia.org/wiki/Ring_(diacritic)[Ringed^] A (lowercase)
+
+| 230
+| 346
+| e6
+| 11100110
+| &amp;#230;
+| &amp;aelig;
+| &#230;
+| https://en.wikipedia.org/wiki/%C3%86[AE ligature^] (lowercase)
+
+| 231
+| 347
+| e7
+| 11100111
+| &amp;#231;
+| &amp;ccedil;
+| &#231;
+| https://en.wikipedia.org/wiki/Cedilla[Cedillic^] C (lowercase)
+
+| 232
+| 350
+| e8
+| 11101000
+| &amp;#232;
+| &amp;egrave;
+| &#232;
+| https://en.wikipedia.org/wiki/Grave_accent[Grave^] E (lowercase)
+
+| 233
+| 351
+| e9
+| 11101001
+| &amp;#233;
+| &amp;eacute;
+| &#233;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] E (lowercase)
+
+| 234
+| 352
+| ea
+| 11101010
+| &amp;#234;
+| &amp;ecirc;
+| &#234;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^] E (lowercase)
+
+| 235
+| 353
+| eb
+| 11101011
+| &amp;#235;
+| &amp;euml;
+| &#235;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] E (lowercase)
+
+| 236
+| 354
+| ec
+| 11101100
+| &amp;#236;
+| &amp;igrave;
+| &#236;
+| https://en.wikipedia.org/wiki/Grave_accent[Grave^] I (lowercase)
+
+| 237
+| 355
+| ed
+| 11101101
+| &amp;#237;
+| &amp;iacute;
+| &#237;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] I (lowercase)
+
+| 238
+| 356
+| ee
+| 11101110
+| &amp;#238;
+| &amp;icirc;
+| &#238;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^] I (lowercase)
+
+| 239
+| 357
+| ef
+| 11101111
+| &amp;#239;
+| &amp;iuml;
+| &#239;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] I (lowercase)
+
+| 240
+| 360
+| f0
+| 11110000
+| &amp;#240;
+| &amp;eth;
+| &#240;
+| https://en.wikipedia.org/wiki/Eth[Eth^] (lowercase)
+
+| 241
+| 361
+| f1
+| 11110001
+| &amp;#241;
+| &amp;ntilde;
+| &#241;
+| N with tilde (lowercase)
+
+| 242
+| 362
+| f2
+| 11110010
+| &amp;#242;
+| &amp;ograve;
+| &#242;
+| https://en.wikipedia.org/wiki/Grave_accent[Grave^] O (lowercase)
+
+| 243
+| 363
+| f3
+| 11110011
+| &amp;#243;
+| &amp;oacute;
+| &#243;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] O (lowercase)
+
+| 244
+| 364
+| f4
+| 11110100
+| &amp;#244;
+| &amp;ocirc;
+| &#244;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^] O (lowercase)
+
+| 245
+| 365
+| f5
+| 11110101
+| &amp;#245;
+| &amp;otilde;
+| &#245;
+| O with tilde (lowercase)
+
+| 246
+| 366
+| f6
+| 11110110
+| &amp;#246;
+| &amp;ouml;
+| &#246;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] O (lowercase)
+
+| 247
+| 367
+| f7
+| 11110111
+| &amp;#247;
+| &amp;divide;
+| &#247;
+| Division sign
+
+| 248
+| 370
+| f8
+| 11111000
+| &amp;#248;
+| &amp;oslash;
+| &#248;
+| Slashed 0 (lowercase)
+
+| 249
+| 371
+| f9
+| 11111001
+| &amp;#249;
+| &amp;ugrave;
+| &#249;
+| https://en.wikipedia.org/wiki/Grave_accent[Grave^] U (lowercase)
+
+| 250
+| 372
+| fa
+| 11111010
+| &amp;#250;
+| &amp;uacute;
+| &#250;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] U (lowercase)
+
+| 251
+| 373
+| fb
+| 11111011
+| &amp;#251;
+| &amp;ucirc;
+| &#251;
+| https://en.wikipedia.org/wiki/Circumflex[Circumflex^] U (lowercase)
+
+| 252
+| 374
+| fc
+| 11111100
+| &amp;#252;
+| &amp;uuml;
+| &#252;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] U (lowercase)
+
+| 253
+| 375
+| fd
+| 11111101
+| &amp;#253;
+| &amp;yacute;
+| &#253;
+| https://en.wikipedia.org/wiki/Acute_accent[Acute^] Y (lowercase)
+
+| 254
+| 376
+| fe
+| 11111110
+| &amp;#254;
+| &amp;thorn;
+| &#254;
+| https://en.wikipedia.org/wiki/Thorn_(letter)[Thorn^] (lowercase)
+
+| 255
+| 377
+| ff
+| 11111111
+| &amp;#255;
+| &amp;yuml;
+| &#255;
+| https://en.wikipedia.org/wiki/Diaeresis_(diacritic)[Diaeretic^] Y (lowercase)

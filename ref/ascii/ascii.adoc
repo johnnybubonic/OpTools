@@ -1,0 +1,129 @@
+= ASCII Character Reference
+Brent Saner <r00t@square-r00t.net>
+Last updated/rendered {localdatetime}
+:doctype: book
+:data-uri:
+:imagesdir: images
+:sectlinks:
+ifeval::["{doctype}" != "article"]
+:toc: preamble
+:toc2: left
+endif::[]
+:idprefix:
+:toclevels: 7
+:source-highlighter: highlightjs
+
+
+This document attempts to categorize and give reference 
+for all ASCII codes and their various representations.
+I primarily used http://www.profdavis.net/ASCII_table.pdf[this PDF^] and 
+http://www.robelle.com/smugbook/ascii.html[this website^] as references.
+
+== How to Use This Document
+
+=== How to Render It
+
+The document is written in https://asciidoc.org/[AsciiDoc^]
+(and rendered with https://asciidoctor.org/[AsciiDoctor^]).
+The most up-to-date AsciiDoc code can be found at
+https://git.square-r00t.net/OpTools/tree/ref/ascii[my OpTools repo^].
+You may see some things that don't quite match the AsciiDoc spec in the source; 
+that's because they're probably AsciiDoctor-specific extensions.
+
+You can render it via `asciidoctor -n ascii.adoc`. By default it will render HTML5.
+You can also render to PDF via `asciidoctor-pdf -n ascii.adoc`.
+
+=== How to Read It
+
+Each section under <<reference_tables, Reference Tables>> has information about 
+the following tables. Each table thereafter has the following columns in order:
+
+*DEC*:: The decimal representation of the character (i.e. what would be returned in Python's `ord()`).
+*OCT*:: The octal representation of the character.
+*HEX*:: The hexadecimal representation of the character.
+*BIN*:: The binary representation of the character.
+*HTML*:: The HTML number representation of the character.
+*ESCAPE*:: The HTML escape of the character (if it has one), e.g. `&amp;quot;`.
+(Does not include the full set of https://dev.w3.org/html5/html-author/charref[HTML5 characters^], 
+only characters that should be escaped.)
+*LIT*:: The literal character (if it is unprintable, its symbol name will be given instead in _italics_).
+*DESC*:: A description of the character.
+
+If any fields are not relevant, possible, defined, printable, etc. then they will be "N/A" (without the quotes).
+
+////
+TODO
+You will also find an <<index, Index>> to help you find a certain character more quickly, as well as reverse-lookup.
+
+In this index:
+
+* the literal character is in regular style
+* the decimal is a regular style positive integer
+* the octal is in *bold* 
+* the hex is in _italics_
+* the HTML is in *_bold italics_*
+* the binary is in `fixed-width/monospace`
+* the HTML Escape (if it has one) is in `*bold fixed-width*`
+////
+
+== Reference Tables
+
+ASCII ("**A**merican **S**tandard **C**ode for **I**nformation **I**nterchange") is 
+a series of 7-bit sequences in which each single bit represents a character.
+
+The tables given provide the information in 8 bits (256 characters total) per 
+https://en.wikipedia.org/wiki/ISO/IEC_8859-1[ISO 8859-1^], commonly referred to 
+as the `Latin-1` or `latin1` character set, in order to uniformly include the
+extended ASCII set.
+
+You may see some characters link to a https://en.wikipedia.org/[Wikipedia^] article in their description.
+This is typically done because the symbol/character is known by multiple different names or they're uncommon.
+
+You can, of course, copy the character directly from this page into your clipboard (if your OS supports it).
+
+=== ASCII Control Characters
+(DEC 0-31, OCT **000**-**037**, HEX __00__-__1f__)
+
+These characters represent control codes -- characters that alter the environment. 
+They're primarily used these days for *nix (UNIX, BSD, GNU/Linux) terminals. 
+Historically they have been used for things like line printers.
+
+You may see things in `fixed-width` in the description; these are 
+https://en.wikipedia.org/wiki/Software_flow_control[flow controls^] (commonly 
+used on e.g. RS-232).
+
+.Control Characters
+include::tables/_hdr.adoc[]
+include::tables/ctrl.adoc[]
+|===
+
+=== ASCII Printable Characters
+(DEC 32-127, OCT **040**-**177**, HEX __20__-__7f__)
+
+.Printable Characters
+include::tables/_hdr.adoc[]
+include::tables/print.adoc[]
+|===
+
+=== Extended ASCII Characters
+(DEC 128-255, OCT **200**-**377**, HEX __80__-__ff__)
+
+.Extended Characters
+include::tables/_hdr.adoc[]
+include::tables/extend.adoc[]
+|===
+
+=== Combined Table (All Characters/Codes)
+(DEC 0-255, OCT **000**-**377**, HEX __00__-__ff__)
+
+The following table is a combined table of the previous three sections for ease 
+of reference.
+
+.All Characters
+include::tables/_hdr.adoc[]
+include::tables/ctrl.adoc[]
+include::tables/print.adoc[]
+include::tables/extend.adoc[]
+|===
+
+
