@@ -1,4 +1,4 @@
--sshsecure, need to switch to all-native with virtual env and package installation etc.
+- sshsecure is being re-written in golang
 
 -vault, schema dumper (dump mounts, paths (otional w/switch or toggle), and meta information)
 --ability to recreate from xml dump
