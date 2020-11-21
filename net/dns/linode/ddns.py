@@ -117,7 +117,7 @@ class Updater(object):
         for t in ('A', 'AAAA'):
             logger.debug('Resolving {0} ({1})'.format(record, t))
             try:
-                q = self.resolver.resolve(record, t)
+                q = self.resolver.query(record, t)
                 for a in q:
                     if t not in records.keys():
                         records[t] = []
