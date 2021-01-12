@@ -1,50 +1,44 @@
 #!/usr/bin/env python3
 
-# TODO: logging
-# Example .sysresccd.json:
-# {
-#     "date": "Sun, 22 Nov 2020 18:03:52 +0900",
-#     "arch": "amd64",
-#     "ver": 7.01,
-#     "sha512": "9d8c7e6d5c5f22d42bc20a663(...)"
-# }
-
 import datetime
 import json
 import hashlib
-import pathlib
 import os
+import pathlib
 import re
 import shutil
-# import subprocess
 ##
 import psutil
 import requests
 from lxml import etree
+##
+import arch_mirror_ranking  # <optools>/arch/arch_mirror_ranking.py
 
 
 class Updater(object):
-    _fname_re = re.compile(r'^systemrescue-(?P<version>[0-9.]+)-(?P<arch>(i686|amd64)).iso$')
-    _def_hash = 'sha256'
-    _allowed_hashes = ('sha256', 'sha512')
-    _allowed_arches = ('i686', 'amd64')
+    _fname_re = re.compile(r'^archlinux-(?P<version>[0-9]{4}\.[0-9]{2}\.[0-9]{2})-(?P<arch>(i686|x86_64)).iso$')
+    _def_hash = 'sha1'
+    _allowed_hashes = ('md5', 'sha1')
+    _allowed_arches = ('x86_64', )
     _date_fmt = '%a, %d %b %Y %H:%M:%S %z'
+    _datever_fmt = '%Y.%m.%d'
+    _arch = 'x86_64'  # Arch Linux proper only offers x86_64.
+    _iso_dir = 'iso/latest'
+    _iso_file = os.path.join(_iso_dir, 'archlinux-{ver}-{arch}.iso')
 
     def __init__(self,
-                 arch = 'amd64',
                  dest_dir = '/boot/iso',
-                 dest_file = 'sysresccd.iso',
-                 ver_file = '.sysresccd.json',
-                 lock_path = '/tmp/.sysresccd.lck',
-                 feed_url = 'https://osdn.net/projects/systemrescuecd/storage/!rss',
-                 # dl_base = 'https://osdn.mirror.constant.com//storage/g/s/sy/systemrescuecd',
-                 grub_cfg = '/etc/grub.d/40_custom_sysresccd',
+                 dest_file = 'arch.iso',
+                 ver_file = '.arch.json',
+                 lock_path = '/tmp/.arch.lck',
+                 feed_url = 'https://archlinux.org/feeds/releases/',
+                 grub_cfg = '/etc/grub.d/40_custom_arch',
                  # check_gpg = True,  # TODO: GPG sig checking
-                 hash_type = 'sha512'):
-        if arch.lower() not in self._allowed_arches:
-            raise ValueError('arch must be one of: {0}'.format(', '.join(self._allowed_arches)))
-        else:
-            self.arch = arch.lower()
+                 hash_type = 'sha1'):
+        # if arch.lower() not in self._allowed_arches:
+        #     raise ValueError('arch must be one of: {0}'.format(', '.join(self._allowed_arches)))
+        # else:
+        #     self._arch = arch.lower()
         if hash_type.lower() not in self._allowed_hashes:
             raise ValueError('hash_type must be one of: {0}'.format(', '.join(self._allowed_hashes)))
         else:
@@ -53,19 +47,25 @@ class Updater(object):
         self.dest_file = dest_file
         self.ver_file = ver_file
         self.feed_url = feed_url
-        # self.dl_base = dl_base
-        self.dl_base = None
         self.grub_cfg = grub_cfg
         self.lckfile = os.path.abspath(os.path.expanduser(lock_path))
+        # From the JSON.
+        self.rel_notes_url = None
         self.old_date = None
         self.old_ver = None
         self.old_hash = None
+        self.mirror_base = None
+        self.country = None
+        # New vals.
         self.new_date = None
         self.new_ver = None
         self.new_hash = None
+        # Instance vars again.
         self.do_update = False
         self.force_update = False
         self.iso_url = None
+        self.ipv4 = True
+        self.ipv6 = False
         self.dest_iso = os.path.join(self.dest_dir, self.dest_file)
         self.dest_ver = os.path.join(self.dest_dir, self.ver_file)
         self._init_vars()
@@ -73,6 +73,8 @@ class Updater(object):
     def _init_vars(self):
         if self.getRunning():
             return(None)
+        self.getCountry()
+        self.getNet()
         self.getCurVer()
         self.getNewVer()
         return(None)
@@ -87,6 +89,7 @@ class Updater(object):
                      self.old_ver,
                      self.old_hash)):
             self.do_update = True
+            self.findMirror()
             self.download()
         self.touchVer()
         self.unlock()
@@ -114,6 +117,38 @@ class Updater(object):
         self.updateVer()
         return(None)
 
+    def findMirror(self):
+        self.getCountry()
+        if self.mirror_base:
+            return(None)
+        for p in ('http', 'https'):
+            m = arch_mirror_ranking.MirrorIdx(country = self.country,
+                                              proto = 'http',
+                                              is_active = True,
+                                              ipv4 = self.ipv4,
+                                              ipv6 = self.ipv6,
+                                              isos = True,
+                                              statuses = False)
+            for s in m.ranked_servers:
+                try:
+                    req = requests.get(s['url'])
+                    if req.ok:
+                        self.mirror_base = s['url']
+                        break
+                except (OSError, ConnectionRefusedError):
+                    continue
+        return(None)
+
+    def getCountry(self):
+        if self.country:  # The API has limited number of accesses for free.
+            return(None)
+        url = 'https://ipinfo.io/country'
+        req = requests.get(url, headers = {'User-Agent': 'curl/7.74.0'})
+        if not req.ok:
+            raise RuntimeError('Received non-200/30x {0} for {1}'.format(req.status_code, url))
+        self.country = req.content.decode('utf-8').strip().upper()
+        return(None)
+
     def getCurVer(self):
         if self.getRunning():
             return(None)
@@ -125,14 +160,15 @@ class Updater(object):
         with open(self.dest_ver, 'rb') as fh:
             ver_info = json.load(fh)
         self.old_date = datetime.datetime.strptime(ver_info['date'], self._date_fmt)
-        self.old_ver = ver_info['ver']
+        self.old_ver = datetime.datetime.strptime(ver_info['ver'], self._datever_fmt)
         self.old_hash = ver_info.get(self.hash_type, self._def_hash)
+        self.country = ver_info.get('country')
         self.new_hash = self.old_hash
         self.new_ver = self.old_ver
         self.new_date = self.old_date
-        if ver_info.get('arch') != self.arch:
-            self.do_update = True
-            self.force_update = True
+        # if ver_info.get('arch') != self._arch:
+        #     self.do_update = True
+        #     self.force_update = True
         try:
             hasher = hashlib.new(self.hash_type)
             with open(self.dest_iso, 'rb') as fh:
@@ -144,46 +180,65 @@ class Updater(object):
             self.do_update = True
             self.force_update = True
             return(None)
-        return (None)
+        return(None)
+
+    def getNet(self):
+        for k in ('ipv4', 'ipv6'):
+            url = 'https://{0}.clientinfo.square-r00t.net'.format(k)
+            try:
+                req = requests.get(url)
+                setattr(self, k, req.json()['ip'])
+            except OSError:
+                setattr(self, k, False)
+        return(None)
 
     def getNewVer(self):
         if self.getRunning():
             return(None)
+        if not self.mirror_base:
+            self.findMirror()
         req = requests.get(self.feed_url, headers = {'User-Agent': 'curl/7.74.0'})
         if not req.ok:
             raise RuntimeError('Received non-200/30x {0} for {1}'.format(req.status_code, self.feed_url))
         feed = etree.fromstring(req.content)
-        self.dl_base = feed.xpath('channel/link')[0].text
         for item in feed.xpath('//item'):
             date_xml = item.find('pubDate')
-            title_xml = item.find('title')
-            # link_xml = item.find('link')
-            date = title = link = None
+            ver_xml = item.find('title')
+            notes_xml = item.find('link')
+            date = ver = notes = None
             if date_xml is not None:
                 date = datetime.datetime.strptime(date_xml.text, self._date_fmt)
-            if title_xml is not None:
-                title = title_xml.text
-            # if link_xml is not None:
-            #     link = link_xml.text
-            fname_r = self._fname_re.search(os.path.basename(title))
-            if not fname_r:
-                continue
-            ver_info = fname_r.groupdict()
-            if ver_info['arch'] != self.arch:
-                continue
-            new_ver = float(ver_info.get('version', self.old_ver))
+            if ver_xml is not None:
+                ver = ver_xml.text
+            if notes_xml is not None:
+                notes = notes_xml.text
+            new_ver = datetime.datetime.strptime(ver, self._datever_fmt)
             if not all((self.old_ver, self.old_date)) or \
                     (new_ver > self.old_ver) or \
                     (self.old_date < date):
                 self.do_update = True
                 self.new_ver = new_ver
                 self.new_date = date
-                self.iso_url = os.path.join(self.dl_base, title.lstrip('/'))
-                hash_url = '{0}.{1}'.format(self.iso_url, self.hash_type)
+                self.rel_notes_url = notes
+                datever = self.new_ver.strftime(self._datever_fmt)
+                self.iso_url = os.path.join(self.mirror_base,
+                                            self._iso_file.lstrip('/')).format(ver = datever, arch = self._arch)
+                hash_url = os.path.join(self.mirror_base,
+                                        self._iso_dir,
+                                        '{0}sums.txt'.format(self.hash_type))
                 req = requests.get(hash_url, headers = {'User-Agent': 'curl/7.74.0'})
                 if not req.ok:
                     raise RuntimeError('Received non-200/30x {0} for {1}'.format(req.status_code, hash_url))
-                self.new_hash = req.content.decode('utf-8').lower().split()[0]
+                hash_lines = req.content.decode('utf-8').strip().splitlines()
+                tgt_fname = os.path.basename(self.iso_url)
+                for line in hash_lines:
+                    if line.strip().startswith('#'):
+                        continue
+                    hash_str, fname = line.split()
+                    if fname != tgt_fname:
+                        continue
+                    self.new_hash = hash_str.lower()
+                    break
             break
         return(None)
 
@@ -221,8 +276,10 @@ class Updater(object):
         if self.getRunning():
             return(None)
         d = {'date': self.new_date.strftime(self._date_fmt),
-             'arch': self.arch,
-             'ver': self.new_ver,
+             'mirror': self.mirror_base,
+             'country': self.country,
+             'notes': self.rel_notes_url,
+             'ver': self.new_ver.strftime(self._datever_fmt),
              self.hash_type: self.new_hash}
         j = json.dumps(d, indent = 4)
         with open(self.dest_ver, 'w') as fh:

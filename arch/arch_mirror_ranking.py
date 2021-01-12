@@ -139,6 +139,7 @@ def parseArgs():
                            help = ('If specified, only include inactive servers (default is active + inactive)'))
     return(args)
 
+
 if __name__ == '__main__':
     args = vars(parseArgs().parse_args())
     m = MirrorIdx(**args, statuses = True)
