@@ -30,7 +30,7 @@ class Updater(object):
                  ver_file = '.sysresccd.json',
                  lock_path = '/tmp/.sysresccd.lck',
                  feed_url = 'https://osdn.net/projects/systemrescuecd/storage/!rss',
-                 dl_base = 'https://osdn.net/frs/redir.php?m=constant&f=/storage/g/s/sy/systemrescuecd',
+                 # dl_base = 'https://osdn.mirror.constant.com//storage/g/s/sy/systemrescuecd',
                  grub_cfg = '/etc/grub.d/40_custom_sysresccd',
                  # check_gpg = True,  # TODO: GPG sig checking
                  hash_type = 'sha512'):
@@ -46,10 +46,10 @@ class Updater(object):
         self.dest_file = dest_file
         self.ver_file = ver_file
         self.feed_url = feed_url
-        self.dl_base = dl_base
+        # self.dl_base = dl_base
+        self.dl_base = None
         self.grub_cfg = grub_cfg
         self.lckfile = os.path.abspath(os.path.expanduser(lock_path))
-        self.hasher = hashlib.new(self.hash_type)
         self.old_date = None
         self.old_ver = None
         self.old_hash = None
@@ -79,6 +79,7 @@ class Updater(object):
                 all((self.old_date,
                      self.old_ver,
                      self.old_hash)):
+            self.do_update = True
             self.download()
         self.touchVer()
         self.unlock()
@@ -91,16 +92,18 @@ class Updater(object):
             return(None)
         if not self.iso_url:
             raise RuntimeError('iso_url attribute must be set first')
-        req = requests.get(self.iso_url, stream = True)
+        req = requests.get(self.iso_url, stream = True, headers = {'User-Agent': 'curl/7.74.0'})
         if not req.ok:
-            raise RuntimeError('Received non-200/30x for {0}'.format(self.iso_url))
+            raise RuntimeError('Received non-200/30x {0} for {1}'.format(req.status_code, self.iso_url))
         with req as uri:
             with open(self.dest_iso, 'wb') as fh:
                 shutil.copyfileobj(uri.raw, fh)
+        hasher = hashlib.new(self.hash_type)
         with open(self.dest_iso, 'rb') as fh:
-            self.hasher.update(fh.read())
-        self.new_hash = self.hasher.hexdigest().lower()
-        self.hasher = hashlib.new(self.hash_type)
+            hasher.update(fh.read())
+        realhash = hasher.hexdigest().lower()
+        if realhash != self.new_hash:
+            raise RuntimeError('Hash mismatch: {0} (LOCAL), {1} (REMOTE)'.format(realhash, self.new_hash))
         self.updateVer()
         return(None)
 
@@ -114,42 +117,47 @@ class Updater(object):
             return(None)
         with open(self.dest_ver, 'rb') as fh:
             ver_info = json.load(fh)
-        tz_data = datetime.timezone(datetime.timedelta(hours = 0), 'UTC')
-        self.old_date = datetime.datetime.fromtimestamp(ver_info['date']).replace(tzinfo = tz_data)
+        self.old_date = datetime.datetime.strptime(ver_info['date'], self._date_fmt)
         self.old_ver = ver_info['ver']
         self.old_hash = ver_info.get(self.hash_type, self._def_hash)
+        self.new_hash = self.old_hash
+        self.new_ver = self.old_ver
+        self.new_date = self.old_date
         if ver_info.get('arch') != self.arch:
             self.do_update = True
             self.force_update = True
         try:
+            hasher = hashlib.new(self.hash_type)
             with open(self.dest_iso, 'rb') as fh:
-                self.hasher.update(fh.read())
-            if self.old_hash != self.hasher.hexdigest().lower():
+                hasher.update(fh.read())
+            if self.old_hash != hasher.hexdigest().lower():
                 self.do_update = True
                 self.force_update = True
-            self.hasher = hashlib.new(self.hash_type)
         except FileNotFoundError:
+            self.do_update = True
+            self.force_update = True
             return(None)
         return (None)
 
     def getNewVer(self):
         if self.getRunning():
             return(None)
-        req = requests.get(self.feed_url)
+        req = requests.get(self.feed_url, headers = {'User-Agent': 'curl/7.74.0'})
         if not req.ok:
-            raise RuntimeError('Received non-200/30x for {0}'.format(self.feed_url))
+            raise RuntimeError('Received non-200/30x {0} for {1}'.format(req.status_code, self.feed_url))
         feed = etree.fromstring(req.content)
+        self.dl_base = feed.xpath('channel/link')[0].text
         for item in feed.xpath('//item'):
             date_xml = item.find('pubDate')
             title_xml = item.find('title')
-            link_xml = item.find('link')
+            # link_xml = item.find('link')
             date = title = link = None
             if date_xml is not None:
                 date = datetime.datetime.strptime(date_xml.text, self._date_fmt)
             if title_xml is not None:
                 title = title_xml.text
-            if link_xml is not None:
-                link = link_xml.text
+            # if link_xml is not None:
+            #     link = link_xml.text
             fname_r = self._fname_re.search(os.path.basename(title))
             if not fname_r:
                 continue
@@ -163,12 +171,13 @@ class Updater(object):
                 self.do_update = True
                 self.new_ver = new_ver
                 self.new_date = date
-                self.iso_url = link
+                self.iso_url = os.path.join(self.dl_base, title.lstrip('/'))
                 hash_url = '{0}.{1}'.format(self.iso_url, self.hash_type)
-                req = requests.get(hash_url)
+                req = requests.get(hash_url, headers = {'User-Agent': 'curl/7.74.0'})
                 if not req.ok:
-                    raise RuntimeError('Received non-200/30x for {0}'.format(hash_url))
-                self.new_hash = req.content.decode('utf-8').lower()
+                    raise RuntimeError('Received non-200/30x {0} for {1}'.format(req.status_code, hash_url))
+                self.new_hash = req.content.decode('utf-8').lower().split()[0]
+            break
         return(None)
 
     def getRunning(self):
@@ -204,12 +213,13 @@ class Updater(object):
     def updateVer(self):
         if self.getRunning():
             return(None)
-        d = {'date': self.new_date.timestamp(),
+        d = {'date': self.new_date.strftime(self._date_fmt),
              'arch': self.arch,
              'ver': self.new_ver,
              self.hash_type: self.new_hash}
-        with open(os.path.join(self.dest_dir, self.ver_file), 'w') as fh:
-            fh.write(json.dumps(d, indent = 4))
+        j = json.dumps(d, indent = 4)
+        with open(self.dest_ver, 'w') as fh:
+            fh.write(j)
             fh.write('\n')
         return(None)
 
