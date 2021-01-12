@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
 
+# TODO: logging
+# Example .arch.json:
+# {
+#     "date": "Fri, 01 Jan 2021 00:00:00 +0000",
+#     "mirror": "http://arch.mirror.constant.com/",
+#     "country": "US",
+#     "notes": "https://archlinux.org/releng/releases/2021.01.01/",
+#     "ver": "2021.01.01",
+#     "sha1": "c3082b13d3cf0a253e1322568f2fd07479f86d52"
+# }
+
 import datetime
 import json
 import hashlib
