@@ -236,7 +236,7 @@ class BootSync(object):
                     line = re.sub(r'(?<!\=UUID\=){0}'.format(self.dummy_uuid),
                                   self.blkids[disk],
                                   line)
-                    line = re.sub('/boot', '', line)
+                    line = re.sub('(^\s*|\s+)/boot', '', line)
                     f.write('{0}\n'.format(line))
         return()
 
