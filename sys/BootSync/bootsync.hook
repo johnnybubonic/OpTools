@@ -8,7 +8,20 @@ Operation = Upgrade
 Operation = Remove
 Type = File
 Target = boot/*
+Target = usr/lib/modules/*/vmlinuz
+Target = usr/lib/initcpio/*
+
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = linux
+Target = mkinitcpio
 
 [Action]
 When = PostTransaction
 Exec = /usr/local/bin/bootsync
+Depends = python-magic
+Depends = python-psutil
+Depends = python-lxml
