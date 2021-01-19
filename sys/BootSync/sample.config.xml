@@ -84,6 +84,7 @@ SEE prep.txt FOR WHAT MUST BE DONE BEFORE RUNNING BOOTSYNC.
         <path source="/usr/lib/grub/x86_64-efi" target="grub/x86_64-efi" pattern="^.*\.(mod|lst|sh)$"/>
         <!-- And these are ISO files, in case you're like me and do loop mounting in Grub for rescue situations.
              (e.g. https://wiki.archlinux.org/index.php/Multiboot_USB_drive#Using_GRUB_and_loopback_devices) -->
-        <path hashtype="false" source="/boot/iso" target="iso" pattern="^.*\.(iso|img)$"/>
+        <!-- <path hashtype="false" source="/boot/iso" target="iso" pattern="^.*\.(iso|img)$"/> -->
+        <path hashtype="md5" source="/boot/iso" target="iso" pattern=".*"/>
     </syncPaths>
 </bootsync>
